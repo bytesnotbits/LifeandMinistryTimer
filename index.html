@@ -1,35 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life and Ministry Timer</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-    <style>
-        .progress-bar {
-            transition: width 1s linear;
-        }
-        .part-card {
-            transition: border-color 0.2s ease;
-        }
-        .part-card:hover {
-            border-color: #3b82f6;
-        }
-    </style>
+    <!-- ... (head section remains unchanged) ... -->
 </head>
 <body class="bg-gray-100 p-4">
     <div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
         <div class="space-y-6">
-            <!-- Template Management -->
+            <!-- Template Management (unchanged) -->
             <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold">Meeting Template</h2>
-                    <!-- Parts will be inserted here -->
-                </div>
-                
-                <button onclick="addPart()" class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                    Add Part
-                </button>
+                <!-- ... (template management section unchanged) ... -->
             </div>
 
             <!-- Timer Display Section -->
@@ -43,250 +22,17 @@
                 </div>
             </div>
 
-            <!-- Comment Tracking -->
+            <!-- Comment Tracking (unchanged) -->
             <div id="commentSection" class="space-y-4 hidden">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-semibold">Comment Tracking</h3>
-                    <button onclick="toggleComment()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                        Start Comment
-                    </button>
-                </div>
-                <div class="space-y-2">
-                    <p id="commentCount">Total Comments: 0</p>
-                    <p id="averageDuration">Average Duration: 0:00</p>
-                    <p id="currentComment" class="hidden">Current Comment Duration: 0:00</p>
-                </div>
+                <!-- ... (comment section unchanged) ... -->
             </div>
         </div>
     </div>
 
     <script>
-        // Constants and State
-        const DEFAULT_PARTS = [
-            { name: 'Opening Comments', duration: 300, speaker: '' },
-            { name: 'Treasures', duration: 600, speaker: '' },
-            { name: 'Spiritual Gems', duration: 600, speaker: '' },
-            { name: 'Bible Reading', duration: 600, speaker: '' }
-        ];
+        // ... (Constants and utility functions remain unchanged) ...
 
-        let meetingParts = [];
-        let activePart = null;
-        let isRunning = false;
-        let elapsedTimes = {};
-        let comments = [];
-        let activeComment = null;
-        let timerInterval = null;
-        let commentInterval = null;
-
-        // Utility Functions
-        function formatTime(seconds) {
-            const mins = Math.floor(Math.abs(seconds) / 60);
-            const secs = Math.abs(seconds) % 60;
-            const sign = seconds < 0 ? '-' : '';
-            return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        function getProgressInfo(elapsed, duration) {
-            const progress = Math.min((elapsed / duration) * 100, 100);
-            const timeRemaining = duration - elapsed;
-            let color = 'bg-blue-500';
-            if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
-                color = 'bg-yellow-500';
-            } else if (timeRemaining <= 0) {
-                color = 'bg-red-500';
-            }
-            return { progress, color };
-        }
-
-        // Template Management
-        function loadTemplate() {
-            const saved = localStorage.getItem('meetingTemplate');
-            meetingParts = saved ? JSON.parse(saved) : DEFAULT_PARTS;
-            renderTemplate();
-            renderTimerDisplay();
-        }
-
-        function saveTemplate() {
-            localStorage.setItem('meetingTemplate', JSON.stringify(meetingParts));
-        }
-
-        function addPart() {
-            meetingParts.push({ name: '', duration: 300, speaker: '' });
-            saveTemplate();
-            renderTemplate();
-            renderTimerDisplay();
-        }
-
-        function removePart(index) {
-            meetingParts.splice(index, 1);
-            saveTemplate();
-            renderTemplate();
-            renderTimerDisplay();
-        }
-
-        function updatePart(index, field, value) {
-            meetingParts[index][field] = value;
-            if (field === 'duration') {
-                meetingParts[index][field] = value * 60;
-            }
-            saveTemplate();
-            renderTimerDisplay();
-        }
-
-        function movePart(index, direction) {
-            if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
-            const temp = meetingParts[index];
-            meetingParts[index] = meetingParts[index + direction];
-            meetingParts[index + direction] = temp;
-            saveTemplate();
-            renderTemplate();
-            renderTimerDisplay();
-        }
-
-        // Timer Control
-        // MODIFIED toggleTimer() function
-        function toggleTimer() {
-            if (activePart === null) return;
-            isRunning = !isRunning;
-            renderTimerDisplay(); // NEW: Update button states through re-render
-            
-            if (isRunning) {
-                timerInterval = setInterval(updateTimer, 1000);
-            } else {
-                clearInterval(timerInterval);
-            }
-        }
-
-        function updateTimer() {
-            elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1;
-            renderTimerDisplay();
-        }
-
-        // MODIFIED selectPart() function
-        function selectPart(index) {
-            if (isRunning) {
-                alert('Cannot switch parts while timer is active!');
-                return;
-            }
-            activePart = index;
-            document.getElementById('timerToggle').disabled = false;
-            document.getElementById('nextPart').disabled = index >= meetingParts.length - 1;
-            renderTimerDisplay();
-            updateCommentSection();
-        }
-
-        function startNextPart() {
-            if (activePart === null || activePart >= meetingParts.length - 1) return;
-            activePart++;
-            if (!isRunning) {
-                toggleTimer();
-            }
-            document.getElementById('nextPart').disabled = activePart >= meetingParts.length - 1;
-            updateCommentSection();
-        }
-
-        // Comment Tracking
-        function toggleComment() {
-            const commentButton = document.querySelector('#commentSection button');
-            if (!activeComment) {
-                activeComment = { startTime: Date.now() };
-                commentButton.textContent = 'Stop Comment';
-                document.getElementById('currentComment').classList.remove('hidden');
-                commentInterval = setInterval(updateCurrentComment, 1000);
-            } else {
-                const duration = Math.floor((Date.now() - activeComment.startTime) / 1000);
-                comments.push(duration);
-                activeComment = null;
-                commentButton.textContent = 'Start Comment';
-                document.getElementById('currentComment').classList.add('hidden');
-                clearInterval(commentInterval);
-                updateCommentStats();
-            }
-        }
-
-        function updateCurrentComment() {
-            if (!activeComment) return;
-            const duration = Math.floor((Date.now() - activeComment.startTime) / 1000);
-            document.getElementById('currentComment').textContent = `Current Comment Duration: ${formatTime(duration)}`;
-        }
-
-        function updateCommentStats() {
-            document.getElementById('commentCount').textContent = `Total Comments: ${comments.length}`;
-            if (comments.length > 0) {
-                const average = Math.floor(comments.reduce((a, b) => a + b, 0) / comments.length);
-                document.getElementById('averageDuration').textContent = `Average Duration: ${formatTime(average)}`;
-            }
-        }
-
-        function updateCommentSection() {
-            const commentSection = document.getElementById('commentSection');
-            if (activePart !== null && meetingParts[activePart].name === 'Spiritual Gems') {
-                commentSection.classList.remove('hidden');
-            } else {
-                commentSection.classList.add('hidden');
-            }
-        }
-
-        // Reset Functions
-        function resetData() {
-            elapsedTimes = {};
-            comments = [];
-            activeComment = null;
-            activePart = null;
-            isRunning = false;
-            clearInterval(timerInterval);
-            clearInterval(commentInterval);
-            document.getElementById('timerToggle').disabled = true;
-            document.getElementById('timerToggle').textContent = 'Resume';
-            document.getElementById('timerToggle').classList.remove('bg-red-500');
-            document.getElementById('nextPart').disabled = true;
-            renderTimerDisplay();
-            updateCommentStats();
-            updateCommentSection();
-        }
-
-        function clearLocalStorage() {
-            localStorage.removeItem('meetingTemplate');
-            meetingParts = DEFAULT_PARTS;
-            resetData();
-            renderTemplate();
-            renderTimerDisplay();
-        }
-
-        // Rendering Functions
-        function renderTemplate() {
-            const container = document.getElementById('partsTemplate');
-            container.innerHTML = meetingParts.map((part, index) => `
-                <div class="flex items-center space-x-2">
-                    <div class="flex-1 grid grid-cols-3 gap-2">
-                        <input
-                            value="${part.name}"
-                            onchange="updatePart(${index}, 'name', this.value)"
-                            placeholder="Part Name"
-                            class="px-3 py-2 border rounded"
-                        />
-                        <input
-                            type="number"
-                            value="${part.duration / 60}"
-                            onchange="updatePart(${index}, 'duration', this.value)"
-                            placeholder="Minutes"
-                            class="px-3 py-2 border rounded"
-                        />
-                        <input
-                            value="${part.speaker}"
-                            onchange="updatePart(${index}, 'speaker', this.value)"
-                            placeholder="Speaker"
-                            class="px-3 py-2 border rounded"
-                        />
-                    </div>
-                    <button onclick="movePart(${index}, -1)" ${index === 0 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↑</button>
-                    <button onclick="movePart(${index}, 1)" ${index === meetingParts.length - 1 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↓</button>
-                    <button onclick="removePart(${index})" class="px-3 py-2 bg-gray-200 rounded">×</button>
-                </div>
-            `).join('');
-        }
-
-          // MODIFIED renderTimerDisplay() function
+        // MODIFIED renderTimerDisplay() function
         function renderTimerDisplay() {
             const container = document.getElementById('partsDisplay');
             container.innerHTML = meetingParts.map((part, index) => {
@@ -335,8 +81,33 @@
             }).join('');
         }
 
-        // Initialize
-        loadTemplate();
+        // MODIFIED selectPart() function
+        function selectPart(index) {
+            if (isRunning) {
+                alert('Cannot switch parts while timer is active!');
+                return;
+            }
+            activePart = index;
+            document.getElementById('timerToggle').disabled = false;
+            document.getElementById('nextPart').disabled = index >= meetingParts.length - 1;
+            renderTimerDisplay();
+            updateCommentSection();
+        }
+
+        // MODIFIED toggleTimer() function
+        function toggleTimer() {
+            if (activePart === null) return;
+            isRunning = !isRunning;
+            renderTimerDisplay(); // NEW: Update button states through re-render
+            
+            if (isRunning) {
+                timerInterval = setInterval(updateTimer, 1000);
+            } else {
+                clearInterval(timerInterval);
+            }
+        }
+
+        // ... (rest of the code remains unchanged) ...
     </script>
 </body>
 </html>
