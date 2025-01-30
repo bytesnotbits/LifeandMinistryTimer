@@ -65,6 +65,18 @@
                 </button>
             </div>
 
+             <!-- Global Comment History -->
+            <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+                <h3 class="text-lg font-bold mb-4">Comment History</h3>
+                <div id="globalCommentStats" class="mb-4">
+                    <p>Total Comments: <span id="globalCommentCount" class="font-semibold">0</span></p>
+                    <p>Average Duration: <span id="globalAverageDuration" class="font-semibold">0:00</span></p>
+                    </div>
+                <div id="commentHistory" class="space-y-2 max-h-40 overflow-y-auto">
+                    <!-- Comments will be listed here -->
+                </div>
+            </div>
+            
             <!-- Timer Display Section -->
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
@@ -429,19 +441,7 @@ function renderTemplate() {
         }
         function $(selector) {
             return document.querySelector(selector);
-        }
-        
-        <!-- Global Comment History -->
-        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
-            <h3 class="text-lg font-bold mb-4">Comment History</h3>
-            <div id="globalCommentStats" class="mb-4">
-                <p>Total Comments: <span id="globalCommentCount" class="font-semibold">0</span></p>
-                <p>Average Duration: <span id="globalAverageDuration" class="font-semibold">0:00</span></p>
-            </div>
-            <div id="commentHistory" class="space-y-2 max-h-40 overflow-y-auto">
-                <!-- Comments will be listed here -->
-            </div>
-        </div>;
+        };        
     </script>
 </body>
 </html>
