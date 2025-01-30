@@ -21,6 +21,22 @@
         #commentSection {
             transition: all 0.3s ease;
         }
+        #commentHistory::-webkit-scrollbar {
+    width: 6px;
+        }
+        
+        #commentHistory::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        #commentHistory::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        #commentHistory::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
 
@@ -81,7 +97,12 @@
     const DEFAULT_PARTS = [
         { name: 'Opening Comments', duration: 180, speaker: '' },
         { name: 'Treasures', duration: 600, speaker: '' },
-        { name: 'Spiritual Gems', duration: 600, speaker: '' },
+        { 
+        name: 'Spiritual Gems', 
+        duration: 600, 
+        speaker: '',
+        enableComments: true  // Adding this new property
+        }
         { name: 'Bible Reading', duration: 300, speaker: '' }
     ];
 
@@ -100,6 +121,54 @@
         const sign = seconds < 0 ? '-' : '';
         return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
     }
+    // Comment Management
+        let comments = JSON.parse(localStorage.getItem('meetingComments')) || [];
+        let activeComment = null;
+        
+        function updateGlobalComments() {
+            // Update stats
+            document.getElementById('globalCommentCount').textContent = comments.length;
+            const average = comments.length > 0 
+                ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / comments.length)
+                : 0;
+            document.getElementById('globalAverageDuration').textContent = formatTime(average);
+        
+            // Update history list
+            const historyContainer = document.getElementById('commentHistory');
+            historyContainer.innerHTML = comments.map((comment, i) => `
+                <div class="bg-white p-2 rounded shadow-sm">
+                    <div class="flex justify-between text-sm">
+                        <span>Comment ${i+1}</span>
+                        <span>${formatTime(comment.duration)}</span>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        ${new Date(comment.timestamp).toLocaleTimeString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function toggleComment(partIndex) {
+            if (activeComment) {
+                // Save comment
+                comments.push({
+                    duration: Math.floor((Date.now() - activeComment.startTime)/1000),
+                    partIndex: partIndex,
+                    timestamp: Date.now()
+                });
+                activeComment = null;
+            } else {
+                activeComment = {
+                    startTime: Date.now(),
+                    partIndex: partIndex
+                };
+            }
+            
+            // Update storage and UI
+            localStorage.setItem('meetingComments', JSON.stringify(comments));
+            updateGlobalComments();
+            renderTimerDisplay();
+        }
 
 function getProgressInfo(elapsed, duration) {
     const progress = Math.min((elapsed / duration) * 100, 100);
@@ -194,44 +263,32 @@ function renderTemplate() {
             const { progress, color } = getProgressInfo(elapsed, part.duration);
             
             return `
-                <div
-                    class="p-4 border rounded-lg cursor-pointer part-card ${activePart === index ? 'border-blue-500' : ''}"
-                    onclick="selectPart(${index})"
-                >
-                    <div class="flex justify-between mb-2">
-                        <span class="font-medium">${part.name}</span>
-                        <span>${part.speaker}</span>
-                    </div>
-                    <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative">
-                        <div
-                            class="h-full ${color} progress-bar absolute"
-                            style="width: ${progress}%"
-                        >
-                            <span class="absolute left-2 text-white">
-                                ${formatTime(elapsed)}
+                function renderTimerDisplay() {
+    const container = document.getElementById('partsDisplay');
+    container.innerHTML = meetingParts.map((part, index) => {
+        // ... keep existing progress bar code ...
+
+        return `
+            <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : ''}">
+                <!-- Existing timer elements -->
+
+                ${part.enableComments ? `
+                    <div class="mt-4 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <button onclick="event.stopPropagation(); toggleComment(${index})" 
+                                    class="px-4 py-2 ${activeComment ? 'bg-red-500' : 'bg-purple-500'} text-white rounded">
+                                ${activeComment ? 'Stop Comment' : 'Start Comment'}
+                            </button>
+                            <span id="currentComment-${index}" class="text-sm ${activeComment ? '' : 'invisible'}">
+                                ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
                             </span>
                         </div>
-                        <span class="absolute right-2">
-                            ${formatTime(part.duration - elapsed)}
-                        </span>
                     </div>
-                    <!-- NEW: MOVED TIMER CONTROLS HERE -->
-                    ${activePart === index ? `
-                    <div class="mt-4 flex space-x-2">
-                        <button onclick="event.stopPropagation(); toggleTimer()"
-                            class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600">
-                            ${isRunning ? 'Pause' : 'Start'}
-                        </button>
-                        <button onclick="event.stopPropagation(); startNextPart()"
-                            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                            Begin Next Part
-                        </button>
-                    </div>
-                    ` : ''}
-                </div>
-            `;
-        }).join('');
-    }
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+}
         function updateTimer() {
             if (activePart === null) return;
             elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1;
@@ -275,9 +332,10 @@ function renderTemplate() {
             renderTimerDisplay();
         }
 
-       document.addEventListener('DOMContentLoaded', () => {
-           loadTemplate();
-       });
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTemplate();
+            updateGlobalComments();  // Add this line
+        });
         
        function toggleComment() {
            const commentButton = document.querySelector('#commentSection button');
@@ -331,6 +389,8 @@ function renderTemplate() {
             elapsedTimes = {};
             comments = [];
             activeComment = null;
+            localStorage.removeItem('meetingComments');
+            updateGlobalComments();
             activePart = null;
             isRunning = false;
             clearInterval(timerInterval);
@@ -349,7 +409,19 @@ function renderTemplate() {
         }
         function $(selector) {
             return document.querySelector(selector);
-        };
+        }
+        
+        <!-- Global Comment History -->
+        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h3 class="text-lg font-bold mb-4">Comment History</h3>
+            <div id="globalCommentStats" class="mb-4">
+                <p>Total Comments: <span id="globalCommentCount" class="font-semibold">0</span></p>
+                <p>Average Duration: <span id="globalAverageDuration" class="font-semibold">0:00</span></p>
+            </div>
+            <div id="commentHistory" class="space-y-2 max-h-40 overflow-y-auto">
+                <!-- Comments will be listed here -->
+            </div>
+        </div>;
     </script>
 </body>
 </html>
