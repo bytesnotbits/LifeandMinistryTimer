@@ -87,21 +87,6 @@
                     <!-- Timer displays will be inserted here -->
                 </div>
             </div>
-
-            <!-- Comment Tracking (unchanged) -->
-            <div id="commentSection" class="space-y-4">
-                <h3 class="text-lg font-semibold">Comment Tracking</h3>
-                <div id="commentControls" class="space-y-2">
-                    <button onclick="toggleComment()" class="px-4 py-2 bg-purple-500 text-white rounded">
-                        Start Comment
-                        </button>
-                    <div id="currentComment" class="hidden"></div>
-                </div>
-                <div id="commentStats">
-                    <p id="commentCount">Total Comments: 0</p>
-                    <p id="averageDuration">Average Duration: 0:00</p>
-                </div>
-            </div>
         </div>
 
     <script>
@@ -165,7 +150,7 @@
                 // Save comment
                 comments.push({
                     duration: Math.floor((Date.now() - activeComment.startTime)/1000),
-                    partIndex: partIndex,
+                    partIndex: partIndex,  // Make sure to use the parameter
                     timestamp: Date.now()
                 });
                 activeComment = null;
@@ -401,22 +386,7 @@ function renderTemplate() {
                     document.getElementById('averageDuration').textContent = 'Average Duration: 0:00';
                 }
             }
-        
-        function updateCommentSection() {
-            const commentSection = document.getElementById('commentSection');
-            const isSpiritualGems = activePart !== null && 
-                meetingParts[activePart].name.toLowerCase() === 'spiritual gems';
-            
-            // Always show section, only hide controls
-            commentSection.classList.remove('hidden');
-            document.getElementById('commentControls').classList.toggle('hidden', !isSpiritualGems);
-            
-            // Stop any active comment when leaving Spiritual Gems
-            if (!isSpiritualGems && activeComment) {
-                toggleComment();
-                }
-            }
-        
+             
         function resetData() {
             elapsedTimes = {};
             comments = [];
