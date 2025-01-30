@@ -125,81 +125,264 @@ const DOM = {
     }
 };
 
-const render = {
-    template: function() {
-        if (!DOM.partsTemplate) return;
+//----------------------------------------------------------------------------------------------        
+// BEGIN Utility Functions
         
-        const template = meetingParts.map((part, index) => `
-            <div class="flex items-center space-x-2" role="group" aria-label="Meeting part ${index + 1}">
-                <div class="flex-1 grid grid-cols-3 gap-2">
-                    <div class="flex flex-col">
-                        <label for="part-name-${index}" class="sr-only">Part Name</label>
-                        <input
-                            id="part-name-${index}"
-                            value="${sanitizeInput(part.name)}"
-                            onchange="updatePart(${index}, 'name', this.value)"
-                            placeholder="Part Name"
-                            class="px-3 py-2 border rounded"
-                            aria-label="Name for part ${index + 1}"
-                        />
+function throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+// END Utility Functions
+//----------------------------------------------------------------------------------------------
+        
+//----------------------------------------------------------------------------------------------
+//BEGIN RENDER OBJECT
+
+    const render = {
+        template: function() {
+            if (!DOM.partsTemplate) return;
+            
+            const template = meetingParts.map((part, index) => `
+                <div class="flex items-center space-x-2" role="group" aria-label="Meeting part ${index + 1}">
+                    <div class="flex-1 grid grid-cols-3 gap-2">
+                        <div class="flex flex-col">
+                            <label for="part-name-${index}" class="sr-only">Part Name</label>
+                            <input
+                                id="part-name-${index}"
+                                value="${sanitizeInput(part.name)}"
+                                onchange="updatePart(${index}, 'name', this.value)"
+                                placeholder="Part Name"
+                                class="px-3 py-2 border rounded"
+                                aria-label="Name for part ${index + 1}"
+                            />
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="part-duration-${index}" class="sr-only">Duration in Minutes</label>
+                            <input
+                                id="part-duration-${index}"
+                                type="number"
+                                value="${part.duration / 60}"
+                                onchange="updatePart(${index}, 'duration', this.value)"
+                                placeholder="Minutes"
+                                class="px-3 py-2 border rounded"
+                                aria-label="Duration in minutes for part ${index + 1}"
+                                min="0"
+                            />
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="part-speaker-${index}" class="sr-only">Speaker Name</label>
+                            <input
+                                id="part-speaker-${index}"
+                                value="${sanitizeInput(part.speaker)}"
+                                onchange="updatePart(${index}, 'speaker', this.value)"
+                                placeholder="Speaker"
+                                class="px-3 py-2 border rounded"
+                                aria-label="Speaker name for part ${index + 1}"
+                            />
+                        </div>
                     </div>
-                    <div class="flex flex-col">
-                        <label for="part-duration-${index}" class="sr-only">Duration in Minutes</label>
-                        <input
-                            id="part-duration-${index}"
-                            type="number"
-                            value="${part.duration / 60}"
-                            onchange="updatePart(${index}, 'duration', this.value)"
-                            placeholder="Minutes"
-                            class="px-3 py-2 border rounded"
-                            aria-label="Duration in minutes for part ${index + 1}"
-                            min="0"
-                        />
-                    </div>
-                    <div class="flex flex-col">
-                        <label for="part-speaker-${index}" class="sr-only">Speaker Name</label>
-                        <input
-                            id="part-speaker-${index}"
-                            value="${sanitizeInput(part.speaker)}"
-                            onchange="updatePart(${index}, 'speaker', this.value)"
-                            placeholder="Speaker"
-                            class="px-3 py-2 border rounded"
-                            aria-label="Speaker name for part ${index + 1}"
-                        />
-                    </div>
+                    <button 
+                        onclick="movePart(${index}, -1)" 
+                        ${index === 0 ? 'disabled' : ''} 
+                        class="px-3 py-2 bg-gray-200 rounded"
+                        aria-label="Move part ${index + 1} up"
+                        ${index === 0 ? 'aria-disabled="true"' : ''}>
+                        ↑
+                    </button>
+                    <button 
+                        onclick="movePart(${index}, 1)" 
+                        ${index === meetingParts.length - 1 ? 'disabled' : ''} 
+                        class="px-3 py-2 bg-gray-200 rounded"
+                        aria-label="Move part ${index + 1} down"
+                        ${index === meetingParts.length - 1 ? 'aria-disabled="true"' : ''}>
+                        ↓
+                    </button>
+                    <button 
+                        onclick="removePart(${index})" 
+                        class="px-3 py-2 bg-gray-200 rounded"
+                        aria-label="Remove part ${index + 1}">
+                        ×
+                    </button>
                 </div>
-                <button 
-                    onclick="movePart(${index}, -1)" 
-                    ${index === 0 ? 'disabled' : ''} 
-                    class="px-3 py-2 bg-gray-200 rounded"
-                    aria-label="Move part ${index + 1} up"
-                    ${index === 0 ? 'aria-disabled="true"' : ''}>
-                    ↑
-                </button>
-                <button 
-                    onclick="movePart(${index}, 1)" 
-                    ${index === meetingParts.length - 1 ? 'disabled' : ''} 
-                    class="px-3 py-2 bg-gray-200 rounded"
-                    aria-label="Move part ${index + 1} down"
-                    ${index === meetingParts.length - 1 ? 'aria-disabled="true"' : ''}>
-                    ↓
-                </button>
-                <button 
-                    onclick="removePart(${index})" 
-                    class="px-3 py-2 bg-gray-200 rounded"
-                    aria-label="Remove part ${index + 1}">
-                    ×
-                </button>
-            </div>
-        `).join('');
+            `).join('');
+            
+            if (DOM.partsTemplate.innerHTML !== template) {
+                DOM.partsTemplate.innerHTML = template;
+            }
+        },
+
+    timerDisplay: function() {
+        if (!DOM.partsDisplay) return;
         
-        if (DOM.partsTemplate.innerHTML !== template) {
-            DOM.partsTemplate.innerHTML = template;
+        const display = meetingParts.map((part, index) => {
+            const elapsed = elapsedTimes[index] || 0;
+            const { progress, color } = getProgressInfo(elapsed, part.duration, index);
+            
+            return `
+                <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
+                     onclick="selectPart(${index})"
+                     role="region"
+                     aria-label="Timer for ${sanitizeInput(part.name)}"
+                     aria-selected="${activePart === index}">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-medium">${sanitizeInput(part.name)}</span>
+                        <span aria-label="Speaker">${sanitizeInput(part.speaker)}</span>
+                    </div>
+                    <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative"
+                         role="progressbar"
+                         aria-valuemin="0"
+                         aria-valuemax="${part.duration}"
+                         aria-valuenow="${elapsed}"
+                         aria-label="Progress for ${sanitizeInput(part.name)}">
+                        <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
+                            <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
+                        </div>
+                        <span class="absolute right-2">${formatTime(part.duration - elapsed)}</span>
+                    </div>
+    
+                    ${part.enableComments ? `
+                        <div class="mt-4 space-y-2">
+                            <div class="flex items-center gap-2">
+                                <button onclick="event.stopPropagation(); toggleComment(${index})" 
+                                    class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded"
+                                    aria-label="${activeComment?.partIndex === index ? 'Stop comment' : 'Start comment'}">
+                                    ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
+                                </button>
+                                <span id="currentComment-${index}" 
+                                      class="text-sm ${activeComment ? '' : 'invisible'}"
+                                      aria-live="polite"
+                                      role="timer">
+                                    ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
+                                </span>
+                            </div>
+                        </div>
+                    ` : ''}
+    
+                    ${activePart === index ? `
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="event.stopPropagation(); toggleTimer()" 
+                                    class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600"
+                                    aria-label="${isRunning ? 'Pause timer' : 'Start timer'}">
+                                ${isRunning ? 'Pause' : 'Start'}
+                            </button>
+                            <button onclick="event.stopPropagation(); startNextPart()" 
+                                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                    aria-label="Begin next part">
+                                Begin Next Part
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+        
+        if (DOM.partsDisplay.innerHTML !== display) {
+            DOM.partsDisplay.innerHTML = display;
         }
     },
 
+    comments: function() {
+        if (!DOM.commentHistory || !DOM.globalCommentCount || !DOM.globalAverageDuration) return;
         
- // Constants and State
+        const commentCount = comments.length;
+        const averageDuration = commentCount > 0 
+            ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / commentCount)
+            : 0;
+
+        if (DOM.globalCommentCount.textContent !== commentCount.toString()) {
+            DOM.globalCommentCount.textContent = commentCount;
+        }
+        
+        const formattedAverage = formatTime(averageDuration);
+        if (DOM.globalAverageDuration.textContent !== formattedAverage) {
+            DOM.globalAverageDuration.textContent = formattedAverage;
+        }
+
+        const historyHTML = comments.map((comment, i) => `
+            <div class="bg-white p-2 rounded shadow-sm">
+                <div class="flex justify-between text-sm">
+                    <span>Comment ${i+1}</span>
+                    <span>${formatTime(comment.duration)}</span>
+                </div>
+                <div class="text-xs text-gray-500">
+                    ${new Date(comment.timestamp).toLocaleTimeString()}
+                </div>
+            </div>
+        `).join('');
+
+        if (DOM.commentHistory.innerHTML !== historyHTML) {
+            DOM.commentHistory.innerHTML = historyHTML;
+        }
+    }
+}
+
+//END RENDER OBJECT        
+//----------------------------------------------------------------------------------------------
+
+
+//----------------------------------------------------------------------------------------------
+//BEGIN PERFORMANCE MONITORING
+        
+ // Update render methods to include performance monitoring
+Object.keys(render).forEach(key => {
+    const originalMethod = render[key];
+    render[key] = function(...args) {
+        const startTime = Date.now();
+        const result = originalMethod.apply(this, args);
+        performanceMonitor.logRenderTime(startTime, key);
+        return result;
+    };
+});
+
+// Add performance monitoring to key functions
+    ['toggleTimer', 'startNextPart', 'toggleComment'].forEach(fnName => {
+        const originalFn = window[fnName];
+        window[fnName] = trackError(function(...args) {
+            const startTime = Date.now();
+            const result = originalFn.apply(this, args);
+            performanceMonitor.logRenderTime(fnName, startTime);
+            return result;
+        }, fnName);
+    });
+    
+    // Add periodic performance logging
+    setInterval(() => {
+        if (isRunning) {
+            Object.keys(render).forEach(key => {
+                performanceMonitor.logPerformanceData(key);
+            });
+        }
+    }, 60000); // Log every minute while running
+
+// Add debounced save function to reduce storage operations
+const debouncedSave = (function() {
+    let timeout;
+    return function(data, key) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (error) {
+                console.error('Failed to save to localStorage:', error);
+            }
+        }, 1000); // Wait 1 second after last change before saving
+    };
+})();
+
+//END PERFORMANCE MONITORING
+//----------------------------------------------------------------------------------------------
+
+        
+//----------------------------------------------------------------------------------------------
+//BEGIN CONSTANTS AND STATE
+        
     const DEFAULT_PARTS = [
         { name: 'Opening Comments', duration: 180, speaker: '', enableComments: false },
         { name: 'Treasures', duration: 600, speaker: '', enableComments: false },
@@ -230,6 +413,10 @@ const render = {
                 .trim();
         }
 
+//END CONSTANTS AND STATE
+//----------------------------------------------------------------------------------------------
+
+        
 // Cache progress calculations
 const progressCache = {
     lastUpdate: {},
@@ -266,45 +453,6 @@ function throttle(func, limit) {
         }
     };
 }        
-
-// Throttle to max 5 updates per second
-     comments: throttle(function() {
-        if (!DOM.commentHistory || !DOM.globalCommentCount || !DOM.globalAverageDuration) return;
-        
-        // Cache calculations
-        const commentCount = comments.length;
-        const averageDuration = commentCount > 0 
-            ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / commentCount)
-            : 0;
-
-        // Update stats only if changed
-        if (DOM.globalCommentCount.textContent !== commentCount.toString()) {
-            DOM.globalCommentCount.textContent = commentCount;
-        }
-        
-        const formattedAverage = formatTime(averageDuration);
-        if (DOM.globalAverageDuration.textContent !== formattedAverage) {
-            DOM.globalAverageDuration.textContent = formattedAverage;
-        }
-
-        // Update history with optimized rendering
-        const historyHTML = comments.map((comment, i) => `
-            <div class="bg-white p-2 rounded shadow-sm">
-                <div class="flex justify-between text-sm">
-                    <span>Comment ${i+1}</span>
-                    <span>${formatTime(comment.duration)}</span>
-                </div>
-                <div class="text-xs text-gray-500">
-                    ${new Date(comment.timestamp).toLocaleTimeString()}
-                </div>
-            </div>
-        `).join('');
-
-        if (DOM.commentHistory.innerHTML !== historyHTML) {
-            DOM.commentHistory.innerHTML = historyHTML;
-        }
-    }, 500) // Throttle to max 2 updates per second
-};
 
 function getProgressInfo(elapsed, duration, partIndex = null) {
     // Use cache if partIndex is provided
@@ -404,26 +552,6 @@ function getProgressInfo(elapsed, duration, partIndex = null) {
             return result;
         }, `render.${key}`);
     });
-
-    // Add performance monitoring to key functions
-    ['toggleTimer', 'startNextPart', 'toggleComment'].forEach(fnName => {
-        const originalFn = window[fnName];
-        window[fnName] = trackError(function(...args) {
-            const startTime = Date.now();
-            const result = originalFn.apply(this, args);
-            performanceMonitor.logRenderTime(fnName, startTime);
-            return result;
-        }, fnName);
-    });
-    
-    // Add periodic performance logging
-    setInterval(() => {
-        if (isRunning) {
-            Object.keys(render).forEach(key => {
-                performanceMonitor.logPerformanceData(key);
-            });
-        }
-    }, 60000); // Log every minute while running
     
     // Add memory leak prevention
     function cleanupResources() {
@@ -445,139 +573,6 @@ function getProgressInfo(elapsed, duration, partIndex = null) {
             saveState();
         }
     }
-    
-    timerDisplay: throttle(function() {
-    if (!DOM.partsDisplay) return;
-    
-    const display = meetingParts.map((part, index) => {
-        const elapsed = elapsedTimes[index] || 0;
-        const { progress, color } = getProgressInfo(elapsed, part.duration, index);
-        
-        return `
-            <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
-                 onclick="selectPart(${index})"
-                 role="region"
-                 aria-label="Timer for ${sanitizeInput(part.name)}"
-                 aria-selected="${activePart === index}">
-                <div class="flex justify-between mb-2">
-                    <span class="font-medium">${sanitizeInput(part.name)}</span>
-                    <span aria-label="Speaker">${sanitizeInput(part.speaker)}</span>
-                </div>
-                <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative"
-                     role="progressbar"
-                     aria-valuemin="0"
-                     aria-valuemax="${part.duration}"
-                     aria-valuenow="${elapsed}"
-                     aria-label="Progress for ${sanitizeInput(part.name)}">
-                    <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
-                        <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
-                    </div>
-                    <span class="absolute right-2">${formatTime(part.duration - elapsed)}</span>
-                </div>
-
-                ${part.enableComments ? `
-                    <div class="mt-4 space-y-2">
-                        <div class="flex items-center gap-2">
-                            <button onclick="event.stopPropagation(); toggleComment(${index})" 
-                                class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded"
-                                aria-label="${activeComment?.partIndex === index ? 'Stop comment' : 'Start comment'}">
-                                ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
-                            </button>
-                            <span id="currentComment-${index}" 
-                                  class="text-sm ${activeComment ? '' : 'invisible'}"
-                                  aria-live="polite"
-                                  role="timer">
-                                ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
-                            </span>
-                        </div>
-                    </div>
-                ` : ''}
-
-                ${activePart === index ? `
-                    <div class="mt-4 flex space-x-2">
-                        <button onclick="event.stopPropagation(); toggleTimer()" 
-                                class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600"
-                                aria-label="${isRunning ? 'Pause timer' : 'Start timer'}">
-                            ${isRunning ? 'Pause' : 'Start'}
-                        </button>
-                        <button onclick="event.stopPropagation(); startNextPart()" 
-                                class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                                aria-label="Begin next part">
-                            Begin Next Part
-                        </button>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-    }).join('');
-    
-    if (DOM.partsDisplay.innerHTML !== display) {
-        DOM.partsDisplay.innerHTML = display;
-    }
-}, 200), // Throttle to max 5 updates per second
-    
- comments: throttle(function() {
-    if (!DOM.commentHistory || !DOM.globalCommentCount || !DOM.globalAverageDuration) return;
-    
-    // Cache calculations
-    const commentCount = comments.length;
-    const averageDuration = commentCount > 0 
-        ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / commentCount)
-        : 0;
-
-    // Update stats only if changed
-    if (DOM.globalCommentCount.textContent !== commentCount.toString()) {
-        DOM.globalCommentCount.textContent = commentCount;
-    }
-    
-    const formattedAverage = formatTime(averageDuration);
-    if (DOM.globalAverageDuration.textContent !== formattedAverage) {
-        DOM.globalAverageDuration.textContent = formattedAverage;
-    }
-
-    // Update history with optimized rendering
-    const historyHTML = comments.map((comment, i) => `
-        <div class="bg-white p-2 rounded shadow-sm">
-            <div class="flex justify-between text-sm">
-                <span>Comment ${i+1}</span>
-                <span>${formatTime(comment.duration)}</span>
-            </div>
-            <div class="text-xs text-gray-500">
-                ${new Date(comment.timestamp).toLocaleTimeString()}
-            </div>
-        </div>
-    `).join('');
-
-    if (DOM.commentHistory.innerHTML !== historyHTML) {
-        DOM.commentHistory.innerHTML = historyHTML;
-    }
-}, 500) // Throttle to max 2 updates per second
-     
-// Update render methods to include performance monitoring
-Object.keys(render).forEach(key => {
-    const originalMethod = render[key];
-    render[key] = function(...args) {
-        const startTime = Date.now();
-        const result = originalMethod.apply(this, args);
-        performance.logRenderTime(startTime, key);
-        return result;
-    };
-});
-
-// Add debounced save function to reduce storage operations
-const debouncedSave = (function() {
-    let timeout;
-    return function(data, key) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            try {
-                localStorage.setItem(key, JSON.stringify(data));
-            } catch (error) {
-                console.error('Failed to save to localStorage:', error);
-            }
-        }, 1000); // Wait 1 second after last change before saving
-    };
-})();
         
     function formatTime(seconds) {
         const mins = Math.floor(Math.abs(seconds) / 60);
@@ -648,7 +643,7 @@ const debouncedSave = (function() {
             }, 200);
         }
         
-        render.timerDisplay();     // Changed from renderTimerDisplay()
+        render.timerDisplay();     // Changed from render.timerDisplay()
     }
 
         function saveState() {
@@ -694,7 +689,7 @@ const debouncedSave = (function() {
     });
     saveTemplate();
     render.template();         // Changed from renderTemplate()
-    render.timerDisplay();     // Changed from renderTimerDisplay()
+    render.timerDisplay();     // Changed from render.timerDisplay()
     }
 
     // Update these functions to use the new render system
@@ -715,26 +710,20 @@ const debouncedSave = (function() {
         elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1;
         render.timerDisplay();
     }
-    
-    function toggleComment(partIndex) {
-        // ... existing comment logic ...
-        render.comments();
-        render.timerDisplay();
-    }
         
     function movePart(index, direction) {
     if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
     [meetingParts[index], meetingParts[index + direction]] = [meetingParts[index + direction], meetingParts[index]];
     saveTemplate();
     render.template();         // Changed from renderTemplate()
-    render.timerDisplay();     // Changed from renderTimerDisplay()
+    render.timerDisplay();     // Changed from render.timerDisplay()
     }
 
     function removePart(index) {
     meetingParts.splice(index, 1);
     saveTemplate();
     render.template();         // Changed from renderTemplate()
-    render.timerDisplay();     // Changed from renderTimerDisplay()
+    render.timerDisplay();     // Changed from render.timerDisplay()
 }
     
     function saveTemplate() {
@@ -746,21 +735,15 @@ const debouncedSave = (function() {
     meetingParts = saved ? JSON.parse(saved) : DEFAULT_PARTS;
     activePart = meetingParts.length > 0 ? 0 : null;
     render.template();         // Changed from renderTemplate()
-    render.timerDisplay();     // Changed from renderTimerDisplay()
+    render.timerDisplay();     // Changed from render.timerDisplay()
 }
         
-        function updateTimer() {
-            if (activePart === null) return;
-            elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1;
-            renderTimerDisplay();
-            // REMOVED the auto-stop functionality
-        }
-        
+       
         function startNextPart() {
             if (activePart === null || activePart >= meetingParts.length - 1) return;
             activePart++;
             if (!isRunning) toggleTimer();
-            renderTimerDisplay();
+            render.timerDisplay();
         }
         
         function selectPart(index) {
@@ -769,7 +752,7 @@ const debouncedSave = (function() {
                 return;
             }
             activePart = index;
-            render.timerDisplay();     // Changed from renderTimerDisplay()
+            render.timerDisplay();     // Changed from render.timerDisplay()
         }
 
         function toggleTimer() {
@@ -785,7 +768,7 @@ const debouncedSave = (function() {
            } else {
                clearInterval(timerInterval);
            }
-           render.timerDisplay();     // Changed from renderTimerDisplay()
+           render.timerDisplay();     // Changed from render.timerDisplay()
         }
         
         function resetData() {
@@ -799,7 +782,7 @@ const debouncedSave = (function() {
             clearInterval(timerInterval);
             clearInterval(commentInterval);
             commentInterval = null;
-            render.timerDisplay();     // Changed from renderTimerDisplay()
+            render.timerDisplay();     // Changed from render.timerDisplay()
         }
         
         function clearLocalStorage() {
@@ -807,7 +790,7 @@ const debouncedSave = (function() {
             meetingParts = DEFAULT_PARTS;
             resetData();
             render.template();         // Changed from renderTemplate()
-            render.timerDisplay();     // Changed from renderTimerDisplay()
+            render.timerDisplay();     // Changed from render.timerDisplay()
         }
 
         function $(selector) {
