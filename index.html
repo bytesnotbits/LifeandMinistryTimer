@@ -132,18 +132,39 @@
             alert('Part timer must be running to record comments!');
             return;
         }
+        
         // Prevent multiple active comments
         if (activeComment && activeComment.partIndex !== partIndex) return;
     
         if (activeComment) {
             // Stop existing comment
             const duration = Math.floor((Date.now() - activeComment.startTime) / 1000);
+            
+            // Duration validations moved inside this block where 'duration' exists
+            if (duration < 5) {
+                alert('Comment too short!');
+                return;
+            }
+            
+            let finalDuration = duration;
+            if (duration > COMMENT_LIMIT) {
+                finalDuration = COMMENT_LIMIT;
+                alert('Maximum comment duration reached!');
+            }
+    
             comments.push({
-                duration,
+                duration: finalDuration,
                 timestamp: Date.now(),
                 partName: meetingParts[partIndex].name
             });
-            localStorage.setItem('meetingComments', JSON.stringify(comments));
+            
+            try {
+                localStorage.setItem('meetingComments', JSON.stringify(comments));
+            } catch (error) {
+                console.error('Failed to save comments:', error);
+                alert('Failed to save comment. Please try again.');
+            }
+            
             activeComment = null;
             clearInterval(commentInterval);
             updateGlobalComments();
@@ -153,32 +174,19 @@
                 startTime: Date.now(),
                 partIndex: partIndex
             };
+            
             commentInterval = setInterval(() => {
-                // Update current comment display
                 const currentElement = document.getElementById(`currentComment-${partIndex}`);
-                    if (currentElement) {
-                        currentElement.textContent = formatTime(
-                            Math.floor((Date.now() - activeComment.startTime) / 1000)
-                        );
-                    }
-                }, 200);
-            }
-        if (duration > COMMENT_LIMIT) {
-                duration = COMMENT_LIMIT;
-                alert('Maximum comment duration reached!');
-            }
-        try {
-            localStorage.setItem('meetingComments', JSON.stringify(comments));
-        } catch (error) {
-            console.error('Failed to save comments:', error);
-            // Handle local storage errors
-            }
-        if (duration < 5) { // Minimum 5 seconds
-            alert('Comment too short!');
-            return;
+                if (currentElement) {
+                    currentElement.textContent = formatTime(
+                        Math.floor((Date.now() - activeComment.startTime) / 1000)
+                    );
+                }
+            }, 200);
         }
-            renderTimerDisplay();
-        }
+        
+        renderTimerDisplay();
+    }
 
         function saveState() {
             localStorage.setItem('elapsedTimes', JSON.stringify(elapsedTimes));
@@ -336,8 +344,8 @@
                                     class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded">
                                 ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
                                 </button>
-                                `<span id="currentComment-${index}" class="text-sm ${activeComment ? '' : 'invisible'}">
-                                    `${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}`
+                                <span id="currentComment-${index}" class="text-sm ${activeComment ? '' : 'invisible'}">
+                                    ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
                                 </span>
                             </div>
                         </div>
