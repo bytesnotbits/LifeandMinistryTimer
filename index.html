@@ -32,20 +32,12 @@
                 </button>
             </div>
 
-            <!-- Timer Display -->
+            <!-- Timer Display Section -->
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-bold">Meeting Timer</h2>
-                    <div class="space-x-2">
-                        <button id="timerToggle" onclick="toggleTimer()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" disabled>
-                            Resume
-                        </button>
-                        <button id="nextPart" onclick="startNextPart()" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600" disabled>
-                            Begin Next Part
-                        </button>
-                    </div>
+                    <!-- REMOVED BUTTONS FROM HERE -->
                 </div>
-
                 <div id="partsDisplay" class="space-y-4">
                     <!-- Timer displays will be inserted here -->
                 </div>
@@ -152,10 +144,11 @@
         }
 
         // Timer Control
+        // MODIFIED toggleTimer() function
         function toggleTimer() {
             if (activePart === null) return;
             isRunning = !isRunning;
-            renderTimerDisplay(); // This updates button states
+            renderTimerDisplay(); // NEW: Update button states through re-render
             
             if (isRunning) {
                 timerInterval = setInterval(updateTimer, 1000);
@@ -169,10 +162,12 @@
             renderTimerDisplay();
         }
 
+        // MODIFIED selectPart() function
         function selectPart(index) {
             if (isRunning) {
-                alert('⏳ Timer is active! Pause first to switch parts.');
+                alert('Cannot switch parts while timer is active!');
                 return;
+            }
             activePart = index;
             document.getElementById('timerToggle').disabled = false;
             document.getElementById('nextPart').disabled = index >= meetingParts.length - 1;
@@ -291,35 +286,54 @@
             `).join('');
         }
 
+          // MODIFIED renderTimerDisplay() function
         function renderTimerDisplay() {
-    const container = document.getElementById('partsDisplay');
-    container.innerHTML = meetingParts.map((part, index) => {
-        const elapsed = elapsedTimes[index] || 0;
-        const { progress, color } = getProgressInfo(elapsed, part.duration);
-        
-        return `
-            <div class="p-4 border rounded-lg cursor-pointer part-card ${activePart === index ? 'border-blue-500' : ''}"
-                 onclick="selectPart(${index})">
-                <!-- ... (keep existing progress bar code) ... -->
+            const container = document.getElementById('partsDisplay');
+            container.innerHTML = meetingParts.map((part, index) => {
+                const elapsed = elapsedTimes[index] || 0;
+                const { progress, color } = getProgressInfo(elapsed, part.duration);
                 
-                ${activePart === index ? `
-                <div class="mt-4 flex space-x-2">
-                    <button onclick="toggleTimer()" 
-                            class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600"
-                            ${isRunning ? 'disabled' : ''}>
-                        ${isRunning ? 'Pause' : 'Resume'}
-                    </button>
-                    <button onclick="startNextPart()" 
-                            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                            ${index >= meetingParts.length - 1 ? 'disabled' : ''}>
-                        Begin Next Part
-                    </button>
-                </div>
-                ` : ''}
-            </div>
-        `;
-    }).join('');
-}
+                return `
+                    <div
+                        class="p-4 border rounded-lg cursor-pointer part-card ${activePart === index ? 'border-blue-500' : ''}"
+                        onclick="selectPart(${index})"
+                    >
+                        <div class="flex justify-between mb-2">
+                            <span class="font-medium">${part.name}</span>
+                            <span>${part.speaker}</span>
+                        </div>
+                        <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative">
+                            <div
+                                class="h-full ${color} progress-bar absolute"
+                                style="width: ${progress}%"
+                            >
+                                <span class="absolute left-2 text-white">
+                                    ${formatTime(elapsed)}
+                                </span>
+                            </div>
+                            <span class="absolute right-2">
+                                ${formatTime(part.duration - elapsed)}
+                            </span>
+                        </div>
+                        <!-- NEW: MOVED TIMER CONTROLS HERE -->
+                        ${activePart === index ? `
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="toggleTimer()" 
+                                    class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600"
+                                    ${isRunning ? 'disabled' : ''}>
+                                ${isRunning ? 'Pause' : 'Resume'}
+                            </button>
+                            <button onclick="startNextPart()" 
+                                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                    ${activePart >= meetingParts.length - 1 ? 'disabled' : ''}>
+                                Begin Next Part
+                            </button>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
 
         // Initialize
         loadTemplate();
