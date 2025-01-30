@@ -94,12 +94,7 @@
     const DEFAULT_PARTS = [
         { name: 'Opening Comments', duration: 180, speaker: '' },
         { name: 'Treasures', duration: 600, speaker: '' },
-        { 
-        name: 'Spiritual Gems', 
-        duration: 600, 
-        speaker: '',
-        enableComments: true  // Adding this new property
-        },
+        {name: 'Spiritual Gems', duration: 600, speaker: '', enableComments: true},
         { name: 'Bible Reading', duration: 300, speaker: '' }
     ];
 
@@ -107,8 +102,6 @@
         let activePart = 0;
         let isRunning = false;
         let elapsedTimes = {};
-        // let comments = [];
-        // let activeComment = null;
         let timerInterval = null;
         let commentInterval = null;
 
