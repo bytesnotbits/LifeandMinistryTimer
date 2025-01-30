@@ -314,7 +314,7 @@
                     ${part.enableComments ? `
                         <div class="mt-4 space-y-2">
                             <div class="flex items-center gap-2">
-                                `<button onclick="event.stopPropagation(); toggleComment(${index})" 
+                                <button onclick="event.stopPropagation(); toggleComment(${index})" 
                                     class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded">
                                 ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
                                 </button>`
