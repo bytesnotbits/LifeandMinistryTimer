@@ -257,21 +257,27 @@ function renderTemplate() {
         
         // MODIFIED renderTimerDisplay() function
     function renderTimerDisplay() {
-        const container = document.getElementById('partsDisplay');
-        container.innerHTML = meetingParts.map((part, index) => {
-            const elapsed = elapsedTimes[index] || 0;
-            const { progress, color } = getProgressInfo(elapsed, part.duration);
-            
-            return `
-                function renderTimerDisplay() {
     const container = document.getElementById('partsDisplay');
     container.innerHTML = meetingParts.map((part, index) => {
-        // ... keep existing progress bar code ...
-
+        const elapsed = elapsedTimes[index] || 0;
+        const { progress, color } = getProgressInfo(elapsed, part.duration);
+        
         return `
-            <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : ''}">
-                <!-- Existing timer elements -->
+            <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
+                 onclick="selectPart(${index})">
+                <!-- EXISTING TIMER ELEMENTS (keep these) -->
+                <div class="flex justify-between mb-2">
+                    <span class="font-medium">${part.name}</span>
+                    <span>${part.speaker}</span>
+                </div>
+                <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative">
+                    <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
+                        <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
+                    </div>
+                    <span class="absolute right-2">${formatTime(part.duration - elapsed)}</span>
+                </div>
 
+                <!-- NEW COMMENT CONTROLS (only for Spiritual Gems) -->
                 ${part.enableComments ? `
                     <div class="mt-4 space-y-2">
                         <div class="flex items-center gap-2">
@@ -283,6 +289,20 @@ function renderTemplate() {
                                 ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
                             </span>
                         </div>
+                    </div>
+                ` : ''}
+
+                <!-- EXISTING TIMER CONTROLS (keep these) -->
+                ${activePart === index ? `
+                    <div class="mt-4 flex space-x-2">
+                        <button onclick="event.stopPropagation(); toggleTimer()" 
+                                class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600">
+                            ${isRunning ? 'Pause' : 'Start'}
+                        </button>
+                        <button onclick="event.stopPropagation(); startNextPart()" 
+                                class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                            Begin Next Part
+                        </button>
                     </div>
                 ` : ''}
             </div>
