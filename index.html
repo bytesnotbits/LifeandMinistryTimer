@@ -109,7 +109,8 @@
 </body>
 
     <script>
-// DOM Cache
+//----------------------------------------------------------------------------------------------        
+// BEGIN DOM CACHE
 const DOM = {
     partsTemplate: null,
     partsDisplay: null,
@@ -125,8 +126,10 @@ const DOM = {
     }
 };
 
+// END DOM CACHE
+//----------------------------------------------------------------------------------------------  
 //----------------------------------------------------------------------------------------------        
-// BEGIN Utility Functions
+// BEGIN UTILITY FUNCTIONS
         
 function throttle(func, limit) {
     let inThrottle;
@@ -139,9 +142,144 @@ function throttle(func, limit) {
     };
 }
 
-// END Utility Functions
-//----------------------------------------------------------------------------------------------
+function trackError(fn, context = 'unknown') {
+    return function(...args) {
+        try {
+            return fn.apply(this, args);
+        } catch (error) {
+            console.error(`Error in ${context}:`, error);
+            // You could add additional error handling here, like sending to an error tracking service
+            throw error; // Re-throw to maintain original behavior
+        }
+    };
+}
+
+function sanitizeInput(input) {
+    if (typeof input !== 'string') return input;
+    return input
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .trim();
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(Math.abs(seconds) / 60);
+    const secs = Math.abs(seconds) % 60;
+    const sign = seconds < 0 ? '-' : '';
+    return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
+}
         
+// END UTILITY FUNCTIONS
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+// BEGIN PROGRESS MANAGEMENT
+
+// Cache progress calculations
+const progressCache = {
+    lastUpdate: {},
+    getProgressInfo(elapsed, duration, partIndex) {
+        const cacheKey = `${elapsed}-${duration}-${partIndex}`;
+        if (this.lastUpdate[partIndex] === cacheKey) {
+            return this.lastUpdate[`${partIndex}-result`];
+        }
+
+        const progress = Math.min((elapsed / duration) * 100, 100);
+        const timeRemaining = duration - elapsed;
+        let color = 'bg-blue-500';
+        
+        if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
+            color = 'bg-yellow-500';
+        } else if (timeRemaining <= 0) {
+            color = 'bg-red-500';
+        }
+
+        const result = { progress, color };
+        this.lastUpdate[partIndex] = cacheKey;
+        this.lastUpdate[`${partIndex}-result`] = result;
+        return result;
+    }
+};
+
+function getProgressInfo(elapsed, duration, partIndex = null) {
+    // Use cache if partIndex is provided
+    if (partIndex !== null) {
+        return progressCache.getProgressInfo(elapsed, duration, partIndex);
+    }
+
+    // Fallback for cases where partIndex isn't provided
+    const progress = Math.min((elapsed / duration) * 100, 100);
+    const timeRemaining = duration - elapsed;
+    let color = 'bg-blue-500';
+    
+    if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
+        color = 'bg-yellow-500';
+    } else if (timeRemaining <= 0) {
+        color = 'bg-red-500';
+    }
+
+    return { progress, color };
+}
+ 
+// END PROGRESS MANAGEMENT
+//----------------------------------------------------------------------------------------------        
+//----------------------------------------------------------------------------------------------
+// BEGIN PERFORMANCE MONITOR OBJECT DEFINITION
+
+const performanceMonitor = {
+    renderTimes: new Map(), // Using Map for better performance
+    maxSamples: 100,
+    warningThreshold: 16.67, // 60fps threshold in ms
+    
+    logRenderTime(startTime, operation) {
+        const duration = Date.now() - startTime;
+        
+        if (!this.renderTimes.has(operation)) {
+            this.renderTimes.set(operation, []);
+        }
+        const times = this.renderTimes.get(operation);
+        
+        times.push(duration);
+        
+        if (times.length > this.maxSamples) {
+            times.shift();
+        }
+        
+        if (duration > this.warningThreshold) {
+            console.warn(`Slow ${operation} render: ${duration}ms`);
+            this.logPerformanceData(operation);
+        }
+    },
+    
+    getAverageRenderTime(operation) {
+        const times = this.renderTimes.get(operation);
+        if (!times || times.length === 0) return 0;
+        
+        const sum = times.reduce((acc, curr) => acc + curr, 0);
+        return sum / times.length;
+    },
+    
+    logPerformanceData(operation) {
+        const times = this.renderTimes.get(operation);
+        if (!times) return;
+        
+        const avg = this.getAverageRenderTime(operation);
+        const max = Math.max(...times);
+        const min = Math.min(...times);
+        
+        console.group(`Performance data for ${operation}`);
+        console.log(`Average: ${avg.toFixed(2)}ms`);
+        console.log(`Max: ${max}ms`);
+        console.log(`Min: ${min}ms`);
+        console.log(`Samples: ${times.length}`);
+        console.groupEnd();
+    }
+};
+
+// END PERFORMANCE MONITOR OBJECT DEFINITION
+//----------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------
 //BEGIN RENDER OBJECT
 
@@ -325,10 +463,8 @@ function throttle(func, limit) {
 
 //END RENDER OBJECT        
 //----------------------------------------------------------------------------------------------
-
-
 //----------------------------------------------------------------------------------------------
-//BEGIN PERFORMANCE MONITORING
+//BEGIN PERFORMANCE MONITORING CODE
         
  // Update render methods to include performance monitoring
 Object.keys(render).forEach(key => {
@@ -376,10 +512,8 @@ const debouncedSave = (function() {
     };
 })();
 
-//END PERFORMANCE MONITORING
+//END PERFORMANCE MONITORING CODE
 //----------------------------------------------------------------------------------------------
-
-        
 //----------------------------------------------------------------------------------------------
 //BEGIN CONSTANTS AND STATE
         
@@ -401,147 +535,243 @@ const debouncedSave = (function() {
         let elapsedTimes = {};
         let timerInterval = null;
         let commentInterval = null;
-
-        function sanitizeInput(input) {
-            if (typeof input !== 'string') return input;
-            return input
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;')
-                .trim();
-        }
+        // Comment Management
+        let comments = JSON.parse(localStorage.getItem('meetingComments')) || [];
+        let activeComment = null;
 
 //END CONSTANTS AND STATE
 //----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+// BEGIN STATE MANAGEMENT
 
-        
-// Cache progress calculations
-const progressCache = {
-    lastUpdate: {},
-    getProgressInfo(elapsed, duration, partIndex) {
-        const cacheKey = `${elapsed}-${duration}-${partIndex}`;
-        if (this.lastUpdate[partIndex] === cacheKey) {
-            return this.lastUpdate[`${partIndex}-result`];
-        }
-
-        const progress = Math.min((elapsed / duration) * 100, 100);
-        const timeRemaining = duration - elapsed;
-        let color = 'bg-blue-500';
-        
-        if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
-            color = 'bg-yellow-500';
-        } else if (timeRemaining <= 0) {
-            color = 'bg-red-500';
-        }
-
-        const result = { progress, color };
-        this.lastUpdate[partIndex] = cacheKey;
-        this.lastUpdate[`${partIndex}-result`] = result;
-        return result;
-    }
-};
-        
-function throttle(func, limit) {
-    let inThrottle;
-    return function(...args) {
-        if (!inThrottle) {
-            func.apply(this, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}        
-
-function getProgressInfo(elapsed, duration, partIndex = null) {
-    // Use cache if partIndex is provided
-    if (partIndex !== null) {
-        return progressCache.getProgressInfo(elapsed, duration, partIndex);
-    }
-
-    // Fallback for cases where partIndex isn't provided
-    const progress = Math.min((elapsed / duration) * 100, 100);
-    const timeRemaining = duration - elapsed;
-    let color = 'bg-blue-500';
-    
-    if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
-        color = 'bg-yellow-500';
-    } else if (timeRemaining <= 0) {
-        color = 'bg-red-500';
-    }
-
-    return { progress, color };
+function saveState() {
+    localStorage.setItem('elapsedTimes', JSON.stringify(elapsedTimes));
+    localStorage.setItem('activePart', activePart);
 }
 
-    // Add performance monitoring (optional)
-    const performanceMonitor = {
-        renderTimes: new Map(), // Using Map for better performance
-        maxSamples: 100,
-        warningThreshold: 16.67, // 60fps threshold in ms
-        
-        logRenderTime(operation, startTime) {
-            const duration = Date.now() - startTime;
-            
-            // Get or create array for this operation
-            if (!this.renderTimes.has(operation)) {
-                this.renderTimes.set(operation, []);
-            }
-            const times = this.renderTimes.get(operation);
-            
-            // Add new timing
-            times.push(duration);
-            
-            // Keep only last maxSamples measurements
-            if (times.length > this.maxSamples) {
-                times.shift();
-            }
-            
-            // Log warning if render is slow
-            if (duration > this.warningThreshold) {
-                console.warn(`Slow ${operation} render: ${duration}ms`);
-                this.logPerformanceData(operation);
-            }
-        },
-        
-        getAverageRenderTime(operation) {
-            const times = this.renderTimes.get(operation);
-            if (!times || times.length === 0) return 0;
-            
-            const sum = times.reduce((acc, curr) => acc + curr, 0);
-            return sum / times.length;
-        },
-        
-        logPerformanceData(operation) {
-            const times = this.renderTimes.get(operation);
-            if (!times) return;
-            
-            const avg = this.getAverageRenderTime(operation);
-            const max = Math.max(...times);
-            const min = Math.min(...times);
-            
-            console.group(`Performance data for ${operation}`);
-            console.log(`Average: ${avg.toFixed(2)}ms`);
-            console.log(`Max: ${max}ms`);
-            console.log(`Min: ${min}ms`);
-            console.log(`Samples: ${times.length}`);
-            console.groupEnd();
-        }
-    };
-    
-    // Error tracking wrapper
-    function trackError(fn, context = 'unknown') {
-        return function(...args) {
-            try {
-                return fn.apply(this, args);
-            } catch (error) {
-                console.error(`Error in ${context}:`, error);
-                // You might want to send this to an error tracking service
-                throw error; // Re-throw to maintain original behavior
-            }
-        };
+function loadState() {
+    const savedTimes = localStorage.getItem('elapsedTimes');
+    if (savedTimes) {
+        elapsedTimes = JSON.parse(savedTimes);
+    }
+    activePart = parseInt(localStorage.getItem('activePart')) || 0;
+}
+
+function saveTemplate() {
+    localStorage.setItem('meetingTemplate', JSON.stringify(meetingParts));
+}
+
+function loadTemplate() {
+    const saved = localStorage.getItem('meetingTemplate');
+    meetingParts = saved ? JSON.parse(saved) : DEFAULT_PARTS;
+    activePart = meetingParts.length > 0 ? 0 : null;
+    render.template();
+    render.timerDisplay();
+}
+
+function resetData() {
+    elapsedTimes = {};
+    comments = [];
+    activeComment = null;
+    localStorage.removeItem('meetingComments');
+    render.comments();
+    activePart = null;
+    isRunning = false;
+    clearInterval(timerInterval);
+    clearInterval(commentInterval);
+    commentInterval = null;
+    render.timerDisplay();
+}
+
+function clearLocalStorage() {
+    localStorage.removeItem('meetingTemplate');
+    meetingParts = DEFAULT_PARTS;
+    resetData();
+    render.template();
+    render.timerDisplay();
+}
+
+// END STATE MANAGEMENT
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+// BEGIN TIMER AND COMMENT CONTROLS
+
+function toggleTimer() {
+    if (activePart === null) {
+        activePart = 0;
+        elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
     }
     
+    isRunning = !isRunning;
+    
+    if (isRunning) {
+        timerInterval = setInterval(updateTimer, 1000);
+    } else {
+        clearInterval(timerInterval);
+    }
+    render.timerDisplay();
+}
+
+function updateTimer() {
+    if (activePart === null) return;
+    elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1;
+    render.timerDisplay();
+}
+
+function startNextPart() {
+    if (activePart === null || activePart >= meetingParts.length - 1) return;
+    activePart++;
+    if (!isRunning) toggleTimer();
+    render.timerDisplay();
+}
+
+function selectPart(index) {
+    if (isRunning) {
+        alert('Cannot switch parts while timer is active!');
+        return;
+    }
+    activePart = index;
+    render.timerDisplay();
+}
+
+function toggleComment(partIndex) {
+    if (activePart !== partIndex || !isRunning) {
+        alert('Part timer must be running to record comments!');
+        return;
+    }
+    
+    if (activeComment && activeComment.partIndex !== partIndex) return;
+
+    if (activeComment) {
+        const duration = Math.floor((Date.now() - activeComment.startTime) / 1000);
+        
+        if (duration < 5) {
+            alert('Comment too short!');
+            return;
+        }
+        
+        let finalDuration = duration;
+        if (duration > COMMENT_LIMIT) {
+            finalDuration = COMMENT_LIMIT;
+            alert('Maximum comment duration reached!');
+        }
+
+        comments.push({
+            duration: finalDuration,
+            timestamp: Date.now(),
+            partName: meetingParts[partIndex].name
+        });
+        
+        try {
+            localStorage.setItem('meetingComments', JSON.stringify(comments));
+        } catch (error) {
+            console.error('Failed to save comments:', error);
+            alert('Failed to save comment. Please try again.');
+        }
+        
+        activeComment = null;
+        clearInterval(commentInterval);
+        render.comments();
+    } else {
+        activeComment = {
+            startTime: Date.now(),
+            partIndex: partIndex
+        };
+        
+        commentInterval = setInterval(() => {
+            const currentElement = document.getElementById(`currentComment-${partIndex}`);
+            if (currentElement) {
+                currentElement.textContent = formatTime(
+                    Math.floor((Date.now() - activeComment.startTime) / 1000)
+                );
+            }
+        }, 200);
+    }
+    
+    render.timerDisplay();
+}
+
+// END TIMER AND COMMENT CONTROLS
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+// BEGIN APPLICATION LIFECYCLE MANAGEMENT
+
+function cleanupResources() {
+    // Clear all intervals
+    clearInterval(timerInterval);
+    clearInterval(commentInterval);
+    
+    // Clear performance monitoring data
+    performanceMonitor.renderTimes.clear();
+    
+    // Save state before cleanup
+    if (isRunning) {
+        saveState();
+    }
+}
+
+function initializeApplication() {
+    // Initialize DOM cache
+    DOM.init();
+    
+    // Load saved data
+    loadTemplate();
+    loadState();
+    
+    // Initialize UI
+    render.comments();
+    render.timerDisplay();
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && e.target === document.body) {
+            e.preventDefault();
+            toggleTimer();
+        }
+    });
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', initializeApplication);
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        cleanupResources();
+    }
+});
+
+window.addEventListener('beforeunload', (e) => {
+    cleanupResources();
+    if (isRunning) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
+window.addEventListener('error', (event) => {
+    console.error('Global error caught:', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error
+    });
+    
+    // Attempt recovery
+    try {
+        resetData();
+        render.template();
+        render.timerDisplay();
+        alert('An error occurred. The application has been reset.');
+    } catch (recoveryError) {
+        console.error('Recovery failed:', recoveryError);
+        alert('Application error. Please refresh the page.');
+    }
+});
+  
+// END APPLICATION LIFECYCLE MANAGEMENT
+//---------------------------------------------------------------------------------------------- 
+        
     // Wrap render methods with performance monitoring and error tracking
     Object.keys(render).forEach(key => {
         const originalMethod = render[key];
@@ -552,45 +782,7 @@ function getProgressInfo(elapsed, duration, partIndex = null) {
             return result;
         }, `render.${key}`);
     });
-    
-    // Add memory leak prevention
-    function cleanupResources() {
-        // Clear all intervals
-        clearInterval(timerInterval);
-        clearInterval(commentInterval);
-        
-        // Cancel any pending animation frames
-        if (rafId) {
-            cancelAnimationFrame(rafId);
-            rafId = null;
-        }
-        
-        // Clear performance monitoring data
-        performanceMonitor.renderTimes.clear();
-        
-        // Save state before cleanup
-        if (isRunning) {
-            saveState();
-        }
-    }
-        
-    function formatTime(seconds) {
-        const mins = Math.floor(Math.abs(seconds) / 60);
-        const secs = Math.abs(seconds) % 60;
-        const sign = seconds < 0 ? '-' : '';
-        return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-    // Comment Management
-        let comments = JSON.parse(localStorage.getItem('meetingComments')) || [];
-        let activeComment = null;
-        
-    function toggleComment(partIndex) {
-        // Prevent comments if timer isn't running for this part
-        if (activePart !== partIndex || !isRunning) {
-            alert('Part timer must be running to record comments!');
-            return;
-        }
-        
+              
         // Prevent multiple active comments
         if (activeComment && activeComment.partIndex !== partIndex) return;
     
@@ -625,7 +817,7 @@ function getProgressInfo(elapsed, duration, partIndex = null) {
             
             activeComment = null;
             clearInterval(commentInterval);
-            updateGlobalComments();
+            render.comments();
         } else {
             // Start new comment
             activeComment = {
@@ -645,40 +837,6 @@ function getProgressInfo(elapsed, duration, partIndex = null) {
         
         render.timerDisplay();     // Changed from render.timerDisplay()
     }
-
-        function saveState() {
-            localStorage.setItem('elapsedTimes', JSON.stringify(elapsedTimes));
-            localStorage.setItem('activePart', activePart);
-        }
-        function loadState() {
-            const savedTimes = localStorage.getItem('elapsedTimes');
-            if (savedTimes) {
-                elapsedTimes = JSON.parse(savedTimes);
-            }
-            activePart = parseInt(localStorage.getItem('activePart')) || 0;
-        }
-        
-    function updateGlobalComments() {
-        // Update stats
-        document.getElementById('globalCommentCount').textContent = comments.length;
-        const average = comments.length > 0 
-            ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / comments.length)
-            : 0;
-        document.getElementById('globalAverageDuration').textContent = formatTime(average);
-      // Update history list
-            const historyContainer = document.getElementById('commentHistory');
-            historyContainer.innerHTML = comments.map((comment, i) => `
-                <div class="bg-white p-2 rounded shadow-sm">
-                    <div class="flex justify-between text-sm">
-                        <span>Comment ${i+1}</span>
-                        <span>${formatTime(comment.duration)}</span>
-                    </div>
-                    <div class="text-xs text-gray-500">
-                        ${new Date(comment.timestamp).toLocaleTimeString()}
-                    </div>
-                </div>
-            `).join('');
-        }
         
     function addPart() {
     meetingParts.push({ 
@@ -704,12 +862,6 @@ function getProgressInfo(elapsed, duration, partIndex = null) {
         render.template();
         render.timerDisplay();
     }
-    
-    function updateTimer() {
-        if (activePart === null) return;
-        elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1;
-        render.timerDisplay();
-    }
         
     function movePart(index, direction) {
     if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
@@ -729,69 +881,6 @@ function getProgressInfo(elapsed, duration, partIndex = null) {
     function saveTemplate() {
         localStorage.setItem('meetingTemplate', JSON.stringify(meetingParts));
     }
-    
-    function loadTemplate() {
-    const saved = localStorage.getItem('meetingTemplate');
-    meetingParts = saved ? JSON.parse(saved) : DEFAULT_PARTS;
-    activePart = meetingParts.length > 0 ? 0 : null;
-    render.template();         // Changed from renderTemplate()
-    render.timerDisplay();     // Changed from render.timerDisplay()
-}
-        
-       
-        function startNextPart() {
-            if (activePart === null || activePart >= meetingParts.length - 1) return;
-            activePart++;
-            if (!isRunning) toggleTimer();
-            render.timerDisplay();
-        }
-        
-        function selectPart(index) {
-            if (isRunning) {
-                alert('Cannot switch parts while timer is active!');
-                return;
-            }
-            activePart = index;
-            render.timerDisplay();     // Changed from render.timerDisplay()
-        }
-
-        function toggleTimer() {
-           if (activePart === null) {
-               activePart = 0;
-               elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
-           }
-           
-           isRunning = !isRunning;
-           
-           if (isRunning) {
-               timerInterval = setInterval(updateTimer, 1000);
-           } else {
-               clearInterval(timerInterval);
-           }
-           render.timerDisplay();     // Changed from render.timerDisplay()
-        }
-        
-        function resetData() {
-            elapsedTimes = {};
-            comments = [];
-            activeComment = null;
-            localStorage.removeItem('meetingComments');
-            render.comments();         // Changed from updateGlobalComments()
-            activePart = null;
-            isRunning = false;
-            clearInterval(timerInterval);
-            clearInterval(commentInterval);
-            commentInterval = null;
-            render.timerDisplay();     // Changed from render.timerDisplay()
-        }
-        
-        function clearLocalStorage() {
-            localStorage.removeItem('meetingTemplate');
-            meetingParts = DEFAULT_PARTS;
-            resetData();
-            render.template();         // Changed from renderTemplate()
-            render.timerDisplay();     // Changed from render.timerDisplay()
-        }
 
         function $(selector) {
             return document.querySelector(selector);
