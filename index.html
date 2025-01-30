@@ -48,7 +48,42 @@
     </div>
 
     <script>
-        // ... (Constants and utility functions remain unchanged) ...
+ // Constants and State
+    const DEFAULT_PARTS = [
+        { name: 'Opening Comments', duration: 180, speaker: '' },
+        { name: 'Treasures', duration: 600, speaker: '' },
+        { name: 'Spiritual Gems', duration: 600, speaker: '' },
+        { name: 'Bible Reading', duration: 300, speaker: '' }
+    ];
+
+        let meetingParts = [];
+        let activePart = null;
+        let isRunning = false;
+        let elapsedTimes = {};
+        let comments = [];
+        let activeComment = null;
+        let timerInterval = null;
+        let commentInterval = null;
+
+    function formatTime(seconds) {
+        const mins = Math.floor(Math.abs(seconds) / 60);
+        const secs = Math.abs(seconds) % 60;
+        const sign = seconds < 0 ? '-' : '';
+        return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+function getProgressInfo(elapsed, duration) {
+    const progress = Math.min((elapsed / duration) * 100, 100);
+    const timeRemaining = duration - elapsed;
+    let color = 'bg-blue-500';
+    if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
+        color = 'bg-yellow-500';
+    } else if (timeRemaining <= 0) {
+        color = 'bg-red-500';
+    }
+    return { progress, color };
+}
+ 
     function renderTemplate() {
         const container = document.getElementById('partsTemplate');
         if (!container) return;
@@ -82,6 +117,37 @@
             </div>
     `).join('');
 }
+     function updatePart(index, field, value) {
+        meetingParts[index][field] = field === 'duration' ? value * 60 : value;
+        saveTemplate();
+        renderTimerDisplay();
+    }
+
+    function movePart(index, direction) {
+        if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
+        [meetingParts[index], meetingParts[index + direction]] = [meetingParts[index + direction], meetingParts[index]];
+        saveTemplate();
+        renderTemplate();
+        renderTimerDisplay();
+    }
+
+    function removePart(index) {
+        meetingParts.splice(index, 1);
+        saveTemplate();
+        renderTemplate();
+        renderTimerDisplay();
+    }
+    
+    function saveTemplate() {
+        localStorage.setItem('meetingTemplate', JSON.stringify(meetingParts));
+    }
+    
+    function loadTemplate() {
+        const saved = localStorage.getItem('meetingTemplate');
+        meetingParts = saved ? JSON.parse(saved) : DEFAULT_PARTS;
+        renderTemplate();
+        renderTimerDisplay();
+    }
         
         // MODIFIED renderTimerDisplay() function
         function renderTimerDisplay() {
@@ -131,7 +197,18 @@
                 `;
             }).join('');
         }
-
+        function updateTimer() {
+            elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1;
+            renderTimerDisplay();
+        }
+        
+        function startNextPart() {
+            if (activePart === null || activePart >= meetingParts.length - 1) return;
+            activePart++;
+            if (!isRunning) toggleTimer();
+            renderTimerDisplay();
+            updateCommentSection();
+        }
         // MODIFIED selectPart() function
         function selectPart(index) {
             if (isRunning) {
@@ -158,7 +235,63 @@
 
        document.addEventListener('DOMContentLoaded', () => {
            loadTemplate();
-       });
+       })
+       function toggleComment() {
+           const commentButton = document.querySelector('#commentSection button');
+           if (!activeComment) {
+           activeComment = { startTime: Date.now() };
+           commentButton.textContent = 'Stop Comment';
+           document.getElementById('currentComment').classList.remove('hidden');
+           commentInterval = setInterval(updateCurrentComment, 1000);
+           } else {
+               comments.push(Math.floor((Date.now() - activeComment.startTime) / 1000));
+               activeComment = null;
+               commentButton.textContent = 'Start Comment';
+               document.getElementById('currentComment').classList.add('hidden');
+               clearInterval(commentInterval);
+               updateCommentStats();
+           }
+       }
+     
+        function updateCurrentComment() {
+            if (!activeComment) return;
+            const duration = Math.floor((Date.now() - activeComment.startTime) / 1000);
+            document.getElementById('currentComment').textContent = `Current Comment Duration: ${formatTime(duration)}`;
+        }
+        
+        function updateCommentStats() {
+            document.getElementById('commentCount').textContent = `Total Comments: ${comments.length}`;
+            if (comments.length > 0) {
+                const average = Math.floor(comments.reduce((a, b) => a + b, 0) / comments.length);
+                document.getElementById('averageDuration').textContent = `Average Duration: ${formatTime(average)}`;
+            }
+        }
+        
+        function updateCommentSection() {
+            document.getElementById('commentSection').classList.toggle('hidden', 
+            activePart === null || meetingParts[activePart].name !== 'Spiritual Gems');
+        }
+        
+        function resetData() {
+            elapsedTimes = {};
+            comments = [];
+            activeComment = null;
+            activePart = null;
+            isRunning = false;
+            clearInterval(timerInterval);
+            clearInterval(commentInterval);
+            renderTimerDisplay();
+            updateCommentStats();
+            updateCommentSection();
+        }
+
+        function clearLocalStorage() {
+            localStorage.removeItem('meetingTemplate');
+            meetingParts = DEFAULT_PARTS;
+            resetData();
+            renderTemplate();
+            renderTimerDisplay();
+        };
     </script>
 </body>
 </html>
