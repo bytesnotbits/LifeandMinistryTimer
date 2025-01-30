@@ -7,11 +7,11 @@
     <title>Life and Ministry Timer</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <style>
-.progress-bar span {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-}
+        .progress-bar span {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
         .part-card {
             transition: border-color 0.2s ease;
         }
@@ -22,7 +22,7 @@
             transition: all 0.3s ease;
         }
         #commentHistory::-webkit-scrollbar {
-    width: 6px;
+            width: 6px;
         }
         
         #commentHistory::-webkit-scrollbar-track {
@@ -36,6 +36,12 @@
         
         #commentHistory::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
+        }
+
+        .progress-bar {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
     </style>
 </head>
@@ -92,12 +98,17 @@
     <script>
  // Constants and State
     const DEFAULT_PARTS = [
-        { name: 'Opening Comments', duration: 180, speaker: '' },
-        { name: 'Treasures', duration: 600, speaker: '' },
-        {name: 'Spiritual Gems', duration: 600, speaker: '', enableComments: true},
-        { name: 'Bible Reading', duration: 300, speaker: '' }
-    ];
-
+        { name: 'Opening Comments', duration: 180, speaker: '', enableComments: false },
+        { name: 'Treasures', duration: 600, speaker: '', enableComments: false },
+        { name: 'Spiritual Gems', duration: 600, speaker: '', enableComments: true},
+        { name: 'Bible Reading', duration: 300, speaker: '', enableComments: false },
+        { name: 'Apply yourself 1', duration, 180, speaker, '', enableComments: false },
+        { name: 'Apply yourself 1', duration, 180, speaker, '', enableComments: false },
+        { name: 'Student Talk', duration, 300, speaker, '', enableComments: false },
+        { name: 'CBS', duration: 1800, speaker: '', enableComments: false }
+   ];
+        const COMMENT_LIMIT = 240; // 4 minutes in seconds
+        
         let meetingParts = [];
         let activePart = 0;
         let isRunning = false;
@@ -115,15 +126,64 @@
         let comments = JSON.parse(localStorage.getItem('meetingComments')) || [];
         let activeComment = null;
         
-        function updateGlobalComments() {
-            // Update stats
-            document.getElementById('globalCommentCount').textContent = comments.length;
-            const average = comments.length > 0 
-                ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / comments.length)
-                : 0;
-            document.getElementById('globalAverageDuration').textContent = formatTime(average);
-        
-            // Update history list
+    function toggleComment(partIndex) {
+        // Prevent comments if timer isn't running for this part
+        if (activePart !== partIndex || !isRunning) {
+            alert('Part timer must be running to record comments!');
+            return;
+        // Prevent multiple active comments
+        if (activeComment && activeComment.partIndex !== partIndex) return;
+    
+        if (activeComment) {
+            // Stop existing comment
+            const duration = Math.floor((Date.now() - activeComment.startTime) / 1000);
+            comments.push({
+                duration,
+                timestamp: Date.now(),
+                partName: meetingParts[partIndex].name
+            });
+            localStorage.setItem('meetingComments', JSON.stringify(comments));
+            activeComment = null;
+            clearInterval(commentInterval);
+            updateGlobalComments();
+        } else {
+            // Start new comment
+            activeComment = {
+                startTime: Date.now(),
+                partIndex: partIndex
+            };
+            commentInterval = setInterval(() => {
+                // Update current comment display
+                const currentElement = document.getElementById(`currentComment-${partIndex}`);
+                    if (currentElement) {
+                        currentElement.textContent = formatTime(
+                            Math.floor((Date.now() - activeComment.startTime) / 1000)
+                        );
+                    }
+                }, 200);
+            }
+            renderTimerDisplay();
+        }
+        if (activeComment) {
+            // When stopping comment
+            clearInterval(commentInterval);
+            commentInterval = null;
+        } else {
+            // When starting comment
+            commentInterval = setInterval(() => {
+                // Update logic...
+            }, 200);
+        }
+    }
+
+    function updateGlobalComments() {
+        // Update stats
+        document.getElementById('globalCommentCount').textContent = comments.length;
+        const average = comments.length > 0 
+            ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / comments.length)
+            : 0;
+        document.getElementById('globalAverageDuration').textContent = formatTime(average);
+      // Update history list
             const historyContainer = document.getElementById('commentHistory');
             historyContainer.innerHTML = comments.map((comment, i) => `
                 <div class="bg-white p-2 rounded shadow-sm">
@@ -137,59 +197,64 @@
                 </div>
             `).join('');
         }
-
-function getProgressInfo(elapsed, duration) {
-    const progress = Math.min((elapsed / duration) * 100, 100);
-    const timeRemaining = duration - elapsed;
-    let color = 'bg-blue-500';
-    if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
-        color = 'bg-yellow-500';
-    } else if (timeRemaining <= 0) {
-        color = 'bg-red-500';
+        
+    function getProgressInfo(elapsed, duration) {
+        const progress = Math.min((elapsed / duration) * 100, 100);
+        const timeRemaining = duration - elapsed;
+        let color = 'bg-blue-500';
+        if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
+            color = 'bg-yellow-500';
+        } else if (timeRemaining <= 0) {
+            color = 'bg-red-500';
+        }
+        return { progress, color };
     }
-    return { progress, color };
-}
- 
-function renderTemplate() {
-    const container = document.getElementById('partsTemplate');
-    if (!container) return;
-    
-    container.innerHTML = meetingParts.map((part, index) => `
-        <div class="flex items-center space-x-2">
-            <div class="flex-1 grid grid-cols-3 gap-2">
-                <input
-                    value="${part.name}"
-                    onchange="updatePart(${index}, 'name', this.value)"
-                    placeholder="Part Name"
-                    class="px-3 py-2 border rounded"
-                />
-                <input
-                    type="number"
-                    value="${part.duration / 60}"
-                    onchange="updatePart(${index}, 'duration', this.value)"
-                    placeholder="Minutes"
-                    class="px-3 py-2 border rounded"
-                />
-                <input
-                    value="${part.speaker}"
-                    onchange="updatePart(${index}, 'speaker', this.value)"
-                    placeholder="Speaker"
-                    class="px-3 py-2 border rounded"
-                />
+     
+    function renderTemplate() {
+        const container = document.getElementById('partsTemplate');
+        if (!container) return;
+        
+        container.innerHTML = meetingParts.map((part, index) => `
+            <div class="flex items-center space-x-2">
+                <div class="flex-1 grid grid-cols-3 gap-2">
+                    <input
+                        value="${part.name}"
+                        onchange="updatePart(${index}, 'name', this.value)"
+                        placeholder="Part Name"
+                        class="px-3 py-2 border rounded"
+                    />
+                    <input
+                        type="number"
+                        value="${part.duration / 60}"
+                        onchange="updatePart(${index}, 'duration', this.value)"
+                        placeholder="Minutes"
+                        class="px-3 py-2 border rounded"
+                    />
+                    <input
+                        value="${part.speaker}"
+                        onchange="updatePart(${index}, 'speaker', this.value)"
+                        placeholder="Speaker"
+                        class="px-3 py-2 border rounded"
+                    />
+                </div>
+                <button onclick="movePart(${index}, -1)" ${index === 0 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↑</button>
+                <button onclick="movePart(${index}, 1)" ${index === meetingParts.length - 1 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↓</button>
+                <button onclick="removePart(${index})" class="px-3 py-2 bg-gray-200 rounded">×</button>
             </div>
-            <button onclick="movePart(${index}, -1)" ${index === 0 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↑</button>
-            <button onclick="movePart(${index}, 1)" ${index === meetingParts.length - 1 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↓</button>
-            <button onclick="removePart(${index})" class="px-3 py-2 bg-gray-200 rounded">×</button>
-        </div>
-    `).join('');  // FIXED: Added proper closing
-}
+        `).join('');  // FIXED: Added proper closing
+    }
+        
     function addPart() {
-        meetingParts.push({ name: '', duration: 180, speaker: '' });
+        meetingParts.push({ 
+            name: '', 
+            duration: 180, 
+            speaker: '', 
+            enableComments: false  // Fixed syntax and initialization
+        });
         saveTemplate();
         renderTemplate();
         renderTimerDisplay();
-        enableComments: false
-    }
+        }
 
      function updatePart(index, field, value) {
         meetingParts[index][field] = field === 'duration' ? value * 60 : value;
@@ -224,60 +289,59 @@ function renderTemplate() {
         renderTimerDisplay();
     }
         
-        // MODIFIED renderTimerDisplay() function
     function renderTimerDisplay() {
-    const container = document.getElementById('partsDisplay');
-    container.innerHTML = meetingParts.map((part, index) => {
-        const elapsed = elapsedTimes[index] || 0;
-        const { progress, color } = getProgressInfo(elapsed, part.duration);
-        
-        return `
-            <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
-                 onclick="selectPart(${index})">
-                <!-- EXISTING TIMER ELEMENTS (keep these) -->
-                <div class="flex justify-between mb-2">
-                    <span class="font-medium">${part.name}</span>
-                    <span>${part.speaker}</span>
-                </div>
-                <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative">
-                    <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
-                        <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
+        const container = document.getElementById('partsDisplay');
+        container.innerHTML = meetingParts.map((part, index) => {
+            const elapsed = elapsedTimes[index] || 0;
+            const { progress, color } = getProgressInfo(elapsed, part.duration);
+            
+            return `
+                <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
+                     onclick="selectPart(${index})">
+                    <!-- EXISTING TIMER ELEMENTS (keep these) -->
+                    <div class="flex justify-between mb-2">
+                        <span class="font-medium">${part.name}</span>
+                        <span>${part.speaker}</span>
                     </div>
-                    <span class="absolute right-2">${formatTime(part.duration - elapsed)}</span>
-                </div>
-
-                <!-- NEW COMMENT CONTROLS (only for Spiritual Gems) -->
-                ${part.enableComments ? `
-                    <div class="mt-4 space-y-2">
-                        <div class="flex items-center gap-2">
-                            <button onclick="event.stopPropagation(); toggleComment(${index})" 
-                                    class="px-4 py-2 ${activeComment ? 'bg-red-500' : 'bg-purple-500'} text-white rounded">
-                                ${activeComment ? 'Stop Comment' : 'Start Comment'}
-                            </button>
-                            <span id="currentComment-${index}" class="text-sm ${activeComment ? '' : 'invisible'}">
-                                ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
-                            </span>
+                    <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative">
+                        <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
+                            <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
                         </div>
+                        <span class="absolute right-2">${formatTime(part.duration - elapsed)}</span>
                     </div>
-                ` : ''}
-
-                <!-- EXISTING TIMER CONTROLS (keep these) -->
-                ${activePart === index ? `
-                    <div class="mt-4 flex space-x-2">
-                        <button onclick="event.stopPropagation(); toggleTimer()" 
-                                class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600">
-                            ${isRunning ? 'Pause' : 'Start'}
-                        </button>
-                        <button onclick="event.stopPropagation(); startNextPart()" 
-                                class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                            Begin Next Part
-                        </button>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-    }).join('');
-}
+    
+                    <!-- NEW COMMENT CONTROLS (only for Spiritual Gems) -->
+                    ${part.enableComments ? `
+                        <div class="mt-4 space-y-2">
+                            <div class="flex items-center gap-2">
+                                `<button onclick="event.stopPropagation(); toggleComment(${index})" 
+                                    class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded">
+                                ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
+                                </button>`
+                                <span id="currentComment-${index}" class="text-sm ${activeComment ? '' : 'invisible'}">
+                                    ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
+                                </span>
+                            </div>
+                        </div>
+                    ` : ''}
+    
+                    <!-- EXISTING TIMER CONTROLS (keep these) -->
+                    ${activePart === index ? `
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="event.stopPropagation(); toggleTimer()" 
+                                    class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600">
+                                ${isRunning ? 'Pause' : 'Start'}
+                            </button>
+                            <button onclick="event.stopPropagation(); startNextPart()" 
+                                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                                Begin Next Part
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+    }
         function updateTimer() {
             if (activePart === null) return;
             elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1;
@@ -291,7 +355,7 @@ function renderTemplate() {
             if (!isRunning) toggleTimer();
             renderTimerDisplay();
         }
-        // MODIFIED selectPart() function
+        
         function selectPart(index) {
             if (isRunning) {
                 alert('Cannot switch parts while timer is active!');
@@ -301,7 +365,6 @@ function renderTemplate() {
             renderTimerDisplay();
         }
 
-        // MODIFIED toggleTimer() function
         function toggleTimer() {
             if (activePart === null) {
                 // Initialize to first part if none selected
@@ -334,6 +397,7 @@ function renderTemplate() {
             isRunning = false;
             clearInterval(timerInterval);
             clearInterval(commentInterval);
+            commentInterval = null;
             renderTimerDisplay();
         }
 
