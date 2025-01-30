@@ -109,7 +109,8 @@
 </body>
 
     <script>
-//----------------------------------------------------------------------------------------------        
+//---------------------------------------------------------------------------------------------- 
+//----------------------------------------------------------------------------------------------
 // BEGIN DOM CACHE
 const DOM = {
     partsTemplate: null,
@@ -594,6 +595,50 @@ function clearLocalStorage() {
 // END STATE MANAGEMENT
 //----------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------
+// BEGIN TEMPLATE MANAGEMENT
+
+function addPart() {
+    meetingParts.push({ 
+        name: '', 
+        duration: 180, 
+        speaker: '', 
+        enableComments: false
+    });
+    saveTemplate();
+    render.template();
+    render.timerDisplay();
+}
+
+function updatePart(index, field, value) {
+    if (field === 'duration') {
+        value = Math.max(0, parseInt(value, 10) || 0) * 60;
+    } else {
+        value = sanitizeInput(value);
+    }
+    meetingParts[index][field] = value;
+    saveTemplate();
+    render.template();
+    render.timerDisplay();
+}
+
+function movePart(index, direction) {
+    if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
+    [meetingParts[index], meetingParts[index + direction]] = [meetingParts[index + direction], meetingParts[index]];
+    saveTemplate();
+    render.template();
+    render.timerDisplay();
+}
+
+function removePart(index) {
+    meetingParts.splice(index, 1);
+    saveTemplate();
+    render.template();
+    render.timerDisplay();
+}
+        
+// END TEMPLATE MANAGEMENT
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
 // BEGIN TIMER AND COMMENT CONTROLS
 
 function toggleTimer() {
@@ -771,179 +816,7 @@ window.addEventListener('error', (event) => {
   
 // END APPLICATION LIFECYCLE MANAGEMENT
 //---------------------------------------------------------------------------------------------- 
-        
-    // Wrap render methods with performance monitoring and error tracking
-    Object.keys(render).forEach(key => {
-        const originalMethod = render[key];
-        render[key] = trackError(function(...args) {
-            const startTime = Date.now();
-            const result = originalMethod.apply(this, args);
-            performanceMonitor.logRenderTime(key, startTime);
-            return result;
-        }, `render.${key}`);
-    });
-              
-        // Prevent multiple active comments
-        if (activeComment && activeComment.partIndex !== partIndex) return;
-    
-        if (activeComment) {
-            // Stop existing comment
-            const duration = Math.floor((Date.now() - activeComment.startTime) / 1000);
-            
-            // Duration validations moved inside this block where 'duration' exists
-            if (duration < 5) {
-                alert('Comment too short!');
-                return;
-            }
-            
-            let finalDuration = duration;
-            if (duration > COMMENT_LIMIT) {
-                finalDuration = COMMENT_LIMIT;
-                alert('Maximum comment duration reached!');
-            }
-    
-            comments.push({
-                duration: finalDuration,
-                timestamp: Date.now(),
-                partName: meetingParts[partIndex].name
-            });
-            
-            try {
-                localStorage.setItem('meetingComments', JSON.stringify(comments));
-            } catch (error) {
-                console.error('Failed to save comments:', error);
-                alert('Failed to save comment. Please try again.');
-            }
-            
-            activeComment = null;
-            clearInterval(commentInterval);
-            render.comments();
-        } else {
-            // Start new comment
-            activeComment = {
-                startTime: Date.now(),
-                partIndex: partIndex
-            };
-            
-            commentInterval = setInterval(() => {
-                const currentElement = document.getElementById(`currentComment-${partIndex}`);
-                if (currentElement) {
-                    currentElement.textContent = formatTime(
-                        Math.floor((Date.now() - activeComment.startTime) / 1000)
-                    );
-                }
-            }, 200);
-        }
-        
-        render.timerDisplay();     // Changed from render.timerDisplay()
-    }
-        
-    function addPart() {
-    meetingParts.push({ 
-        name: '', 
-        duration: 180, 
-        speaker: '', 
-        enableComments: false
-    });
-    saveTemplate();
-    render.template();         // Changed from renderTemplate()
-    render.timerDisplay();     // Changed from render.timerDisplay()
-    }
 
-    // Update these functions to use the new render system
-    function updatePart(index, field, value) {
-        if (field === 'duration') {
-            value = Math.max(0, parseInt(value, 10) || 0) * 60;
-        } else {
-            value = sanitizeInput(value);
-        }
-        meetingParts[index][field] = value;
-        saveTemplate();
-        render.template();
-        render.timerDisplay();
-    }
-        
-    function movePart(index, direction) {
-    if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
-    [meetingParts[index], meetingParts[index + direction]] = [meetingParts[index + direction], meetingParts[index]];
-    saveTemplate();
-    render.template();         // Changed from renderTemplate()
-    render.timerDisplay();     // Changed from render.timerDisplay()
-    }
-
-    function removePart(index) {
-    meetingParts.splice(index, 1);
-    saveTemplate();
-    render.template();         // Changed from renderTemplate()
-    render.timerDisplay();     // Changed from render.timerDisplay()
-}
-    
-    function saveTemplate() {
-        localStorage.setItem('meetingTemplate', JSON.stringify(meetingParts));
-    }
-
-        function $(selector) {
-            return document.querySelector(selector);
-        };
-// Initialize application with consolidated event listeners
-    document.addEventListener('DOMContentLoaded', () => {
-        // Initialize DOM cache
-        DOM.init();
-        
-        // Load saved data
-        loadTemplate();
-        loadState();
-        
-        // Initialize UI
-        render.comments();
-        render.timerDisplay();
-        
-        // Add keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && e.target === document.body) {
-                e.preventDefault();
-                toggleTimer();
-            }
-        });
-    });
-
-    // Add visibility change handler
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            cleanupResources();
-        }
-    });
-
-    // Add beforeunload handler
-    window.addEventListener('beforeunload', (e) => {
-        cleanupResources();
-        if (isRunning) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
-    });
-
-    // Add error handler
-    window.addEventListener('error', (event) => {
-        console.error('Global error caught:', {
-            message: event.message,
-            filename: event.filename,
-            lineno: event.lineno,
-            colno: event.colno,
-            error: event.error
-        });
-        
-        // Attempt recovery
-        try {
-            resetData();
-            render.template();
-            render.timerDisplay();
-            alert('An error occurred. The application has been reset.');
-        } catch (recoveryError) {
-            console.error('Recovery failed:', recoveryError);
-            alert('Application error. Please refresh the page.');
-        }
-    });
     </script>
 </body>
 </html>
