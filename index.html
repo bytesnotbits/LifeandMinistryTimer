@@ -131,6 +131,7 @@
         if (activePart !== partIndex || !isRunning) {
             alert('Part timer must be running to record comments!');
             return;
+        }
         // Prevent multiple active comments
         if (activeComment && activeComment.partIndex !== partIndex) return;
     
@@ -162,10 +163,35 @@
                     }
                 }, 200);
             }
+        if (duration > COMMENT_LIMIT) {
+                duration = COMMENT_LIMIT;
+                alert('Maximum comment duration reached!');
+            }
+        try {
+            localStorage.setItem('meetingComments', JSON.stringify(comments));
+        } catch (error) {
+            console.error('Failed to save comments:', error);
+            // Handle local storage errors
+            }
+        if (duration < 5) { // Minimum 5 seconds
+            alert('Comment too short!');
+            return;
+        }
             renderTimerDisplay();
         }
-    }
 
+        function saveState() {
+            localStorage.setItem('elapsedTimes', JSON.stringify(elapsedTimes));
+            localStorage.setItem('activePart', activePart);
+        }
+        function loadState() {
+            const savedTimes = localStorage.getItem('elapsedTimes');
+            if (savedTimes) {
+                elapsedTimes = JSON.parse(savedTimes);
+            }
+            activePart = parseInt(localStorage.getItem('activePart')) || 0;
+        }
+        
     function updateGlobalComments() {
         // Update stats
         document.getElementById('globalCommentCount').textContent = comments.length;
@@ -247,11 +273,13 @@
         }
 
      function updatePart(index, field, value) {
-        meetingParts[index][field] = field === 'duration' ? value * 60 : value;
-        saveTemplate();
-        renderTimerDisplay();
-    }
-
+         if (field === 'duration') {
+             value = Math.max(0, parseInt(value, 10) || 0) * 60;
+             }
+         meetingParts[index][field] = value;
+         saveTemplate();
+         renderTimerDisplay();
+         }
     function movePart(index, direction) {
         if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
         [meetingParts[index], meetingParts[index + direction]] = [meetingParts[index + direction], meetingParts[index]];
@@ -309,7 +337,7 @@
                                 ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
                                 </button>
                                 `<span id="currentComment-${index}" class="text-sm ${activeComment ? '' : 'invisible'}">
-                                    ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
+                                    `${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}`
                                 </span>
                             </div>
                         </div>
