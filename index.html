@@ -20,8 +20,8 @@
                     </div>
                 </div>
                 
-                <div id="partsTemplate" class="space-y-4">
-                    <!-- Parts will be inserted here -->
+                addeventlistener
+                    <!-- What parts go here? -->
                 </div>
                 
                 <button onclick="addPart()" class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
@@ -84,38 +84,38 @@ function getProgressInfo(elapsed, duration) {
     return { progress, color };
 }
  
-    function renderTemplate() {
-        const container = document.getElementById('partsTemplate');
-        if (!container) return;
-        
-        container.innerHTML = meetingParts.map((part, index) => `
-            <div class="flex items-center space-x-2">
-                <div class="flex-1 grid grid-cols-3 gap-2">
-                    <input
-                        value="${part.name}"
-                        onchange="updatePart(${index}, 'name', this.value)"
-                        placeholder="Part Name"
-                        class="px-3 py-2 border rounded"
-                    />
-                    <input
-                        type="number"
-                        value="${part.duration / 60}"
-                        onchange="updatePart(${index}, 'duration', this.value)"
-                        placeholder="Minutes"
-                        class="px-3 py-2 border rounded"
-                    />
-                    <input
-                        value="${part.speaker}"
-                        onchange="updatePart(${index}, 'speaker', this.value)"
-                        placeholder="Speaker"
-                        class="px-3 py-2 border rounded"
-                    />
-                </div>
-                <button onclick="movePart(${index}, -1)" ${index === 0 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↑</button>
-                <button onclick="movePart(${index}, 1)" ${index === meetingParts.length - 1 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↓</button>
-                <button onclick="removePart(${index})" class="px-3 py-2 bg-gray-200 rounded">×</button>
+function renderTemplate() {
+    const container = document.getElementById('partsTemplate');
+    if (!container) return;
+    
+    container.innerHTML = meetingParts.map((part, index) => `
+        <div class="flex items-center space-x-2">
+            <div class="flex-1 grid grid-cols-3 gap-2">
+                <input
+                    value="${part.name}"
+                    onchange="updatePart(${index}, 'name', this.value)"
+                    placeholder="Part Name"
+                    class="px-3 py-2 border rounded"
+                />
+                <input
+                    type="number"
+                    value="${part.duration / 60}"
+                    onchange="updatePart(${index}, 'duration', this.value)"
+                    placeholder="Minutes"
+                    class="px-3 py-2 border rounded"
+                />
+                <input
+                    value="${part.speaker}"
+                    onchange="updatePart(${index}, 'speaker', this.value)"
+                    placeholder="Speaker"
+                    class="px-3 py-2 border rounded"
+                />
             </div>
-    `).join('');
+            <button onclick="movePart(${index}, -1)" ${index === 0 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↑</button>
+            <button onclick="movePart(${index}, 1)" ${index === meetingParts.length - 1 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↓</button>
+            <button onclick="removePart(${index})" class="px-3 py-2 bg-gray-200 rounded">×</button>
+        </div>
+    `).join('');  // FIXED: Added proper closing
 }
      function updatePart(index, field, value) {
         meetingParts[index][field] = field === 'duration' ? value * 60 : value;
@@ -235,7 +235,8 @@ function getProgressInfo(elapsed, duration) {
 
        document.addEventListener('DOMContentLoaded', () => {
            loadTemplate();
-       })
+       });
+        
        function toggleComment() {
            const commentButton = document.querySelector('#commentSection button');
            if (!activeComment) {
