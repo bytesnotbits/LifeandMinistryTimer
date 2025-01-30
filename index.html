@@ -144,28 +144,6 @@
                 </div>
             `).join('');
         }
-        
-        function toggleComment(partIndex) {
-            if (activeComment) {
-                // Save comment
-                comments.push({
-                    duration: Math.floor((Date.now() - activeComment.startTime)/1000),
-                    partIndex: partIndex,  // Make sure to use the parameter
-                    timestamp: Date.now()
-                });
-                activeComment = null;
-            } else {
-                activeComment = {
-                    startTime: Date.now(),
-                    partIndex: partIndex
-                };
-            }
-            
-            // Update storage and UI
-            localStorage.setItem('meetingComments', JSON.stringify(comments));
-            updateGlobalComments();
-            renderTimerDisplay();
-        }
 
 function getProgressInfo(elapsed, duration) {
     const progress = Math.min((elapsed / duration) * 100, 100);
@@ -352,39 +330,6 @@ function renderTemplate() {
             updateGlobalComments();  // Add this line
         });
         
-       function toggleComment() {
-           const commentButton = document.querySelector('#commentSection button');
-           if (!activeComment) {
-           activeComment = { startTime: Date.now() };
-           commentButton.textContent = 'Stop Comment';
-           document.getElementById('currentComment').classList.remove('hidden');
-           commentInterval = setInterval(updateCurrentComment, 1000);
-           } else {
-               comments.push(Math.floor((Date.now() - activeComment.startTime) / 1000));
-               activeComment = null;
-               commentButton.textContent = 'Start Comment';
-               document.getElementById('currentComment').classList.add('hidden');
-               clearInterval(commentInterval);
-               updateCommentStats();
-           }
-       }
-     
-        function updateCurrentComment() {
-            if (!activeComment) return;
-            const duration = Math.floor((Date.now() - activeComment.startTime) / 1000);
-            document.getElementById('currentComment').textContent = `Current Comment Duration: ${formatTime(duration)}`;
-        }
-        
-        function updateCommentStats() {
-            document.getElementById('commentCount').textContent = `Total Comments: ${comments.length}`;
-            if (comments.length > 0) {
-                const average = Math.floor(comments.reduce((a, b) => a + b, 0) / comments.length);
-                document.getElementById('averageDuration').textContent = `Average Duration: ${formatTime(average)}`;
-                } else {
-                    document.getElementById('averageDuration').textContent = 'Average Duration: 0:00';
-                }
-            }
-             
         function resetData() {
             elapsedTimes = {};
             comments = [];
@@ -396,7 +341,6 @@ function renderTemplate() {
             clearInterval(timerInterval);
             clearInterval(commentInterval);
             renderTimerDisplay();
-            updateCommentStats();
         }
 
         function clearLocalStorage() {
