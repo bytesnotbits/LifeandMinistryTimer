@@ -1,12 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- ... (head section remains unchanged) ... -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life and Ministry Timer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .progress-bar {
+            transition: width 1s linear;
+        }
+        .part-card {
+            transition: border-color 0.2s ease;
+        }
+        .part-card:hover {
+            border-color: #3b82f6;
+        }
+    </style>
 </head>
+
 <body class="bg-gray-100 p-4">
     <div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
         <div class="space-y-6">
-            <!-- Template Management (unchanged) -->
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-bold">Meeting Template</h2>
