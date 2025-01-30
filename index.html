@@ -164,16 +164,6 @@
             }
             renderTimerDisplay();
         }
-        if (activeComment) {
-            // When stopping comment
-            clearInterval(commentInterval);
-            commentInterval = null;
-        } else {
-            // When starting comment
-            commentInterval = setInterval(() => {
-                // Update logic...
-            }, 200);
-        }
     }
 
     function updateGlobalComments() {
@@ -318,7 +308,7 @@
                                     class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded">
                                 ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
                                 </button>
-                                \`<span id="currentComment-${index}" class="text-sm ${activeComment ? '' : 'invisible'}">
+                                `<span id="currentComment-${index}" class="text-sm ${activeComment ? '' : 'invisible'}">
                                     ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
                                 </span>
                             </div>
