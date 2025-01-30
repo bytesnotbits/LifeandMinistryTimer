@@ -318,7 +318,6 @@ function renderTemplate() {
             activePart++;
             if (!isRunning) toggleTimer();
             renderTimerDisplay();
-            updateCommentSection();
         }
         // MODIFIED selectPart() function
         function selectPart(index) {
@@ -328,7 +327,6 @@ function renderTemplate() {
             }
             activePart = index;
             renderTimerDisplay();
-            updateCommentSection();
         }
 
         // MODIFIED toggleTimer() function
@@ -399,7 +397,6 @@ function renderTemplate() {
             clearInterval(commentInterval);
             renderTimerDisplay();
             updateCommentStats();
-            updateCommentSection();
         }
 
         function clearLocalStorage() {
