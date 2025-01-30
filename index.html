@@ -18,6 +18,9 @@
         .part-card:hover {
             border-color: #3b82f6;
         }
+        #commentSection {
+            transition: all 0.3s ease;
+        }
     </style>
 </head>
 
@@ -58,11 +61,20 @@
             </div>
 
             <!-- Comment Tracking (unchanged) -->
-            <div id="commentSection" class="space-y-4 hidden">
-                <!-- ... (comment section unchanged) ... -->
+            <div id="commentSection" class="space-y-4">
+                <h3 class="text-lg font-semibold">Comment Tracking</h3>
+                <div id="commentControls" class="space-y-2">
+                    <button onclick="toggleComment()" class="px-4 py-2 bg-purple-500 text-white rounded">
+                        Start Comment
+                        </button>
+                    <div id="currentComment" class="hidden"></div>
+                </div>
+                <div id="commentStats">
+                    <p id="commentCount">Total Comments: 0</p>
+                    <p id="averageDuration">Average Duration: 0:00</p>
+                </div>
             </div>
         </div>
-    </div>
 
     <script>
  // Constants and State
@@ -295,13 +307,25 @@ function renderTemplate() {
             if (comments.length > 0) {
                 const average = Math.floor(comments.reduce((a, b) => a + b, 0) / comments.length);
                 document.getElementById('averageDuration').textContent = `Average Duration: ${formatTime(average)}`;
+                } else {
+                    document.getElementById('averageDuration').textContent = 'Average Duration: 0:00';
+                }
             }
-        }
         
         function updateCommentSection() {
-            document.getElementById('commentSection').classList.toggle('hidden', 
-            activePart === null || meetingParts[activePart].name !== 'Spiritual Gems');
-        }
+            const commentSection = document.getElementById('commentSection');
+            const isSpiritualGems = activePart !== null && 
+                meetingParts[activePart].name.toLowerCase() === 'spiritual gems';
+            
+            // Always show section, only hide controls
+            commentSection.classList.remove('hidden');
+            document.getElementById('commentControls').classList.toggle('hidden', !isSpiritualGems);
+            
+            // Stop any active comment when leaving Spiritual Gems
+            if (!isSpiritualGems && activeComment) {
+                toggleComment();
+                }
+            }
         
         function resetData() {
             elapsedTimes = {};
