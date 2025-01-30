@@ -47,53 +47,66 @@
 </head>
 
 <body class="bg-gray-100 p-4">
-    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
-        <div class="space-y-6">
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold">Meeting Template</h2>
-                    <div class="space-x-2">
-                        <button onclick="resetData()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                            Reset Timers
-                        </button>
-                        <button onclick="clearLocalStorage()" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-                            Clear Template
-                        </button>
-                    </div>
+    <main class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+        <!-- Template Section -->
+        <section aria-labelledby="template-heading" class="space-y-6">
+            <header class="flex justify-between items-center">
+                <h1 id="template-heading" class="text-xl font-bold">Meeting Template</h1>
+                <div class="space-x-2">
+                    <button 
+                        onclick="resetData()" 
+                        class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                        aria-label="Reset all timers">
+                        Reset Timers
+                    </button>
+                    <button 
+                        onclick="clearLocalStorage()" 
+                        class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                        aria-label="Clear template and reset all data">
+                        Clear Template
+                    </button>
                 </div>
-                
-                <div id="partsTemplate" class="space-y-2">
-                    <!-- Parts will be rendered here -->
-                </div>
-                
-                <button onclick="addPart()" class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                    Add Part
-                </button>
-            </div>
-
-             <!-- Global Comment History -->
-            <div class="mt-8 p-4 bg-gray-50 rounded-lg">
-                <h3 class="text-lg font-bold mb-4">Comment History</h3>
-                <div id="globalCommentStats" class="mb-4">
-                    <p>Total Comments: <span id="globalCommentCount" class="font-semibold">0</span></p>
-                    <p>Average Duration: <span id="globalAverageDuration" class="font-semibold">0:00</span></p>
-                    </div>
-                <div id="commentHistory" class="space-y-2 max-h-40 overflow-y-auto">
-                    <!-- Comments will be listed here -->
-                </div>
+            </header>
+            
+            <div id="partsTemplate" class="space-y-2" role="form" aria-label="Meeting parts template">
+                <!-- Parts will be rendered here -->
             </div>
             
-            <!-- Timer Display Section -->
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold">Meeting Timer</h2>
-                    <!-- REMOVED BUTTONS FROM HERE -->
-                </div>
-                <div id="partsDisplay" class="space-y-4">
-                    <!-- Timer displays will be inserted here -->
-                </div>
+            <button 
+                onclick="addPart()" 
+                class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                aria-label="Add new meeting part">
+                Add Part
+            </button>
+        </section>
+
+        <!-- Comment History Section -->
+        <section aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h2 id="comment-heading" class="text-lg font-bold mb-4">Comment History</h2>
+            <div id="globalCommentStats" class="mb-4">
+                <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p>
+                <p>Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span></p>
             </div>
-        </div>
+            <div id="commentHistory" 
+                 class="space-y-2 max-h-40 overflow-y-auto"
+                 role="log" 
+                 aria-label="Comment history list">
+                <!-- Comments will be listed here -->
+            </div>
+        </section>
+        
+        <!-- Timer Display Section -->
+        <section aria-labelledby="timer-heading" class="space-y-4 mt-8">
+            <h2 id="timer-heading" class="text-xl font-bold">Meeting Timer</h2>
+            <div id="partsDisplay" 
+                 class="space-y-4"
+                 role="region" 
+                 aria-label="Active timers">
+                <!-- Timer displays will be inserted here -->
+            </div>
+        </section>
+    </main>
+</body>
 
     <script>
  // Constants and State
@@ -250,31 +263,66 @@
         if (!container) return;
         
         container.innerHTML = meetingParts.map((part, index) => `
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-2" role="group" aria-label="Meeting part ${index + 1}">
                 <div class="flex-1 grid grid-cols-3 gap-2">
-                    <input
-                        value="${sanitizeInput(part.name)}"
-                        onchange="updatePart(${index}, 'name', this.value)"
-                        placeholder="Part Name"
-                        class="px-3 py-2 border rounded"
-                    />
-                    <input
-                        type="number"
-                        value="${part.duration / 60}"
-                        onchange="updatePart(${index}, 'duration', this.value)"
-                        placeholder="Minutes"
-                        class="px-3 py-2 border rounded"
-                    />
-                    <input
-                        value="${sanitizeInput(part.speaker)}"
-                        onchange="updatePart(${index}, 'speaker', this.value)"
-                        placeholder="Speaker"
-                        class="px-3 py-2 border rounded"
-                    />
+                    <div class="flex flex-col">
+                        <label for="part-name-${index}" class="sr-only">Part Name</label>
+                        <input
+                            id="part-name-${index}"
+                            value="${sanitizeInput(part.name)}"
+                            onchange="updatePart(${index}, 'name', this.value)"
+                            placeholder="Part Name"
+                            class="px-3 py-2 border rounded"
+                            aria-label="Name for part ${index + 1}"
+                        />
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="part-duration-${index}" class="sr-only">Duration in Minutes</label>
+                        <input
+                            id="part-duration-${index}"
+                            type="number"
+                            value="${part.duration / 60}"
+                            onchange="updatePart(${index}, 'duration', this.value)"
+                            placeholder="Minutes"
+                            class="px-3 py-2 border rounded"
+                            aria-label="Duration in minutes for part ${index + 1}"
+                            min="0"
+                        />
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="part-speaker-${index}" class="sr-only">Speaker Name</label>
+                        <input
+                            id="part-speaker-${index}"
+                            value="${sanitizeInput(part.speaker)}"
+                            onchange="updatePart(${index}, 'speaker', this.value)"
+                            placeholder="Speaker"
+                            class="px-3 py-2 border rounded"
+                            aria-label="Speaker name for part ${index + 1}"
+                        />
+                    </div>
                 </div>
-                <button onclick="movePart(${index}, -1)" ${index === 0 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↑</button>
-                <button onclick="movePart(${index}, 1)" ${index === meetingParts.length - 1 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↓</button>
-                <button onclick="removePart(${index})" class="px-3 py-2 bg-gray-200 rounded">×</button>
+                <button 
+                    onclick="movePart(${index}, -1)" 
+                    ${index === 0 ? 'disabled' : ''} 
+                    class="px-3 py-2 bg-gray-200 rounded"
+                    aria-label="Move part ${index + 1} up"
+                    ${index === 0 ? 'aria-disabled="true"' : ''}>
+                    ↑
+                </button>
+                <button 
+                    onclick="movePart(${index}, 1)" 
+                    ${index === meetingParts.length - 1 ? 'disabled' : ''} 
+                    class="px-3 py-2 bg-gray-200 rounded"
+                    aria-label="Move part ${index + 1} down"
+                    ${index === meetingParts.length - 1 ? 'aria-disabled="true"' : ''}>
+                    ↓
+                </button>
+                <button 
+                    onclick="removePart(${index})" 
+                    class="px-3 py-2 bg-gray-200 rounded"
+                    aria-label="Remove part ${index + 1}">
+                    ×
+                </button>
             </div>
         `).join('');
     }
@@ -334,48 +382,73 @@
         container.innerHTML = meetingParts.map((part, index) => {
             const elapsed = elapsedTimes[index] || 0;
             const { progress, color } = getProgressInfo(elapsed, part.duration);
+            const timeRemaining = part.duration - elapsed;
             
             return `
-                <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
-                     onclick="selectPart(${index})">
+                <div 
+                    class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
+                    onclick="selectPart(${index})"
+                    role="region"
+                    aria-label="Timer for ${sanitizeInput(part.name)}"
+                    aria-selected="${activePart === index}"
+                >
                     <div class="flex justify-between mb-2">
                         <span class="font-medium">${sanitizeInput(part.name)}</span>
-                        <span>${sanitizeInput(part.speaker)}</span>
+                        <span aria-label="Speaker">${sanitizeInput(part.speaker)}</span>
                     </div>
-                    <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative">
+                    <div 
+                        class="h-8 bg-gray-200 rounded-full overflow-hidden relative"
+                        role="progressbar"
+                        aria-valuemin="0"
+                        aria-valuemax="${part.duration}"
+                        aria-valuenow="${elapsed}"
+                        aria-label="Progress for ${sanitizeInput(part.name)}"
+                    >
                         <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
-                            <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
+                            <span class="absolute left-2 text-white" aria-label="Elapsed time">${formatTime(elapsed)}</span>
                         </div>
-                        <span class="absolute right-2">${formatTime(part.duration - elapsed)}</span>
+                        <span class="absolute right-2" aria-label="Time remaining">${formatTime(timeRemaining)}</span>
                     </div>
     
-                    <!-- NEW COMMENT CONTROLS (only for Spiritual Gems) -->
-                   ${part.enableComments ? `
+                    ${part.enableComments ? `
                         <div class="mt-4 space-y-2">
                             <div class="flex items-center gap-2">
-                                <button onclick="event.stopPropagation(); toggleComment(${index})" 
-                                    class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded">
-                                ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
+                                <button 
+                                    onclick="event.stopPropagation(); toggleComment(${index})" 
+                                    class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded"
+                                    aria-label="${activeComment?.partIndex === index ? 'Stop comment' : 'Start comment'}"
+                                >
+                                    ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
                                 </button>
-                                <span id="currentComment-${index}" class="text-sm ${activeComment ? '' : 'invisible'}">
+                                <span 
+                                    id="currentComment-${index}" 
+                                    class="text-sm ${activeComment ? '' : 'invisible'}"
+                                    aria-live="polite"
+                                    role="timer"
+                                >
                                     ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
                                 </span>
                             </div>
                         </div>
                     ` : ''}
-    
-                    <!-- EXISTING TIMER CONTROLS (keep these) -->
-                    ${activePart === index ? `
-                        <div class="mt-4 flex space-x-2">
-                            <button onclick="event.stopPropagation(); toggleTimer()" 
-                                    class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600">
-                                ${isRunning ? 'Pause' : 'Start'}
-                            </button>
-                            <button onclick="event.stopPropagation(); startNextPart()" 
-                                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                                Begin Next Part
-                            </button>
-                        </div>
+
+                ${activePart === index ? `
+                    <div class="mt-4 flex space-x-2">
+                        <button 
+                            onclick="event.stopPropagation(); toggleTimer()" 
+                            class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600"
+                            aria-label="${isRunning ? 'Pause timer' : 'Start timer'}"
+                        >
+                            ${isRunning ? 'Pause' : 'Start'}
+                        </button>
+                        <button 
+                            onclick="event.stopPropagation(); startNextPart()" 
+                            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                            aria-label="Begin next part"
+                        >
+                            Begin Next Part
+                        </button>
+                    </div>
                     ` : ''}
                 </div>
             `;
