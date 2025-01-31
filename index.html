@@ -172,6 +172,20 @@ function formatTime(seconds) {
     const sign = seconds < 0 ? '-' : '';
     return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
 }
+
+function updatePart(index, field, value) {
+    if (field === 'duration') {
+        value = Math.round(Math.max(0, parseFloat(value) || 0) * 60); // Convert minutes to seconds
+    } else if (field === 'enableComments') {
+        value = Boolean(value); // Ensure boolean type
+    } else {
+        value = sanitizeInput(value);
+    }
+    meetingParts[index][field] = value;
+    saveTemplate();
+    render.template();
+    render.timerDisplay();
+}
         
 // END UTILITY FUNCTIONS
 //----------------------------------------------------------------------------------------------
