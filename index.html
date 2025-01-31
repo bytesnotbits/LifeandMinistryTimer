@@ -407,13 +407,17 @@ timerDisplay: function() {
                         </div>
                     </div>
                 ` : ''}
-                ${activePart === index ? `
-                    <div class="mt-4 flex space-x-2">
-                        <button class="timer-toggle px-4 py-2 text-white rounded hover:bg-blue-600"></button>
-                        <button class="next-part px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"></button>
-                    </div>
-                ` : ''}
-            `;
+${activePart === index ? `
+    <div class="mt-4 flex space-x-2">
+        <button class="timer-toggle px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:${isRunning ? 'bg-red-600' : 'bg-blue-600'}">
+            ${isRunning ? 'Stop' : 'Start'}
+        </button>
+        <button class="next-part px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+            Begin Next Part
+        </button>
+    </div>
+` : ''}
+`;
             
             // Add event listeners to new elements
             card.addEventListener('click', () => selectPart(index));
@@ -430,16 +434,22 @@ timerDisplay: function() {
         card.className = `p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}`;
         
         // Update progress bar
-        const progressBar = card.querySelector('.progress-bar');
-        progressBar.style.width = `${progress}%`;
-        progressBar.className = `h-full ${color} progress-bar absolute`;
-        
-        // Update text elements
-        card.querySelector('.font-medium').textContent = sanitizeInput(part.name);
-        card.querySelector('.speaker-display').textContent = sanitizeInput(part.speaker);
-        card.querySelector('.timer-elapsed').textContent = formatTime(elapsed);
-        card.querySelector('.timer-remaining').textContent = formatTime(part.duration - elapsed);
+const progressBar = card.querySelector('.progress-bar');
+if (progressBar) {
+    progressBar.style.width = `${progress}%`;
+    progressBar.className = `h-full ${color} progress-bar absolute`;
+}
 
+// Update text elements with null checks:
+const nameElement = card.querySelector('.font-medium');
+const speakerElement = card.querySelector('.speaker-display');
+const elapsedElement = card.querySelector('.timer-elapsed');
+const remainingElement = card.querySelector('.timer-remaining');
+
+if (nameElement) nameElement.textContent = sanitizeInput(part.name);
+if (speakerElement) speakerElement.textContent = sanitizeInput(part.speaker);
+if (elapsedElement) elapsedElement.textContent = formatTime(elapsed);
+if (remainingElement) remainingElement.textContent = formatTime(part.duration - elapsed);
         // Update comment section if present
         if (part.enableComments) {
             const commentButton = card.querySelector('.comment-button');
@@ -450,17 +460,36 @@ timerDisplay: function() {
                 formatTime((elapsedTimes[index] || 0) - activeComment.startElapsed) : '0:00';
         }
 
+// Modify the card creation logic to include data attributes:
+card.innerHTML = `
+    <div class="flex justify-between mb-2">
+        <span class="font-medium" data-part="name"></span>
+        <span class="speaker-display" data-part="speaker"></span>
+    </div>
+    ...
+`;
+
+// Then use these data attributes for safer selection:
+card.querySelector('[data-part="name"]');        
+
         // Update control buttons if active part
-        if (activePart === index) {
-            const timerToggle = card.querySelector('.timer-toggle');
-            const nextPartBtn = card.querySelector('.next-part');
-            timerToggle.className = `timer-toggle px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:${isRunning ? 'bg-red-600' : 'bg-blue-600'}`;
-            timerToggle.textContent = isRunning ? 'Stop' : 'Start';
-            nextPartBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                startNextPart();
-            });
-        }
+if (activePart === index) {
+    const timerToggle = card.querySelector('.timer-toggle');
+    const nextPartBtn = card.querySelector('.next-part');
+
+    // Only update if elements exist
+    if (timerToggle) {
+        timerToggle.className = `timer-toggle px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:${isRunning ? 'bg-red-600' : 'bg-blue-600'}`;
+        timerToggle.textContent = isRunning ? 'Stop' : 'Start';
+    }
+
+    if (nextPartBtn) {
+        nextPartBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startNextPart();
+        });
+    }
+}
 
         return card;
     });
