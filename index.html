@@ -638,6 +638,11 @@ function updatePart(index, field, value) {
 }
         
 function toggleTimer() {
+    // Prevent timer toggle if comment is active in another part
+    if (activeComment && activeComment.partIndex !== activePart) {
+        alert('Finish or stop the active comment first!');
+        return;
+    }
     if (activePart === null) {
         activePart = 0;
         elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
@@ -748,6 +753,27 @@ function updateTimer() {
 
 function startNextPart() {
     if (activePart === null || activePart >= meetingParts.length - 1) return;
+    
+    // Stop any active comment when changing parts
+    if (activeComment) {
+        const partIndex = activeComment.partIndex;
+        const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
+        
+        if (duration >= 5) {
+            const finalDuration = Math.min(duration, COMMENT_LIMIT);
+            comments.push({
+                duration: finalDuration,
+                timestamp: Date.now(),
+                partName: meetingParts[partIndex].name
+            });
+            localStorage.setItem('meetingComments', JSON.stringify(comments));
+            render.comments();
+        }
+        
+        clearInterval(commentInterval);
+        activeComment = null;
+    }
+
     activePart++;
     if (!isRunning) toggleTimer();
     render.timerDisplay();
