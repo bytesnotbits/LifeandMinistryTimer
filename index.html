@@ -717,55 +717,37 @@ function toggleComment(partIndex) {
         alert('Part timer must be running to record comments!');
         return;
     }
-    
-    if (activeComment && activeComment.partIndex !== partIndex) return;
 
     if (activeComment) {
-        const duration = Math.floor((Date.now() - activeComment.startTime) / 1000);
-        
+        // Calculate duration based on elapsed time
+        const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
         if (duration < 5) {
             alert('Comment too short!');
             return;
         }
-        
-        let finalDuration = duration;
-        if (duration > COMMENT_LIMIT) {
-            finalDuration = COMMENT_LIMIT;
-            alert('Maximum comment duration reached!');
-        }
-
+        const finalDuration = Math.min(duration, COMMENT_LIMIT);
         comments.push({
             duration: finalDuration,
             timestamp: Date.now(),
             partName: meetingParts[partIndex].name
         });
-        
-        try {
-            localStorage.setItem('meetingComments', JSON.stringify(comments));
-        } catch (error) {
-            console.error('Failed to save comments:', error);
-            alert('Failed to save comment. Please try again.');
-        }
-        
+        localStorage.setItem('meetingComments', JSON.stringify(comments));
         activeComment = null;
         clearInterval(commentInterval);
         render.comments();
     } else {
         activeComment = {
-            startTime: Date.now(),
+            startElapsed: elapsedTimes[partIndex] || 0,
             partIndex: partIndex
         };
-        
         commentInterval = setInterval(() => {
             const currentElement = document.getElementById(`currentComment-${partIndex}`);
             if (currentElement) {
-                currentElement.textContent = formatTime(
-                    Math.floor((Date.now() - activeComment.startTime) / 1000)
-                );
+                const currentElapsed = elapsedTimes[partIndex] || 0;
+                currentElement.textContent = formatTime(currentElapsed - activeComment.startElapsed);
             }
         }, 200);
     }
-    
     render.timerDisplay();
 }
 
