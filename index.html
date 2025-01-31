@@ -412,7 +412,7 @@ const performanceMonitor = {
                                       class="text-sm ${activeComment ? '' : 'invisible'}"
                                       aria-live="polite"
                                       role="timer">
-                                    ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
+                                    ${activeComment ? formatTime((elapsedTimes[index] || 0) - activeComment.startElapsed) : '0:00'}
                                 </span>
                             </div>
                         </div>
@@ -798,8 +798,7 @@ function toggleComment(partIndex) {
         // Calculate duration based on elapsed time
         const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
         if (duration < 5) {
-            alert('Comment too short!');
-            return;
+            return; // IGNORE COMMENTS LESS THAN 5 SECONDS
         }
         const finalDuration = Math.min(duration, COMMENT_LIMIT);
         comments.push({
@@ -820,7 +819,8 @@ function toggleComment(partIndex) {
             const currentElement = document.getElementById(`currentComment-${partIndex}`);
             if (currentElement) {
                 const currentElapsed = elapsedTimes[partIndex] || 0;
-                currentElement.textContent = formatTime(currentElapsed - activeComment.startElapsed);
+                const commentDuration = currentElapsed - activeComment.startElapsed;
+                currentElement.textContent = formatTime(Math.max(0, commentDuration));
             }
         }, 200);
     }
