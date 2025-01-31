@@ -47,56 +47,491 @@
 </head>
 
 <body class="bg-gray-100 p-4">
-    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
-        <div class="space-y-6">
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold">Meeting Template</h2>
-                    <div class="space-x-2">
-                        <button onclick="resetData()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                            Reset Timers
-                        </button>
-                        <button onclick="clearLocalStorage()" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-                            Clear Template
-                        </button>
-                    </div>
+    <main class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+        <!-- Template Section -->
+        <section aria-labelledby="template-heading" class="space-y-6">
+            <header class="flex justify-between items-center">
+                <h1 id="template-heading" class="text-xl font-bold">Meeting Template</h1>
+                <div class="space-x-2">
+                    <button 
+                        onclick="resetData()" 
+                        class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                        aria-label="Reset all timers">
+                        Reset Timers
+                    </button>
+                    <button 
+                        onclick="clearLocalStorage()" 
+                        class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                        aria-label="Clear template and reset all data">
+                        Clear Template
+                    </button>
                 </div>
-                
-                <div id="partsTemplate" class="space-y-2">
-                    <!-- Parts will be rendered here -->
-                </div>
-                
-                <button onclick="addPart()" class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                    Add Part
-                </button>
-            </div>
-
-             <!-- Global Comment History -->
-            <div class="mt-8 p-4 bg-gray-50 rounded-lg">
-                <h3 class="text-lg font-bold mb-4">Comment History</h3>
-                <div id="globalCommentStats" class="mb-4">
-                    <p>Total Comments: <span id="globalCommentCount" class="font-semibold">0</span></p>
-                    <p>Average Duration: <span id="globalAverageDuration" class="font-semibold">0:00</span></p>
-                    </div>
-                <div id="commentHistory" class="space-y-2 max-h-40 overflow-y-auto">
-                    <!-- Comments will be listed here -->
-                </div>
+            </header>
+            
+            <div id="partsTemplate" class="space-y-2" role="form" aria-label="Meeting parts template">
+                <!-- Parts will be rendered here -->
             </div>
             
-            <!-- Timer Display Section -->
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold">Meeting Timer</h2>
-                    <!-- REMOVED BUTTONS FROM HERE -->
-                </div>
-                <div id="partsDisplay" class="space-y-4">
-                    <!-- Timer displays will be inserted here -->
-                </div>
+            <button 
+                onclick="addPart()" 
+                class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                aria-label="Add new meeting part">
+                Add Part
+            </button>
+        </section>
+
+        <!-- Comment History Section -->
+        <section aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h2 id="comment-heading" class="text-lg font-bold mb-4">Comment History</h2>
+            <div id="globalCommentStats" class="mb-4">
+                <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p>
+                <p>Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span></p>
             </div>
-        </div>
+            <div id="commentHistory" 
+                 class="space-y-2 max-h-40 overflow-y-auto"
+                 role="log" 
+                 aria-label="Comment history list">
+                <!-- Comments will be listed here -->
+            </div>
+        </section>
+        
+        <!-- Timer Display Section -->
+        <section aria-labelledby="timer-heading" class="space-y-4 mt-8">
+            <h2 id="timer-heading" class="text-xl font-bold">Meeting Timer</h2>
+            <div id="partsDisplay" 
+                 class="space-y-4"
+                 role="region" 
+                 aria-label="Active timers">
+                <!-- Timer displays will be inserted here -->
+            </div>
+        </section>
+    </main>
+</body>
 
     <script>
- // Constants and State
+//---------------------------------------------------------------------------------------------- 
+//----------------------------------------------------------------------------------------------
+// BEGIN DOM CACHE
+const DOM = {
+    partsTemplate: null,
+    partsDisplay: null,
+    commentHistory: null,
+    globalCommentCount: null,
+    globalAverageDuration: null,
+    init() {
+        this.partsTemplate = document.getElementById('partsTemplate');
+        this.partsDisplay = document.getElementById('partsDisplay');
+        this.commentHistory = document.getElementById('commentHistory');
+        this.globalCommentCount = document.getElementById('globalCommentCount');
+        this.globalAverageDuration = document.getElementById('globalAverageDuration');
+    }
+};
+
+// END DOM CACHE
+//----------------------------------------------------------------------------------------------  
+//----------------------------------------------------------------------------------------------        
+// BEGIN UTILITY FUNCTIONS
+        
+function throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+function trackError(fn, context = 'unknown') {
+    return function(...args) {
+        try {
+            return fn.apply(this, args);
+        } catch (error) {
+            console.error(`Error in ${context}:`, error);
+            // You could add additional error handling here, like sending to an error tracking service
+            throw error; // Re-throw to maintain original behavior
+        }
+    };
+}
+
+function sanitizeInput(input) {
+    if (typeof input !== 'string') return input;
+    return input
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .trim();
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(Math.abs(seconds) / 60);
+    const secs = Math.abs(seconds) % 60;
+    const sign = seconds < 0 ? '-' : '';
+    return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// END UTILITY FUNCTIONS
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+// BEGIN PROGRESS MANAGEMENT
+
+// Cache progress calculations
+const progressCache = {
+    lastUpdate: {},
+    getProgressInfo(elapsed, duration, partIndex) {
+        const cacheKey = `${elapsed}-${duration}-${partIndex}`;
+        if (this.lastUpdate[partIndex] === cacheKey) {
+            return this.lastUpdate[`${partIndex}-result`];
+        }
+
+        const progress = Math.min((elapsed / duration) * 100, 100);
+        const timeRemaining = duration - elapsed;
+        let color = 'bg-blue-500';
+        
+        if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
+            color = 'bg-yellow-500';
+        } else if (timeRemaining <= 0) {
+            color = 'bg-red-500';
+        }
+
+        const result = { progress, color };
+        this.lastUpdate[partIndex] = cacheKey;
+        this.lastUpdate[`${partIndex}-result`] = result;
+        return result;
+    }
+};
+
+function getProgressInfo(elapsed, duration, partIndex = null) {
+    // Use cache if partIndex is provided
+    if (partIndex !== null) {
+        return progressCache.getProgressInfo(elapsed, duration, partIndex);
+    }
+
+    // Fallback for cases where partIndex isn't provided
+    const progress = Math.min((elapsed / duration) * 100, 100);
+    const timeRemaining = duration - elapsed;
+    let color = 'bg-blue-500';
+    
+    if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
+        color = 'bg-yellow-500';
+    } else if (timeRemaining <= 0) {
+        color = 'bg-red-500';
+    }
+
+    return { progress, color };
+}
+ 
+// END PROGRESS MANAGEMENT
+//----------------------------------------------------------------------------------------------        
+//----------------------------------------------------------------------------------------------
+// BEGIN PERFORMANCE MONITOR OBJECT DEFINITION
+
+const performanceMonitor = {
+    renderTimes: new Map(), // Using Map for better performance
+    maxSamples: 100,
+    warningThreshold: 16.67, // 60fps threshold in ms
+    
+    logRenderTime(startTime, operation) {
+        const duration = Date.now() - startTime;
+        
+        if (!this.renderTimes.has(operation)) {
+            this.renderTimes.set(operation, []);
+        }
+        const times = this.renderTimes.get(operation);
+        
+        times.push(duration);
+        
+        if (times.length > this.maxSamples) {
+            times.shift();
+        }
+        
+        if (duration > this.warningThreshold) {
+            console.warn(`Slow ${operation} render: ${duration}ms`);
+            this.logPerformanceData(operation);
+        }
+    },
+    
+    getAverageRenderTime(operation) {
+        const times = this.renderTimes.get(operation);
+        if (!times || times.length === 0) return 0;
+        
+        const sum = times.reduce((acc, curr) => acc + curr, 0);
+        return sum / times.length;
+    },
+    
+    logPerformanceData(operation) {
+        const times = this.renderTimes.get(operation);
+        if (!times) return;
+        
+        const avg = this.getAverageRenderTime(operation);
+        const max = Math.max(...times);
+        const min = Math.min(...times);
+        
+        console.group(`Performance data for ${operation}`);
+        console.log(`Average: ${avg.toFixed(2)}ms`);
+        console.log(`Max: ${max}ms`);
+        console.log(`Min: ${min}ms`);
+        console.log(`Samples: ${times.length}`);
+        console.groupEnd();
+    }
+};
+
+// END PERFORMANCE MONITOR OBJECT DEFINITION
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+//BEGIN RENDER OBJECT
+
+    const render = {
+        template: function() {
+            if (!DOM.partsTemplate) return;
+            
+            const template = meetingParts.map((part, index) => `
+                <div class="flex items-center space-x-2" role="group" aria-label="Meeting part ${index + 1}">
+                    <div class="flex-1 grid grid-cols-3 gap-2">
+                        <div class="flex flex-col">
+                            <label for="part-name-${index}" class="sr-only">Part Name</label>
+                            <input
+                                id="part-name-${index}"
+                                value="${sanitizeInput(part.name)}"
+                                onchange="updatePart(${index}, 'name', this.value)"
+                                placeholder="Part Name"
+                                class="px-3 py-2 border rounded"
+                                aria-label="Name for part ${index + 1}"
+                            />
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="part-duration-${index}" class="sr-only">Duration in Minutes</label>
+                            <input
+                                id="part-duration-${index}"
+                                type="number"
+                                value="${part.duration / 60}"
+                                onchange="updatePart(${index}, 'duration', this.value)"
+                                placeholder="Minutes"
+                                class="px-3 py-2 border rounded"
+                                aria-label="Duration in minutes for part ${index + 1}"
+                                min="0"
+                            />
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="part-speaker-${index}" class="sr-only">Speaker Name</label>
+                            <input
+                                id="part-speaker-${index}"
+                                value="${sanitizeInput(part.speaker)}"
+                                onchange="updatePart(${index}, 'speaker', this.value)"
+                                placeholder="Speaker"
+                                class="px-3 py-2 border rounded"
+                                aria-label="Speaker name for part ${index + 1}"
+                            />
+                        </div>
+                        <!-- BEGIN COMMENTS CHECKBOX -->
+                            <div class="flex flex-col">
+                                <label class="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        ${part.enableComments ? 'checked' : ''}
+                                        onchange="updatePart(${index}, 'enableComments', this.checked)"
+                                        class="form-checkbox"
+                                        aria-label="Enable comments for this part"
+                                    />
+                                    <span class="text-sm">Comments</span>
+                                </label>
+                            </div>
+                            <!-- END OF COMMENT CHECKBOX -->
+                    </div>
+                    <button 
+                        onclick="movePart(${index}, -1)" 
+                        ${index === 0 ? 'disabled' : ''} 
+                        class="px-3 py-2 bg-gray-200 rounded"
+                        aria-label="Move part ${index + 1} up"
+                        ${index === 0 ? 'aria-disabled="true"' : ''}>
+                        ↑
+                    </button>
+                    <button 
+                        onclick="movePart(${index}, 1)" 
+                        ${index === meetingParts.length - 1 ? 'disabled' : ''} 
+                        class="px-3 py-2 bg-gray-200 rounded"
+                        aria-label="Move part ${index + 1} down"
+                        ${index === meetingParts.length - 1 ? 'aria-disabled="true"' : ''}>
+                        ↓
+                    </button>
+                    <button 
+                        onclick="removePart(${index})" 
+                        class="px-3 py-2 bg-gray-200 rounded"
+                        aria-label="Remove part ${index + 1}">
+                        ×
+                    </button>
+                </div>
+            `).join('');
+            
+            if (DOM.partsTemplate.innerHTML !== template) {
+                DOM.partsTemplate.innerHTML = template;
+            }
+        },
+
+    timerDisplay: function() {
+        if (!DOM.partsDisplay) return;
+        
+        const display = meetingParts.map((part, index) => {
+            const elapsed = elapsedTimes[index] || 0;
+            const { progress, color } = getProgressInfo(elapsed, part.duration, index);
+            
+            return `
+                <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
+                     onclick="selectPart(${index})"
+                     role="region"
+                     aria-label="Timer for ${sanitizeInput(part.name)}"
+                     aria-selected="${activePart === index}">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-medium">${sanitizeInput(part.name)}</span>
+                        <span aria-label="Speaker">${sanitizeInput(part.speaker)}</span>
+                    </div>
+                    <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative"
+                         role="progressbar"
+                         aria-valuemin="0"
+                         aria-valuemax="${part.duration}"
+                         aria-valuenow="${elapsed}"
+                         aria-label="Progress for ${sanitizeInput(part.name)}">
+                        <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
+                            <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
+                        </div>
+                        <span class="absolute right-2">${formatTime(part.duration - elapsed)}</span>
+                    </div>
+    
+                    ${part.enableComments ? `
+                        <div class="mt-4 space-y-2">
+                            <div class="flex items-center gap-2">
+                                <button onclick="event.stopPropagation(); toggleComment(${index})" 
+                                    class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded"
+                                    aria-label="${activeComment?.partIndex === index ? 'Stop comment' : 'Start comment'}">
+                                    ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
+                                </button>
+                                <span id="currentComment-${index}" 
+                                      class="text-sm ${activeComment ? '' : 'invisible'}"
+                                      aria-live="polite"
+                                      role="timer">
+                                    ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
+                                </span>
+                            </div>
+                        </div>
+                    ` : ''}
+    
+                    ${activePart === index ? `
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="event.stopPropagation(); toggleTimer()" 
+                                    class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600"
+                                    aria-label="${isRunning ? 'Stop timer' : 'Start timer'}">
+                                ${isRunning ? 'Stop' : 'Start'}
+                            </button>
+                            <button onclick="event.stopPropagation(); startNextPart()" 
+                                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                    aria-label="Begin next part">
+                                Begin Next Part
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+        
+        if (DOM.partsDisplay.innerHTML !== display) {
+            DOM.partsDisplay.innerHTML = display;
+        }
+    },
+
+    comments: function() {
+        if (!DOM.commentHistory || !DOM.globalCommentCount || !DOM.globalAverageDuration) return;
+        
+        const commentCount = comments.length;
+        const averageDuration = commentCount > 0 
+            ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / commentCount)
+            : 0;
+
+        if (DOM.globalCommentCount.textContent !== commentCount.toString()) {
+            DOM.globalCommentCount.textContent = commentCount;
+        }
+        
+        const formattedAverage = formatTime(averageDuration);
+        if (DOM.globalAverageDuration.textContent !== formattedAverage) {
+            DOM.globalAverageDuration.textContent = formattedAverage;
+        }
+
+        const historyHTML = comments.map((comment, i) => `
+            <div class="bg-white p-2 rounded shadow-sm">
+                <div class="flex justify-between text-sm">
+                    <span>Comment ${i+1}</span>
+                    <span>${formatTime(comment.duration)}</span>
+                </div>
+                <div class="text-xs text-gray-500">
+                    ${new Date(comment.timestamp).toLocaleTimeString()}
+                </div>
+            </div>
+        `).join('');
+
+        if (DOM.commentHistory.innerHTML !== historyHTML) {
+            DOM.commentHistory.innerHTML = historyHTML;
+        }
+    }
+}
+
+//END RENDER OBJECT        
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+//BEGIN PERFORMANCE MONITORING CODE
+        
+ // Update render methods to include performance monitoring
+Object.keys(render).forEach(key => {
+    const originalMethod = render[key];
+    render[key] = function(...args) {
+        const startTime = Date.now();
+        const result = originalMethod.apply(this, args);
+        performanceMonitor.logRenderTime(startTime, key);
+        return result;
+    };
+});
+
+// Add performance monitoring to key functions
+    ['toggleTimer', 'startNextPart', 'toggleComment'].forEach(fnName => {
+        const originalFn = window[fnName];
+        window[fnName] = trackError(function(...args) {
+            const startTime = Date.now();
+            const result = originalFn.apply(this, args);
+            performanceMonitor.logRenderTime(fnName, startTime);
+            return result;
+        }, fnName);
+    });
+    
+    // Add periodic performance logging
+    setInterval(() => {
+        if (isRunning) {
+            Object.keys(render).forEach(key => {
+                performanceMonitor.logPerformanceData(key);
+            });
+        }
+    }, 60000); // Log every minute while running
+
+// Add debounced save function to reduce storage operations
+const debouncedSave = (function() {
+    let timeout;
+    return function(data, key) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (error) {
+                console.error('Failed to save to localStorage:', error);
+            }
+        }, 1000); // Wait 1 second after last change before saving
+    };
+})();
+
+//END PERFORMANCE MONITORING CODE
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+//BEGIN CONSTANTS AND STATE
+        
     const DEFAULT_PARTS = [
         { name: 'Opening Comments', duration: 180, speaker: '', enableComments: false },
         { name: 'Treasures', duration: 600, speaker: '', enableComments: false },
@@ -115,328 +550,338 @@
         let elapsedTimes = {};
         let timerInterval = null;
         let commentInterval = null;
-
-    function formatTime(seconds) {
-        const mins = Math.floor(Math.abs(seconds) / 60);
-        const secs = Math.abs(seconds) % 60;
-        const sign = seconds < 0 ? '-' : '';
-        return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-    // Comment Management
+        // Comment Management
         let comments = JSON.parse(localStorage.getItem('meetingComments')) || [];
         let activeComment = null;
+
+//END CONSTANTS AND STATE
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+// BEGIN STATE MANAGEMENT
+
+function saveState() {
+    localStorage.setItem('elapsedTimes', JSON.stringify(elapsedTimes));
+    localStorage.setItem('activePart', activePart);
+}
+
+function loadState() {
+    const savedTimes = localStorage.getItem('elapsedTimes');
+    if (savedTimes) {
+        elapsedTimes = JSON.parse(savedTimes);
+    }
+    activePart = parseInt(localStorage.getItem('activePart')) || 0;
+}
+
+function saveTemplate() {
+    localStorage.setItem('meetingTemplate', JSON.stringify(meetingParts));
+}
+
+function loadTemplate() {
+    const saved = localStorage.getItem('meetingTemplate');
+    meetingParts = saved ? JSON.parse(saved) : DEFAULT_PARTS;
+    activePart = meetingParts.length > 0 ? 0 : null;
+    render.template();
+    render.timerDisplay();
+}
+
+function resetData() {
+    elapsedTimes = {};
+    comments = [];
+    activeComment = null;
+    localStorage.removeItem('meetingComments');
+    render.comments();
+    activePart = null;
+    isRunning = false;
+    clearInterval(timerInterval);
+    clearInterval(commentInterval);
+    commentInterval = null;
+    render.timerDisplay();
+}
+
+function clearLocalStorage() {
+    localStorage.removeItem('meetingTemplate');
+    meetingParts = DEFAULT_PARTS;
+    resetData();
+    render.template();
+    render.timerDisplay();
+}
+
+// END STATE MANAGEMENT
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+// BEGIN TEMPLATE MANAGEMENT
+
+function addPart() {
+    meetingParts.push({ 
+        name: '', 
+        duration: 180, 
+        speaker: '', 
+        enableComments: false
+    });
+    saveTemplate();
+    render.template();
+    render.timerDisplay();
+}
+
+function updatePart(index, field, value) {
+    if (field === 'duration') {
+        value = Math.round(Math.max(0, parseFloat(value) || 0) * 60); // Convert minutes to seconds
+    } else if (field === 'enableComments') {
+        value = Boolean(value); // Ensure boolean type
+    } else {
+        value = sanitizeInput(value);
+    }
+    meetingParts[index][field] = value;
+    saveTemplate();
+    render.template();
+    render.timerDisplay();
+}
         
-    function toggleComment(partIndex) {
-        // Prevent comments if timer isn't running for this part
-        if (activePart !== partIndex || !isRunning) {
-            alert('Part timer must be running to record comments!');
+function toggleTimer() {
+    if (activePart === null) {
+        activePart = 0;
+        elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
+    }
+
+    isRunning = !isRunning;
+
+    if (isRunning) {
+        timerInterval = setInterval(updateTimer, 1000);
+    } else {
+        clearInterval(timerInterval);
+        // Stop active comment if exists
+        if (activeComment) {
+            const partIndex = activeComment.partIndex;
+            const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
+            if (duration >= 5) {
+                const finalDuration = Math.min(duration, COMMENT_LIMIT);
+                comments.push({
+                    duration: finalDuration,
+                    timestamp: Date.now(),
+                    partName: meetingParts[partIndex].name
+                });
+                localStorage.setItem('meetingComments', JSON.stringify(comments));
+                render.comments();
+            }
+            clearInterval(commentInterval);
+            activeComment = null;
+            render.timerDisplay();
+        }
+    }
+    render.timerDisplay();
+}
+
+function movePart(index, direction) {
+    if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
+    const newIndex = index + direction;
+
+    // Swap parts
+    [meetingParts[index], meetingParts[newIndex]] = [meetingParts[newIndex], meetingParts[index]];
+
+    // Swap elapsed times
+    const tempElapsed = elapsedTimes[index];
+    elapsedTimes[index] = elapsedTimes[newIndex];
+    elapsedTimes[newIndex] = tempElapsed;
+
+    // Update activePart if moved
+    if (activePart === index) {
+        activePart = newIndex;
+    } else if (activePart === newIndex) {
+        activePart = index;
+    }
+
+    saveTemplate();
+    saveState();
+    render.template();
+    render.timerDisplay();
+}
+
+function removePart(index) {
+    meetingParts.splice(index, 1);
+
+    // Adjust elapsedTimes indices
+    const newElapsedTimes = {};
+    Object.keys(elapsedTimes).forEach(key => {
+        const numKey = parseInt(key, 10);
+        if (numKey < index) newElapsedTimes[numKey] = elapsedTimes[key];
+        else if (numKey > index) newElapsedTimes[numKey - 1] = elapsedTimes[key];
+    });
+    elapsedTimes = newElapsedTimes;
+
+    // Adjust activePart
+    if (activePart >= index) {
+        activePart = meetingParts.length === 0 ? null : Math.max(0, activePart - 1);
+    }
+
+    saveTemplate();
+    saveState();
+    render.template();
+    render.timerDisplay();
+}
+        
+// END TEMPLATE MANAGEMENT
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+// BEGIN TIMER AND COMMENT CONTROLS
+
+function toggleTimer() {
+    if (activePart === null) {
+        activePart = 0;
+        elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
+    }
+    
+    isRunning = !isRunning;
+    
+    if (isRunning) {
+        timerInterval = setInterval(updateTimer, 1000);
+    } else {
+        clearInterval(timerInterval);
+    }
+    render.timerDisplay();
+}
+
+function updateTimer() {
+    if (activePart === null) return;
+    elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1;
+    render.timerDisplay();
+}
+
+function startNextPart() {
+    if (activePart === null || activePart >= meetingParts.length - 1) return;
+    activePart++;
+    if (!isRunning) toggleTimer();
+    render.timerDisplay();
+}
+
+function selectPart(index) {
+    if (isRunning) {
+        alert('Cannot switch parts while timer is active!');
+        return;
+    }
+    activePart = index;
+    render.timerDisplay();
+}
+
+function toggleComment(partIndex) {
+    if (activePart !== partIndex || !isRunning) {
+        alert('Part timer must be running to record comments!');
+        return;
+    }
+
+    if (activeComment) {
+        // Calculate duration based on elapsed time
+        const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
+        if (duration < 5) {
+            alert('Comment too short!');
             return;
         }
-        
-        // Prevent multiple active comments
-        if (activeComment && activeComment.partIndex !== partIndex) return;
-    
-        if (activeComment) {
-            // Stop existing comment
-            const duration = Math.floor((Date.now() - activeComment.startTime) / 1000);
-            
-            // Duration validations moved inside this block where 'duration' exists
-            if (duration < 5) {
-                alert('Comment too short!');
-                return;
-            }
-            
-            let finalDuration = duration;
-            if (duration > COMMENT_LIMIT) {
-                finalDuration = COMMENT_LIMIT;
-                alert('Maximum comment duration reached!');
-            }
-    
-            comments.push({
-                duration: finalDuration,
-                timestamp: Date.now(),
-                partName: meetingParts[partIndex].name
-            });
-            
-            try {
-                localStorage.setItem('meetingComments', JSON.stringify(comments));
-            } catch (error) {
-                console.error('Failed to save comments:', error);
-                alert('Failed to save comment. Please try again.');
-            }
-            
-            activeComment = null;
-            clearInterval(commentInterval);
-            updateGlobalComments();
-        } else {
-            // Start new comment
-            activeComment = {
-                startTime: Date.now(),
-                partIndex: partIndex
-            };
-            
-            commentInterval = setInterval(() => {
-                const currentElement = document.getElementById(`currentComment-${partIndex}`);
-                if (currentElement) {
-                    currentElement.textContent = formatTime(
-                        Math.floor((Date.now() - activeComment.startTime) / 1000)
-                    );
-                }
-            }, 200);
-        }
-        
-        renderTimerDisplay();
-    }
-
-        function saveState() {
-            localStorage.setItem('elapsedTimes', JSON.stringify(elapsedTimes));
-            localStorage.setItem('activePart', activePart);
-        }
-        function loadState() {
-            const savedTimes = localStorage.getItem('elapsedTimes');
-            if (savedTimes) {
-                elapsedTimes = JSON.parse(savedTimes);
-            }
-            activePart = parseInt(localStorage.getItem('activePart')) || 0;
-        }
-        
-    function updateGlobalComments() {
-        // Update stats
-        document.getElementById('globalCommentCount').textContent = comments.length;
-        const average = comments.length > 0 
-            ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / comments.length)
-            : 0;
-        document.getElementById('globalAverageDuration').textContent = formatTime(average);
-      // Update history list
-            const historyContainer = document.getElementById('commentHistory');
-            historyContainer.innerHTML = comments.map((comment, i) => `
-                <div class="bg-white p-2 rounded shadow-sm">
-                    <div class="flex justify-between text-sm">
-                        <span>Comment ${i+1}</span>
-                        <span>${formatTime(comment.duration)}</span>
-                    </div>
-                    <div class="text-xs text-gray-500">
-                        ${new Date(comment.timestamp).toLocaleTimeString()}
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-    function getProgressInfo(elapsed, duration) {
-        const progress = Math.min((elapsed / duration) * 100, 100);
-        const timeRemaining = duration - elapsed;
-        let color = 'bg-blue-500';
-        if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
-            color = 'bg-yellow-500';
-        } else if (timeRemaining <= 0) {
-            color = 'bg-red-500';
-        }
-        return { progress, color };
-    }
-     
-    function renderTemplate() {
-        const container = document.getElementById('partsTemplate');
-        if (!container) return;
-        
-        container.innerHTML = meetingParts.map((part, index) => `
-            <div class="flex items-center space-x-2">
-                <div class="flex-1 grid grid-cols-3 gap-2">
-                    <input
-                        value="${part.name}"
-                        onchange="updatePart(${index}, 'name', this.value)"
-                        placeholder="Part Name"
-                        class="px-3 py-2 border rounded"
-                    />
-                    <input
-                        type="number"
-                        value="${part.duration / 60}"
-                        onchange="updatePart(${index}, 'duration', this.value)"
-                        placeholder="Minutes"
-                        class="px-3 py-2 border rounded"
-                    />
-                    <input
-                        value="${part.speaker}"
-                        onchange="updatePart(${index}, 'speaker', this.value)"
-                        placeholder="Speaker"
-                        class="px-3 py-2 border rounded"
-                    />
-                </div>
-                <button onclick="movePart(${index}, -1)" ${index === 0 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↑</button>
-                <button onclick="movePart(${index}, 1)" ${index === meetingParts.length - 1 ? 'disabled' : ''} class="px-3 py-2 bg-gray-200 rounded">↓</button>
-                <button onclick="removePart(${index})" class="px-3 py-2 bg-gray-200 rounded">×</button>
-            </div>
-        `).join('');  // FIXED: Added proper closing
-    }
-        
-    function addPart() {
-        meetingParts.push({ 
-            name: '', 
-            duration: 180, 
-            speaker: '', 
-            enableComments: false  // Fixed syntax and initialization
+        const finalDuration = Math.min(duration, COMMENT_LIMIT);
+        comments.push({
+            duration: finalDuration,
+            timestamp: Date.now(),
+            partName: meetingParts[partIndex].name
         });
-        saveTemplate();
-        renderTemplate();
-        renderTimerDisplay();
-        }
-
-     function updatePart(index, field, value) {
-         if (field === 'duration') {
-             value = Math.max(0, parseInt(value, 10) || 0) * 60;
-             }
-         meetingParts[index][field] = value;
-         saveTemplate();
-         renderTimerDisplay();
-         }
-    function movePart(index, direction) {
-        if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
-        [meetingParts[index], meetingParts[index + direction]] = [meetingParts[index + direction], meetingParts[index]];
-        saveTemplate();
-        renderTemplate();
-        renderTimerDisplay();
-    }
-
-    function removePart(index) {
-        meetingParts.splice(index, 1);
-        saveTemplate();
-        renderTemplate();
-        renderTimerDisplay();
-    }
-    
-    function saveTemplate() {
-        localStorage.setItem('meetingTemplate', JSON.stringify(meetingParts));
-    }
-    
-    function loadTemplate() {
-        const saved = localStorage.getItem('meetingTemplate');
-        meetingParts = saved ? JSON.parse(saved) : DEFAULT_PARTS;
-        activePart = meetingParts.length > 0 ? 0 : null; // Auto-select first part
-        renderTemplate();
-        renderTimerDisplay();
-    }
-        
-    function renderTimerDisplay() {
-        const container = document.getElementById('partsDisplay');
-        container.innerHTML = meetingParts.map((part, index) => {
-            const elapsed = elapsedTimes[index] || 0;
-            const { progress, color } = getProgressInfo(elapsed, part.duration);
-            
-            return `
-                <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
-                     onclick="selectPart(${index})">
-                    <!-- EXISTING TIMER ELEMENTS (keep these) -->
-                    <div class="flex justify-between mb-2">
-                        <span class="font-medium">${part.name}</span>
-                        <span>${part.speaker}</span>
-                    </div>
-                    <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative">
-                        <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
-                            <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
-                        </div>
-                        <span class="absolute right-2">${formatTime(part.duration - elapsed)}</span>
-                    </div>
-    
-                    <!-- NEW COMMENT CONTROLS (only for Spiritual Gems) -->
-                   ${part.enableComments ? `
-                        <div class="mt-4 space-y-2">
-                            <div class="flex items-center gap-2">
-                                <button onclick="event.stopPropagation(); toggleComment(${index})" 
-                                    class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded">
-                                ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
-                                </button>
-                                <span id="currentComment-${index}" class="text-sm ${activeComment ? '' : 'invisible'}">
-                                    ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
-                                </span>
-                            </div>
-                        </div>
-                    ` : ''}
-    
-                    <!-- EXISTING TIMER CONTROLS (keep these) -->
-                    ${activePart === index ? `
-                        <div class="mt-4 flex space-x-2">
-                            <button onclick="event.stopPropagation(); toggleTimer()" 
-                                    class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600">
-                                ${isRunning ? 'Pause' : 'Start'}
-                            </button>
-                            <button onclick="event.stopPropagation(); startNextPart()" 
-                                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                                Begin Next Part
-                            </button>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }).join('');
-    }
-        function updateTimer() {
-            if (activePart === null) return;
-            elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1;
-            renderTimerDisplay();
-            // REMOVED the auto-stop functionality
-        }
-        
-        function startNextPart() {
-            if (activePart === null || activePart >= meetingParts.length - 1) return;
-            activePart++;
-            if (!isRunning) toggleTimer();
-            renderTimerDisplay();
-        }
-        
-        function selectPart(index) {
-            if (isRunning) {
-                alert('Cannot switch parts while timer is active!');
-                return;
+        localStorage.setItem('meetingComments', JSON.stringify(comments));
+        activeComment = null;
+        clearInterval(commentInterval);
+        render.comments();
+    } else {
+        activeComment = {
+            startElapsed: elapsedTimes[partIndex] || 0,
+            partIndex: partIndex
+        };
+        commentInterval = setInterval(() => {
+            const currentElement = document.getElementById(`currentComment-${partIndex}`);
+            if (currentElement) {
+                const currentElapsed = elapsedTimes[partIndex] || 0;
+                currentElement.textContent = formatTime(currentElapsed - activeComment.startElapsed);
             }
-            activePart = index;
-            renderTimerDisplay();
-        }
+        }, 200);
+    }
+    render.timerDisplay();
+}
 
-        function toggleTimer() {
-            if (activePart === null) {
-                // Initialize to first part if none selected
-                activePart = 0;
-                elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
-            }
-            
-            isRunning = !isRunning;
-            
-            if (isRunning) {
-                timerInterval = setInterval(updateTimer, 1000);
-            } else {
-                clearInterval(timerInterval);
-            }
-            renderTimerDisplay();
-        }
+// END TIMER AND COMMENT CONTROLS
+//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+// BEGIN APPLICATION LIFECYCLE MANAGEMENT
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadTemplate();
-            updateGlobalComments();  // Add this line
-        });
-        
-        function resetData() {
-            elapsedTimes = {};
-            comments = [];
-            activeComment = null;
-            localStorage.removeItem('meetingComments');
-            updateGlobalComments();
-            activePart = null;
-            isRunning = false;
-            clearInterval(timerInterval);
-            clearInterval(commentInterval);
-            commentInterval = null;
-            renderTimerDisplay();
-        }
+function cleanupResources() {
+    // Clear all intervals
+    clearInterval(timerInterval);
+    clearInterval(commentInterval);
+    
+    // Clear performance monitoring data
+    performanceMonitor.renderTimes.clear();
+    
+    // Save state before cleanup
+    if (isRunning) {
+        saveState();
+    }
+}
 
-        function clearLocalStorage() {
-            localStorage.removeItem('meetingTemplate');
-            meetingParts = DEFAULT_PARTS;
-            resetData();
-            renderTemplate();
-            renderTimerDisplay();
+function initializeApplication() {
+    // Initialize DOM cache
+    DOM.init();
+    
+    // Load saved data
+    loadTemplate();
+    loadState();
+    
+    // Initialize UI
+    render.comments();
+    render.timerDisplay();
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && e.target === document.body) {
+            e.preventDefault();
+            toggleTimer();
         }
-        function $(selector) {
-            return document.querySelector(selector);
-        };        
+    });
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', initializeApplication);
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        cleanupResources();
+    }
+});
+
+window.addEventListener('beforeunload', (e) => {
+    cleanupResources();
+    if (isRunning) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
+window.addEventListener('error', (event) => {
+    console.error('Global error caught:', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error
+    });
+    
+    // Attempt recovery
+    try {
+        resetData();
+        render.template();
+        render.timerDisplay();
+        alert('An error occurred. The application has been reset.');
+    } catch (recoveryError) {
+        console.error('Recovery failed:', recoveryError);
+        alert('Application error. Please refresh the page.');
+    }
+});
+  
+// END APPLICATION LIFECYCLE MANAGEMENT
+//---------------------------------------------------------------------------------------------- 
+
     </script>
 </body>
 </html>
