@@ -609,15 +609,37 @@ function addPart() {
     render.timerDisplay();
 }
 
-function updatePart(index, field, value) {
-    if (field === 'duration') {
-        value = Math.max(0, parseInt(value, 10) || 0) * 60;
-    } else {
-        value = sanitizeInput(value);
+function toggleTimer() {
+    if (activePart === null) {
+        activePart = 0;
+        elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
     }
-    meetingParts[index][field] = value;
-    saveTemplate();
-    render.template();
+
+    isRunning = !isRunning;
+
+    if (isRunning) {
+        timerInterval = setInterval(updateTimer, 1000);
+    } else {
+        clearInterval(timerInterval);
+        // Stop active comment if exists
+        if (activeComment) {
+            const partIndex = activeComment.partIndex;
+            const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
+            if (duration >= 5) {
+                const finalDuration = Math.min(duration, COMMENT_LIMIT);
+                comments.push({
+                    duration: finalDuration,
+                    timestamp: Date.now(),
+                    partName: meetingParts[partIndex].name
+                });
+                localStorage.setItem('meetingComments', JSON.stringify(comments));
+                render.comments();
+            }
+            clearInterval(commentInterval);
+            activeComment = null;
+            render.timerDisplay();
+        }
+    }
     render.timerDisplay();
 }
 
