@@ -371,75 +371,116 @@ const performanceMonitor = {
             }
         },
 
-    timerDisplay: function() {
-        if (!DOM.partsDisplay) return;
+timerDisplay: function() {
+    if (!DOM.partsDisplay) return;
+    
+    const container = DOM.partsDisplay;
+    const currentChildren = Array.from(container.children);
+    const newChildren = meetingParts.map((part, index) => {
+        const elapsed = elapsedTimes[index] || 0;
+        const { progress, color } = getProgressInfo(elapsed, part.duration, index);
         
-        const display = meetingParts.map((part, index) => {
-            const elapsed = elapsedTimes[index] || 0;
-            const { progress, color } = getProgressInfo(elapsed, part.duration, index);
-            
-            return `
-                <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
-                     onclick="selectPart(${index})"
-                     role="region"
-                     aria-label="Timer for ${sanitizeInput(part.name)}"
-                     aria-selected="${activePart === index}">
-                    <div class="flex justify-between mb-2">
-                        <span class="font-medium">${sanitizeInput(part.name)}</span>
-                        <span aria-label="Speaker">${sanitizeInput(part.speaker)}</span>
-                    </div>
-                    <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative"
-                         role="progressbar"
-                         aria-valuemin="0"
-                         aria-valuemax="${part.duration}"
-                         aria-valuenow="${elapsed}"
-                         aria-label="Progress for ${sanitizeInput(part.name)}">
-                        <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
-                            <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
-                        </div>
-                        <span class="absolute right-2">${formatTime(part.duration - elapsed)}</span>
-                    </div>
-    
-                    ${part.enableComments ? `
-                        <div class="mt-4 space-y-2">
-                            <div class="flex items-center gap-2">
-                                <button onclick="event.stopPropagation(); toggleComment(${index})" 
-                                    class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded"
-                                    aria-label="${activeComment?.partIndex === index ? 'Stop comment' : 'Start comment'}">
-                                    ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
-                                </button>
-                                <span id="currentComment-${index}" 
-                                      class="text-sm ${activeComment ? '' : 'invisible'}"
-                                      aria-live="polite"
-                                      role="timer">
-                                    ${activeComment ? formatTime((elapsedTimes[index] || 0) - activeComment.startElapsed) : '0:00'}
-                                </span>
-                            </div>
-                        </div>
-                    ` : ''}
-    
-                    ${activePart === index ? `
-                        <div class="mt-4 flex space-x-2">
-                            <button onclick="event.stopPropagation(); toggleTimer()" 
-                                    class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600"
-                                    aria-label="${isRunning ? 'Stop timer' : 'Start timer'}">
-                                ${isRunning ? 'Stop' : 'Start'}
-                            </button>
-                            <button onclick="event.stopPropagation(); startNextPart()" 
-                                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                                    aria-label="Begin next part">
-                                Begin Next Part
-                            </button>
-                        </div>
-                    ` : ''}
+        // Try to find existing element
+        let card = currentChildren.find(el => el.dataset.index === index.toString());
+        
+        if (!card) {
+            // Create new element if none exists
+            card = document.createElement('div');
+            card.className = `p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}`;
+            card.dataset.index = index;
+            card.innerHTML = `
+                <div class="flex justify-between mb-2">
+                    <span class="font-medium"></span>
+                    <span class="speaker-display"></span>
                 </div>
+                <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative" role="progressbar">
+                    <div class="h-full progress-bar absolute">
+                        <span class="absolute left-2 text-white timer-elapsed"></span>
+                    </div>
+                    <span class="absolute right-2 timer-remaining"></span>
+                </div>
+                ${part.enableComments ? `
+                    <div class="mt-4 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <button class="comment-button px-4 py-2 text-white rounded"></button>
+                            <span class="current-comment text-sm" aria-live="polite" role="timer"></span>
+                        </div>
+                    </div>
+                ` : ''}
+                ${activePart === index ? `
+                    <div class="mt-4 flex space-x-2">
+                        <button class="timer-toggle px-4 py-2 text-white rounded hover:bg-blue-600"></button>
+                        <button class="next-part px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"></button>
+                    </div>
+                ` : ''}
             `;
-        }).join('');
-        
-        if (DOM.partsDisplay.innerHTML !== display) {
-            DOM.partsDisplay.innerHTML = display;
+            
+            // Add event listeners to new elements
+            card.addEventListener('click', () => selectPart(index));
+            const commentBtn = card.querySelector('.comment-button');
+            if (commentBtn) {
+                commentBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleComment(index);
+                });
+            }
         }
-    },
+
+        // Update dynamic content without replacing the element
+        card.className = `p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}`;
+        
+        // Update progress bar
+        const progressBar = card.querySelector('.progress-bar');
+        progressBar.style.width = `${progress}%`;
+        progressBar.className = `h-full ${color} progress-bar absolute`;
+        
+        // Update text elements
+        card.querySelector('.font-medium').textContent = sanitizeInput(part.name);
+        card.querySelector('.speaker-display').textContent = sanitizeInput(part.speaker);
+        card.querySelector('.timer-elapsed').textContent = formatTime(elapsed);
+        card.querySelector('.timer-remaining').textContent = formatTime(part.duration - elapsed);
+
+        // Update comment section if present
+        if (part.enableComments) {
+            const commentButton = card.querySelector('.comment-button');
+            const commentDisplay = card.querySelector('.current-comment');
+            commentButton.className = `comment-button px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded`;
+            commentButton.textContent = activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment';
+            commentDisplay.textContent = activeComment?.partIndex === index ? 
+                formatTime((elapsedTimes[index] || 0) - activeComment.startElapsed) : '0:00';
+        }
+
+        // Update control buttons if active part
+        if (activePart === index) {
+            const timerToggle = card.querySelector('.timer-toggle');
+            const nextPartBtn = card.querySelector('.next-part');
+            timerToggle.className = `timer-toggle px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:${isRunning ? 'bg-red-600' : 'bg-blue-600'}`;
+            timerToggle.textContent = isRunning ? 'Stop' : 'Start';
+            nextPartBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                startNextPart();
+            });
+        }
+
+        return card;
+    });
+
+    // DOM reconciliation - only update what's changed
+    newChildren.forEach((newChild, index) => {
+        if (!container.children[index] || !container.children[index].isSameNode(newChild)) {
+            if (container.children[index]) {
+                container.replaceChild(newChild, container.children[index]);
+            } else {
+                container.appendChild(newChild);
+            }
+        }
+    });
+
+    // Remove extra children if any
+    while (container.children.length > newChildren.length) {
+        container.removeChild(container.lastChild);
+    }
+}
 
     comments: function() {
         if (!DOM.commentHistory || !DOM.globalCommentCount || !DOM.globalAverageDuration) return;
