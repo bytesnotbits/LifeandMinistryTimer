@@ -326,6 +326,20 @@ const performanceMonitor = {
                                 aria-label="Speaker name for part ${index + 1}"
                             />
                         </div>
+                        <!-- BEGIN COMMENTS CHECKBOX -->
+                            <div class="flex flex-col">
+                                <label class="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        ${part.enableComments ? 'checked' : ''}
+                                        onchange="updatePart(${index}, 'enableComments', this.checked)"
+                                        class="form-checkbox"
+                                        aria-label="Enable comments for this part"
+                                    />
+                                    <span class="text-sm">Comments</span>
+                                </label>
+                            </div>
+                            <!-- END OF COMMENT CHECKBOX -->
                     </div>
                     <button 
                         onclick="movePart(${index}, -1)" 
