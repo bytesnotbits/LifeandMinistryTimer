@@ -422,8 +422,8 @@ const performanceMonitor = {
                         <div class="mt-4 flex space-x-2">
                             <button onclick="event.stopPropagation(); toggleTimer()" 
                                     class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600"
-                                    aria-label="${isRunning ? 'Pause timer' : 'Start timer'}">
-                                ${isRunning ? 'Pause' : 'Start'}
+                                    aria-label="${isRunning ? 'Stop timer' : 'Start timer'}">
+                                ${isRunning ? 'Stop' : 'Start'}
                             </button>
                             <button onclick="event.stopPropagation(); startNextPart()" 
                                     class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
