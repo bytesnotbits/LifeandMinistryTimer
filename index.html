@@ -623,15 +623,48 @@ function updatePart(index, field, value) {
 
 function movePart(index, direction) {
     if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
-    [meetingParts[index], meetingParts[index + direction]] = [meetingParts[index + direction], meetingParts[index]];
+    const newIndex = index + direction;
+
+    // Swap parts
+    [meetingParts[index], meetingParts[newIndex]] = [meetingParts[newIndex], meetingParts[index]];
+
+    // Swap elapsed times
+    const tempElapsed = elapsedTimes[index];
+    elapsedTimes[index] = elapsedTimes[newIndex];
+    elapsedTimes[newIndex] = tempElapsed;
+
+    // Update activePart if moved
+    if (activePart === index) {
+        activePart = newIndex;
+    } else if (activePart === newIndex) {
+        activePart = index;
+    }
+
     saveTemplate();
+    saveState();
     render.template();
     render.timerDisplay();
 }
 
 function removePart(index) {
     meetingParts.splice(index, 1);
+
+    // Adjust elapsedTimes indices
+    const newElapsedTimes = {};
+    Object.keys(elapsedTimes).forEach(key => {
+        const numKey = parseInt(key, 10);
+        if (numKey < index) newElapsedTimes[numKey] = elapsedTimes[key];
+        else if (numKey > index) newElapsedTimes[numKey - 1] = elapsedTimes[key];
+    });
+    elapsedTimes = newElapsedTimes;
+
+    // Adjust activePart
+    if (activePart >= index) {
+        activePart = meetingParts.length === 0 ? null : Math.max(0, activePart - 1);
+    }
+
     saveTemplate();
+    saveState();
     render.template();
     render.timerDisplay();
 }
