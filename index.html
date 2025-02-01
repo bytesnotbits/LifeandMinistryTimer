@@ -690,45 +690,6 @@ function updatePart(index, field, value) {
     render.timerDisplay();
 }
         
-function toggleTimer() {
-    // Prevent timer toggle if comment is active in another part
-    if (activeComment && activeComment.partIndex !== activePart) {
-        alert('Finish or stop the active comment first!');
-        return;
-    }
-    if (activePart === null) {
-        activePart = 0;
-        elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
-    }
-
-    isRunning = !isRunning;
-
-    if (isRunning) {
-        timerInterval = setInterval(updateTimer, 1000);
-    } else {
-        clearInterval(timerInterval);
-        // Stop active comment if exists
-        if (activeComment) {
-            const partIndex = activeComment.partIndex;
-            const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
-            if (duration >= 5) {
-                const finalDuration = Math.min(duration, COMMENT_LIMIT);
-                comments.push({
-                    duration: finalDuration,
-                    timestamp: Date.now(),
-                    partName: meetingParts[partIndex].name
-                });
-                localStorage.setItem('meetingComments', JSON.stringify(comments));
-                render.comments();
-            }
-            clearInterval(commentInterval);
-            activeComment = null;
-            render.timerDisplay();
-        }
-    }
-    render.timerDisplay();
-}
-
 function movePart(index, direction) {
     if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
     const newIndex = index + direction;
@@ -783,17 +744,40 @@ function removePart(index) {
 // BEGIN TIMER AND COMMENT CONTROLS
 
 function toggleTimer() {
+    // Prevent timer toggle if comment is active in another part
+    if (activeComment && activeComment.partIndex !== activePart) {
+        alert('Finish or stop the active comment first!');
+        return;
+    }
     if (activePart === null) {
         activePart = 0;
         elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
     }
-    
+
     isRunning = !isRunning;
-    
+
     if (isRunning) {
         timerInterval = setInterval(updateTimer, 1000);
     } else {
         clearInterval(timerInterval);
+        // Stop active comment if exists
+        if (activeComment) {
+            const partIndex = activeComment.partIndex;
+            const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
+            if (duration >= 5) {
+                const finalDuration = Math.min(duration, COMMENT_LIMIT);
+                comments.push({
+                    duration: finalDuration,
+                    timestamp: Date.now(),
+                    partName: meetingParts[partIndex].name
+                });
+                localStorage.setItem('meetingComments', JSON.stringify(comments));
+                render.comments();
+            }
+            clearInterval(commentInterval);
+            activeComment = null;
+            render.timerDisplay();
+        }
     }
     render.timerDisplay();
 }
