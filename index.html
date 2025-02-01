@@ -14,6 +14,7 @@
         }
         .part-card {
             transition: border-color 0.2s ease;
+            will-change: transform, border-color; /* Added new rule */
         }
         .part-card:hover {
             border-color: #3b82f6;
@@ -37,11 +38,12 @@
         #commentHistory::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-
+    
         .progress-bar {
             position: relative;
             display: flex;
             align-items: center;
+            transition: width 0.5s ease, background-color 0.5s ease; /* Added new rule */
         }
     </style>
 </head>
@@ -107,11 +109,13 @@
         </section>
     </main>
 </body>
+</html>
 
-    <script>
 //---------------------------------------------------------------------------------------------- 
 //----------------------------------------------------------------------------------------------
 // BEGIN DOM CACHE
+<script>
+    
 const DOM = {
     partsTemplate: null,
     partsDisplay: null,
@@ -375,141 +379,121 @@ timerDisplay: function() {
     if (!DOM.partsDisplay) return;
     
     const container = DOM.partsDisplay;
-    const currentChildren = Array.from(container.children);
-    const newChildren = meetingParts.map((part, index) => {
+    
+    meetingParts.forEach((part, index) => {
         const elapsed = elapsedTimes[index] || 0;
         const { progress, color } = getProgressInfo(elapsed, part.duration, index);
         
-        // Try to find existing element
-        let card = currentChildren.find(el => el.dataset.index === index.toString());
+        // Find or create card
+        let card = container.querySelector(`[data-index="${index}"]`);
         
         if (!card) {
-            // Create new element if none exists
             card = document.createElement('div');
-            card.className = `p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}`;
-            card.dataset.index = index;
+            card.setAttribute('data-index', index);
+            card.className = 'p-4 border rounded-lg part-card';
+            
+            // Create basic structure
             card.innerHTML = `
                 <div class="flex justify-between mb-2">
-                    <span class="font-medium"></span>
-                    <span class="speaker-display"></span>
+                    <span class="font-medium part-name"></span>
+                    <span class="speaker-name"></span>
                 </div>
-                <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative" role="progressbar">
-                    <div class="h-full progress-bar absolute">
-                        <span class="absolute left-2 text-white timer-elapsed"></span>
+                <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative progress-container">
+                    <div class="progress-bar h-full absolute">
+                        <span class="absolute left-2 text-white elapsed-time"></span>
                     </div>
-                    <span class="absolute right-2 timer-remaining"></span>
+                    <span class="absolute right-2 remaining-time"></span>
                 </div>
                 ${part.enableComments ? `
-                    <div class="mt-4 space-y-2">
+                    <div class="mt-4 space-y-2 comment-section">
                         <div class="flex items-center gap-2">
-                            <button class="comment-button px-4 py-2 text-white rounded"></button>
-                            <span class="current-comment text-sm" aria-live="polite" role="timer"></span>
+                            <button class="comment-toggle px-4 py-2 text-white rounded"></button>
+                            <span class="comment-timer text-sm"></span>
                         </div>
                     </div>
                 ` : ''}
-${activePart === index ? `
-    <div class="mt-4 flex space-x-2">
-        <button class="timer-toggle px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:${isRunning ? 'bg-red-600' : 'bg-blue-600'}">
-            ${isRunning ? 'Stop' : 'Start'}
-        </button>
-        <button class="next-part px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-            Begin Next Part
-        </button>
-    </div>
-` : ''}
-`;
+                <div class="controls mt-4 flex space-x-2 ${activePart === index ? '' : 'hidden'}">
+                    <button class="timer-toggle px-4 py-2 text-white rounded"></button>
+                    <button class="next-part px-4 py-2 bg-green-500 text-white rounded">Begin Next Part</button>
+                </div>
+            `;
             
-            // Add event listeners to new elements
+            container.appendChild(card);
+            
+            // Add event listeners
             card.addEventListener('click', () => selectPart(index));
-            const commentBtn = card.querySelector('.comment-button');
-            if (commentBtn) {
-                commentBtn.addEventListener('click', (e) => {
+            
+            const commentToggle = card.querySelector('.comment-toggle');
+            if (commentToggle) {
+                commentToggle.addEventListener('click', (e) => {
                     e.stopPropagation();
                     toggleComment(index);
                 });
             }
-        }
-
-        // Update dynamic content without replacing the element
-        card.className = `p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}`;
-        
-        // Update progress bar
-const progressBar = card.querySelector('.progress-bar');
-if (progressBar) {
-    progressBar.style.width = `${progress}%`;
-    progressBar.className = `h-full ${color} progress-bar absolute`;
-}
-
-// Update text elements with null checks:
-const nameElement = card.querySelector('.font-medium');
-const speakerElement = card.querySelector('.speaker-display');
-const elapsedElement = card.querySelector('.timer-elapsed');
-const remainingElement = card.querySelector('.timer-remaining');
-
-if (nameElement) nameElement.textContent = sanitizeInput(part.name);
-if (speakerElement) speakerElement.textContent = sanitizeInput(part.speaker);
-if (elapsedElement) elapsedElement.textContent = formatTime(elapsed);
-if (remainingElement) remainingElement.textContent = formatTime(part.duration - elapsed);
-        // Update comment section if present
-        if (part.enableComments) {
-            const commentButton = card.querySelector('.comment-button');
-            const commentDisplay = card.querySelector('.current-comment');
-            commentButton.className = `comment-button px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded`;
-            commentButton.textContent = activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment';
-            commentDisplay.textContent = activeComment?.partIndex === index ? 
-                formatTime((elapsedTimes[index] || 0) - activeComment.startElapsed) : '0:00';
-        }
-
-// Modify the card creation logic to include data attributes:
-card.innerHTML = `
-    <div class="flex justify-between mb-2">
-        <span class="font-medium" data-part="name"></span>
-        <span class="speaker-display" data-part="speaker"></span>
-    </div>
-    ...
-`;
-
-// Then use these data attributes for safer selection:
-card.querySelector('[data-part="name"]');        
-
-        // Update control buttons if active part
-if (activePart === index) {
-    const timerToggle = card.querySelector('.timer-toggle');
-    const nextPartBtn = card.querySelector('.next-part');
-
-    // Only update if elements exist
-    if (timerToggle) {
-        timerToggle.className = `timer-toggle px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:${isRunning ? 'bg-red-600' : 'bg-blue-600'}`;
-        timerToggle.textContent = isRunning ? 'Stop' : 'Start';
-    }
-
-    if (nextPartBtn) {
-        nextPartBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            startNextPart();
-        });
-    }
-}
-
-        return card;
-    });
-
-    // DOM reconciliation - only update what's changed
-    newChildren.forEach((newChild, index) => {
-        if (!container.children[index] || !container.children[index].isSameNode(newChild)) {
-            if (container.children[index]) {
-                container.replaceChild(newChild, container.children[index]);
-            } else {
-                container.appendChild(newChild);
+            
+            const timerToggle = card.querySelector('.timer-toggle');
+            if (timerToggle) {
+                timerToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleTimer();
+                });
+            }
+            
+            const nextPartBtn = card.querySelector('.next-part');
+            if (nextPartBtn) {
+                nextPartBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    startNextPart();
+                });
             }
         }
+        
+        // Update existing card
+        card.className = `p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}`;
+        
+        // Update content
+        card.querySelector('.part-name').textContent = sanitizeInput(part.name);
+        card.querySelector('.speaker-name').textContent = sanitizeInput(part.speaker);
+        
+        const progressBar = card.querySelector('.progress-bar');
+        progressBar.style.width = `${progress}%`;
+        progressBar.className = `progress-bar h-full ${color} absolute`;
+        
+        card.querySelector('.elapsed-time').textContent = formatTime(elapsed);
+        card.querySelector('.remaining-time').textContent = formatTime(part.duration - elapsed);
+        
+        // Update comment section
+        if (part.enableComments) {
+            const commentToggle = card.querySelector('.comment-toggle');
+            const commentTimer = card.querySelector('.comment-timer');
+            
+            commentToggle.textContent = activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment';
+            commentToggle.className = `comment-toggle px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded`;
+            
+            commentTimer.textContent = activeComment?.partIndex === index ? 
+                formatTime((elapsedTimes[index] || 0) - activeComment.startElapsed) : '0:00';
+        }
+        
+        // Update controls
+        const controls = card.querySelector('.controls');
+        controls.className = `controls mt-4 flex space-x-2 ${activePart === index ? '' : 'hidden'}`;
+        
+        if (activePart === index) {
+            const timerToggle = card.querySelector('.timer-toggle');
+            timerToggle.textContent = isRunning ? 'Stop' : 'Start';
+            timerToggle.className = `timer-toggle px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded`;
+        }
     });
-
-    // Remove extra children if any
-    while (container.children.length > newChildren.length) {
-        container.removeChild(container.lastChild);
-    }
-},
+    
+    // Remove any extra cards
+    Array.from(container.children).forEach(child => {
+        const index = parseInt(child.getAttribute('data-index'));
+        if (index >= meetingParts.length) {
+            container.removeChild(child);
+        }
+    });
+}
+    },
 
     comments: function() {
         if (!DOM.commentHistory || !DOM.globalCommentCount || !DOM.globalAverageDuration) return;
@@ -620,7 +604,6 @@ const debouncedSave = (function() {
         let elapsedTimes = {};
         let timerInterval = null;
         let commentInterval = null;
-        // Comment Management
         let comments = JSON.parse(localStorage.getItem('meetingComments')) || [];
         let activeComment = null;
 
@@ -979,5 +962,3 @@ window.addEventListener('error', (event) => {
 //---------------------------------------------------------------------------------------------- 
 
     </script>
-</body>
-</html>
