@@ -172,9 +172,11 @@ function sanitizeInput(input) {
 }
 
 function formatTime(seconds) {
-    const mins = Math.floor(Math.abs(seconds) / 60);
-    const secs = Math.abs(seconds) % 60;
-    const sign = seconds < 0 ? '-' : '';
+    // Add NaN protection
+    const safeSeconds = Number.isFinite(seconds) ? seconds : 0;
+    const mins = Math.floor(Math.abs(safeSeconds) / 60);
+    const secs = Math.abs(safeSeconds) % 60;
+    const sign = safeSeconds < 0 ? '-' : '';
     return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
@@ -413,12 +415,12 @@ const performanceMonitor = {
                                     aria-label="${activeComment?.partIndex === index ? 'Stop comment' : 'Start comment'}">
                                     ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
                                 </button>
-                                <span id="currentComment-${index}" 
-                                      class="text-sm ${activeComment ? '' : 'invisible'}"
-                                      aria-live="polite"
-                                      role="timer">
-                                    ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
-                                </span>
+                            <span id="currentComment-${index}" 
+                                  class="text-sm ${activeComment ? '' : 'invisible'}"
+                                  aria-live="polite"
+                                  role="timer">
+                                ${activeComment ? formatTime((elapsedTimes[index] || 0) - activeComment.startElapsed) : '0:00'}
+                            </span>
                             </div>
                         </div>
                     ` : ''}
@@ -799,7 +801,8 @@ function toggleComment(partIndex) {
             const currentElement = document.getElementById(`currentComment-${partIndex}`);
             if (currentElement) {
                 const currentElapsed = elapsedTimes[partIndex] || 0;
-                currentElement.textContent = formatTime(currentElapsed - activeComment.startElapsed);
+                const commentDuration = currentElapsed - activeComment.startElapsed;
+                currentElement.textContent = formatTime(Math.max(0, commentDuration));
             }
         }, 200);
     }
