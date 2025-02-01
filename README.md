@@ -17,7 +17,7 @@ To get started with this project locally:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/meeting-timer-web-app.git
+   git clone [https://github.com/yourusername/meeting-timer-web-app.git](https://github.com/bytesnotbits/LifeandMinistryTimer)
 Navigate into the project directory:
 cd meeting-timer-web-app
 Open index.html in your favorite web browser to view and use the app.
