@@ -14,7 +14,6 @@
         }
         .part-card {
             transition: border-color 0.2s ease;
-            will-change: transform, border-color; /* Added new rule */
         }
         .part-card:hover {
             border-color: #3b82f6;
@@ -38,12 +37,11 @@
         #commentHistory::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-    
+
         .progress-bar {
             position: relative;
             display: flex;
             align-items: center;
-            transition: width 0.5s ease, background-color 0.5s ease; /* Added new rule */
         }
     </style>
 </head>
@@ -373,124 +371,74 @@ const performanceMonitor = {
             }
         },
 
-timerDisplay: function() {
-    if (!DOM.partsDisplay) return;
-    
-    const container = DOM.partsDisplay;
-    
-    meetingParts.forEach((part, index) => {
-        const elapsed = elapsedTimes[index] || 0;
-        const { progress, color } = getProgressInfo(elapsed, part.duration, index);
+    timerDisplay: function() {
+        if (!DOM.partsDisplay) return;
         
-        // Find or create card
-        let card = container.querySelector(`[data-index="${index}"]`);
-        
-        if (!card) {
-            card = document.createElement('div');
-            card.setAttribute('data-index', index);
-            card.className = 'p-4 border rounded-lg part-card';
+        const display = meetingParts.map((part, index) => {
+            const elapsed = elapsedTimes[index] || 0;
+            const { progress, color } = getProgressInfo(elapsed, part.duration, index);
             
-            // Create basic structure
-            card.innerHTML = `
-                <div class="flex justify-between mb-2">
-                    <span class="font-medium part-name"></span>
-                    <span class="speaker-name"></span>
-                </div>
-                <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative progress-container">
-                    <div class="progress-bar h-full absolute">
-                        <span class="absolute left-2 text-white elapsed-time"></span>
+            return `
+                <div class="p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
+                     onclick="selectPart(${index})"
+                     role="region"
+                     aria-label="Timer for ${sanitizeInput(part.name)}"
+                     aria-selected="${activePart === index}">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-medium">${sanitizeInput(part.name)}</span>
+                        <span aria-label="Speaker">${sanitizeInput(part.speaker)}</span>
                     </div>
-                    <span class="absolute right-2 remaining-time"></span>
-                </div>
-                ${part.enableComments ? `
-                    <div class="mt-4 space-y-2 comment-section">
-                        <div class="flex items-center gap-2">
-                            <button class="comment-toggle px-4 py-2 text-white rounded"></button>
-                            <span class="comment-timer text-sm"></span>
+                    <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative"
+                         role="progressbar"
+                         aria-valuemin="0"
+                         aria-valuemax="${part.duration}"
+                         aria-valuenow="${elapsed}"
+                         aria-label="Progress for ${sanitizeInput(part.name)}">
+                        <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
+                            <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
                         </div>
+                        <span class="absolute right-2">${formatTime(part.duration - elapsed)}</span>
                     </div>
-                ` : ''}
-                <div class="controls mt-4 flex space-x-2 ${activePart === index ? '' : 'hidden'}">
-                    <button class="timer-toggle px-4 py-2 text-white rounded"></button>
-                    <button class="next-part px-4 py-2 bg-green-500 text-white rounded">Begin Next Part</button>
+    
+                    ${part.enableComments ? `
+                        <div class="mt-4 space-y-2">
+                            <div class="flex items-center gap-2">
+                                <button onclick="event.stopPropagation(); toggleComment(${index})" 
+                                    class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded"
+                                    aria-label="${activeComment?.partIndex === index ? 'Stop comment' : 'Start comment'}">
+                                    ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
+                                </button>
+                                <span id="currentComment-${index}" 
+                                      class="text-sm ${activeComment ? '' : 'invisible'}"
+                                      aria-live="polite"
+                                      role="timer">
+                                    ${activeComment ? formatTime(Math.floor((Date.now() - activeComment.startTime)/1000)) : '0:00'}
+                                </span>
+                            </div>
+                        </div>
+                    ` : ''}
+    
+                    ${activePart === index ? `
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="event.stopPropagation(); toggleTimer()" 
+                                    class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded hover:bg-blue-600"
+                                    aria-label="${isRunning ? 'Stop timer' : 'Start timer'}">
+                                ${isRunning ? 'Stop' : 'Start'}
+                            </button>
+                            <button onclick="event.stopPropagation(); startNextPart()" 
+                                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                    aria-label="Begin next part">
+                                Begin Next Part
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
             `;
-            
-            container.appendChild(card);
-            
-            // Add event listeners
-            card.addEventListener('click', () => selectPart(index));
-            
-            const commentToggle = card.querySelector('.comment-toggle');
-            if (commentToggle) {
-                commentToggle.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    toggleComment(index);
-                });
-            }
-            
-            const timerToggle = card.querySelector('.timer-toggle');
-            if (timerToggle) {
-                timerToggle.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    toggleTimer();
-                });
-            }
-            
-            const nextPartBtn = card.querySelector('.next-part');
-            if (nextPartBtn) {
-                nextPartBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    startNextPart();
-                });
-            }
+        }).join('');
+        
+        if (DOM.partsDisplay.innerHTML !== display) {
+            DOM.partsDisplay.innerHTML = display;
         }
-        
-        // Update existing card
-        card.className = `p-4 border rounded-lg part-card ${activePart === index ? 'border-blue-500' : 'border-gray-200'}`;
-        
-        // Update content
-        card.querySelector('.part-name').textContent = sanitizeInput(part.name);
-        card.querySelector('.speaker-name').textContent = sanitizeInput(part.speaker);
-        
-        const progressBar = card.querySelector('.progress-bar');
-        progressBar.style.width = `${progress}%`;
-        progressBar.className = `progress-bar h-full ${color} absolute`;
-        
-        card.querySelector('.elapsed-time').textContent = formatTime(elapsed);
-        card.querySelector('.remaining-time').textContent = formatTime(part.duration - elapsed);
-        
-        // Update comment section
-        if (part.enableComments) {
-            const commentToggle = card.querySelector('.comment-toggle');
-            const commentTimer = card.querySelector('.comment-timer');
-            
-            commentToggle.textContent = activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment';
-            commentToggle.className = `comment-toggle px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded`;
-            
-            commentTimer.textContent = activeComment?.partIndex === index ? 
-                formatTime((elapsedTimes[index] || 0) - activeComment.startElapsed) : '0:00';
-        }
-        
-        // Update controls
-        const controls = card.querySelector('.controls');
-        controls.className = `controls mt-4 flex space-x-2 ${activePart === index ? '' : 'hidden'}`;
-        
-        if (activePart === index) {
-            const timerToggle = card.querySelector('.timer-toggle');
-            timerToggle.textContent = isRunning ? 'Stop' : 'Start';
-            timerToggle.className = `timer-toggle px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded`;
-        }
-    });
-    
-    // Remove any extra cards
-    Array.from(container.children).forEach(child => {
-        const index = parseInt(child.getAttribute('data-index'));
-        if (index >= meetingParts.length) {
-            container.removeChild(child);
-        }
-    });
-}
     },
 
     comments: function() {
@@ -690,11 +638,6 @@ function updatePart(index, field, value) {
 }
         
 function toggleTimer() {
-    // Prevent timer toggle if comment is active in another part
-    if (activeComment && activeComment.partIndex !== activePart) {
-        alert('Finish or stop the active comment first!');
-        return;
-    }
     if (activePart === null) {
         activePart = 0;
         elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
@@ -805,27 +748,6 @@ function updateTimer() {
 
 function startNextPart() {
     if (activePart === null || activePart >= meetingParts.length - 1) return;
-    
-    // Stop any active comment when changing parts
-    if (activeComment) {
-        const partIndex = activeComment.partIndex;
-        const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
-        
-        if (duration >= 5) {
-            const finalDuration = Math.min(duration, COMMENT_LIMIT);
-            comments.push({
-                duration: finalDuration,
-                timestamp: Date.now(),
-                partName: meetingParts[partIndex].name
-            });
-            localStorage.setItem('meetingComments', JSON.stringify(comments));
-            render.comments();
-        }
-        
-        clearInterval(commentInterval);
-        activeComment = null;
-    }
-
     activePart++;
     if (!isRunning) toggleTimer();
     render.timerDisplay();
@@ -850,7 +772,8 @@ function toggleComment(partIndex) {
         // Calculate duration based on elapsed time
         const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
         if (duration < 5) {
-            return; // IGNORE COMMENTS LESS THAN 5 SECONDS
+            alert('Comment too short!');
+            return;
         }
         const finalDuration = Math.min(duration, COMMENT_LIMIT);
         comments.push({
@@ -871,8 +794,7 @@ function toggleComment(partIndex) {
             const currentElement = document.getElementById(`currentComment-${partIndex}`);
             if (currentElement) {
                 const currentElapsed = elapsedTimes[partIndex] || 0;
-                const commentDuration = currentElapsed - activeComment.startElapsed;
-                currentElement.textContent = formatTime(Math.max(0, commentDuration));
+                currentElement.textContent = formatTime(currentElapsed - activeComment.startElapsed);
             }
         }, 200);
     }
