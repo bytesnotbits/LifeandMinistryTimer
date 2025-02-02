@@ -8,10 +8,9 @@
     <style>
         /* Styling for progress bar and other components */
         .progress-bar span {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #000000
+            position: static; /* Removed absolute positioning */
+            transform: none;
+            width: 50px; /* Fixed width for time displays */
         }
         .part-card {
             border: 2px solid #000000; /* Initial 2px black border */
@@ -41,9 +40,12 @@
         }
 
         .progress-bar {
-            position: relative;
-            display: flex;
-            align-items: center;
+            justify-content: space-between; /* Split left/right content */
+            padding: 0 8px; /* Add breathing room */
+        }
+
+        .remaining-time {
+            text-align: right;
         }
     </style>
 </head>
@@ -54,7 +56,7 @@
 <!-- Template Management Section -->
         <section aria-labelledby="template-heading" class="space-y-6">
             <header class="flex justify-between items-center">
-                <h1 id="template-heading" class="text-xl font-bold">Meeting Template</h1>
+                <h1 id="template-heading" class="text-xl font-bold">Life & Ministry Timer</h1>
                 <div class="space-x-2">
                     <!-- Reset and Clear buttons -->
                     <button 
@@ -297,7 +299,7 @@ const render = {
         // Renders the meeting parts template
         if (!DOM.partsTemplate) return;
         
-        const template = meetingParts.map((part, index) => `...
+        const display = meetingParts.map((part, index) => {
             <!-- Template rendering logic -->
         `).join('');
         
@@ -310,9 +312,31 @@ const render = {
         // Renders the active timers
         if (!DOM.partsDisplay) return;
 
-        const display = meetingParts.map((part, index) => `...
-            <!-- Timer display rendering logic -->
-        `).join('');
+        const display = meetingParts.map((part, index) => {
+          const elapsed = elapsedTimes[index] || 0;
+          const duration = part.duration;
+          const remaining = duration - elapsed;
+          
+          return `
+            <div class="part-card p-4 mb-4 rounded-lg">
+              <div class="flex justify-between items-center mb-2">
+                <h3 class="font-semibold">${sanitizeInput(part.name)}</h3>
+                <button 
+                  onclick="selectPart(${index})" 
+                  class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                >
+                  Select
+                </button>
+              </div>
+              
+              <!-- Updated Progress Bar -->
+              <div class="progress-bar h-8 bg-gray-200 rounded-full flex">
+                <span class="elapsed-time">${formatTime(elapsed)}</span>
+                <span class="remaining-time">${formatTime(remaining)}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
         
         if (DOM.partsDisplay.innerHTML !== display) {
             DOM.partsDisplay.innerHTML = display;
