@@ -58,7 +58,35 @@
 <body class="bg-gray-100 p-4">
     <main class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
 
-<!---  Template Section --->
+
+        <!-- Timer Display Section -->
+        <section aria-labelledby="timer-heading" class="space-y-4 mt-8">
+            <h2 id="timer-heading" class="text-xl font-bold">Meeting Timer</h2>
+            <div id="partsDisplay" 
+                 class="space-y-4"
+                 role="region" 
+                 aria-label="Active timers">
+                <!-- Timer displays will be inserted here -->
+            </div>
+        </section>
+
+        <!--- Comment History Section --->
+
+<section aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg">
+    <h2 id="comment-heading" class="text-lg font-bold mb-4">Comment History</h2>
+    <div id="globalCommentStats" class="mb-4">
+        <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p>
+        <p>Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span></p>
+    </div>
+    <div id="commentHistory" 
+         class="space-y-2 max-h-40 overflow-y-auto"
+         role="log" 
+         aria-label="Comment history list">
+        <!-- Comments will be listed here -->
+    </div>
+</section>
+        
+        <!---  Template Section --->
 
         <section aria-labelledby="template-heading" class="space-y-6">
             <header class="flex justify-between items-center">
@@ -90,38 +118,12 @@
                 Add Part
             </button>
         </section>
-
-<!--- Comment History Section --->
-
-        <section aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg">
-            <h2 id="comment-heading" class="text-lg font-bold mb-4">Comment History</h2>
-            <div id="globalCommentStats" class="mb-4">
-                <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p>
-                <p>Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span></p>
-            </div>
-            <div id="commentHistory" 
-                 class="space-y-2 max-h-40 overflow-y-auto"
-                 role="log" 
-                 aria-label="Comment history list">
-                <!-- Comments will be listed here -->
-            </div>
-        </section>
-        
-        <!-- Timer Display Section -->
-        <section aria-labelledby="timer-heading" class="space-y-4 mt-8">
-            <h2 id="timer-heading" class="text-xl font-bold">Meeting Timer</h2>
-            <div id="partsDisplay" 
-                 class="space-y-4"
-                 role="region" 
-                 aria-label="Active timers">
-                <!-- Timer displays will be inserted here -->
-            </div>
-        </section>
     </main>
 
     <footer class="bg-gray-100 p-4 text-sm text-center">
-        <!-- Other footer content -->
-        01/2025 Version: 1.0.0
+        Version: 1.0.1 (2025)
+        Implemented Elapsed Time and shows it on the right of the progress bars.
+        This line calculates the remaining time by subtracting the elapsed time from the total duration.
     </footer>
 </body>
 
@@ -471,24 +473,33 @@ const performanceMonitor = {
             ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / commentCount)
             : 0;
 
-        if (DOM.globalCommentCount.textContent !== commentCount.toString()) {
-            DOM.globalCommentCount.textContent = commentCount;
-        }
-        
-        const formattedAverage = formatTime(averageDuration);
-        if (DOM.globalAverageDuration.textContent !== formattedAverage) {
-            DOM.globalAverageDuration.textContent = formattedAverage;
-        }
+        DOM.globalCommentCount.textContent = commentCount;
+        DOM.globalAverageDuration.textContent = formatTime(averageDuration);
 
-        const historyHTML = comments.map((comment, i) => `
-            <div class="bg-white p-2 rounded shadow-sm">
-                <div class="flex justify-between text-sm">
-                    <span>Comment ${i+1}</span>
-                    <span>${formatTime(comment.duration)}</span>
-                </div>
-                <div class="text-xs text-gray-500">
-                    ${new Date(comment.timestamp).toLocaleTimeString()}
-                </div>
+        // Group comments by part
+        const groupedComments = comments.reduce((acc, comment) => {
+            const partName = comment.partName || 'Unknown Part';
+            if (!acc[partName]) {
+                acc[partName] = [];
+            }
+            acc[partName].push(comment);
+            return acc;
+        }, {});
+
+        const historyHTML = Object.entries(groupedComments).map(([partName, partComments]) => `
+            <div class="mb-4">
+                <h3 class="font-semibold text-gray-700 mb-2">${sanitizeInput(partName)}</h3>
+                ${partComments.map((comment, i) => `
+                    <div class="bg-white p-2 rounded shadow-sm mb-2">
+                        <div class="flex justify-between text-sm">
+                            <span>Comment ${i+1}</span>
+                            <span>${formatTime(comment.duration)}</span>
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            ${new Date(comment.timestamp).toLocaleTimeString()}
+                        </div>
+                    </div>
+                `).join('')}
             </div>
         `).join('');
 
@@ -777,15 +788,20 @@ function toggleComment(partIndex) {
     if (activeComment) {
         // Calculate duration based on elapsed time
         const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
-        if (duration < 5) {
+
+/*        if (duration < 5) {
             alert('Comment too short!');
             return;
+            
         }
+*/
+
         const finalDuration = Math.min(duration, COMMENT_LIMIT);
         comments.push({
             duration: finalDuration,
             timestamp: Date.now(),
-            partName: meetingParts[partIndex].name
+            partName: meetingParts[partIndex].name,
+            partIndex: partIndex  // Track which part the comment was made on
         });
         localStorage.setItem('meetingComments', JSON.stringify(comments));
         activeComment = null;
