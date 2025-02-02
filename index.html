@@ -658,40 +658,6 @@ function updatePart(index, field, value) {
     render.template();
     render.timerDisplay();
 }
-        
-function toggleTimer() {
-    if (activePart === null) {
-        activePart = 0;
-        elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
-    }
-
-    isRunning = !isRunning;
-
-    if (isRunning) {
-        timerInterval = setInterval(updateTimer, 1000);
-    } else {
-        clearInterval(timerInterval);
-        // Stop active comment if exists
-        if (activeComment) {
-            const partIndex = activeComment.partIndex;
-            const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
-            if (duration >= 5) {
-                const finalDuration = Math.min(duration, COMMENT_LIMIT);
-                comments.push({
-                    duration: finalDuration,
-                    timestamp: Date.now(),
-                    partName: meetingParts[partIndex].name
-                });
-                localStorage.setItem('meetingComments', JSON.stringify(comments));
-                render.comments();
-            }
-            clearInterval(commentInterval);
-            activeComment = null;
-            render.timerDisplay();
-        }
-    }
-    render.timerDisplay();
-}
 
 function movePart(index, direction) {
     if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return;
@@ -751,13 +717,31 @@ function toggleTimer() {
         activePart = 0;
         elapsedTimes[activePart] = elapsedTimes[activePart] || 0;
     }
-    
+
     isRunning = !isRunning;
-    
+
     if (isRunning) {
         timerInterval = setInterval(updateTimer, 1000);
     } else {
         clearInterval(timerInterval);
+        // Stop active comment if exists
+        if (activeComment) {
+            const partIndex = activeComment.partIndex;
+            const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
+            if (duration >= 5) {
+                const finalDuration = Math.min(duration, COMMENT_LIMIT);
+                comments.push({
+                    duration: finalDuration,
+                    timestamp: Date.now(),
+                    partName: meetingParts[partIndex].name
+                });
+                localStorage.setItem('meetingComments', JSON.stringify(comments));
+                render.comments();
+            }
+            clearInterval(commentInterval);
+            activeComment = null;
+            render.timerDisplay();
+        }
     }
     render.timerDisplay();
 }
