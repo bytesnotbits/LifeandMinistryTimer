@@ -73,10 +73,14 @@
         <!--- Comment History Section --->
 
 <section aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg">
-    <h2 id="comment-heading" class="text-lg font-bold mb-4">Comment History</h2>
-    <div id="globalCommentStats" class="mb-4">
-        <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p>
-        <p>Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span></p>
+    <h2 id="comment-heading" class="text-lg font-bold mb-4">Total Meeting Comments</h2>
+    <div id="globalCommentStats" class="mb-4 flex flex-wrap gap-4">
+        <p class="whitespace-nowrap">
+            Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span>
+        </p>
+        <p class="whitespace-nowrap">
+            Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span>
+        </p>
     </div>
     <div id="commentHistory" 
          class="space-y-2 max-h-40 overflow-y-auto"
@@ -151,6 +155,7 @@ const DOM = {
 //----------------------------------------------------------------------------------------------        
 // BEGIN UTILITY FUNCTIONS
         
+// This function throttles the execution of a function to a specified limit
 function throttle(func, limit) {
     let inThrottle;
     return function(...args) {
@@ -162,6 +167,7 @@ function throttle(func, limit) {
     };
 }
 
+// This function tracks errors and logs them to the console
 function trackError(fn, context = 'unknown') {
     return function(...args) {
         try {
@@ -174,6 +180,7 @@ function trackError(fn, context = 'unknown') {
     };
 }
 
+// This function sanitizes input to prevent XSS attacks
 function sanitizeInput(input) {
     if (typeof input !== 'string') return input;
     return input
@@ -185,6 +192,7 @@ function sanitizeInput(input) {
         .trim();
 }
 
+// This function formats the time in minutes and seconds
 function formatTime(seconds) {
     // Add NaN protection
     const safeSeconds = Number.isFinite(seconds) ? seconds : 0;
@@ -192,6 +200,22 @@ function formatTime(seconds) {
     const secs = Math.abs(safeSeconds) % 60;
     const sign = safeSeconds < 0 ? '-' : '';
     return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// This function calculates the total number of comments and the average duration of comments for a given part
+function getPartStatistics(partIndex) {
+    const partComments = comments.filter(comment => comment.partIndex === partIndex);
+    if (partComments.length === 0) return null;
+    
+    const totalComments = partComments.length;
+    const averageDuration = Math.floor(
+        partComments.reduce((sum, comment) => sum + comment.duration, 0) / totalComments
+    );
+    
+    return {
+        count: totalComments,
+        average: averageDuration
+    };
 }
 
 // END UTILITY FUNCTIONS
@@ -405,10 +429,21 @@ const performanceMonitor = {
                      role="region"
                      aria-label="Timer for ${sanitizeInput(part.name)}"
                      aria-selected="${activePart === index}">
-                    <div class="flex justify-between mb-2">
+<!--- Adds the per-part comment statistics --->
+                <div class="flex justify-between mb-2">
+                    <div class="flex items-center gap-2">
                         <span class="font-medium">${sanitizeInput(part.name)}</span>
-                        <span aria-label="Speaker">${sanitizeInput(part.speaker)}</span>
+                        ${part.enableComments ? (() => {
+                            const stats = getPartStatistics(index);
+                            return stats ? 
+                                `<span class="text-sm text-gray-600">
+                                    (${stats.count} comments, avg ${formatTime(stats.average)})
+                                </span>` : 
+                                '';
+                        })() : ''}
                     </div>
+                    <span aria-label="Speaker">${sanitizeInput(part.speaker)}</span>
+                </div>
                     <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative progress-bar"
                          role="progressbar"
                          aria-valuemin="0"
