@@ -408,7 +408,10 @@ const performanceMonitor = {
                         <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
                             <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
                         </div>
-                        <span class="absolute right-2">${formatTime(part.duration - elapsed)}</span>
+                        <span class="absolute right-2 text-black font-medium" 
+                              aria-label="Time remaining">
+                            ${formatTime(part.duration - elapsed)}
+                        </span>
                     </div>
     
                     ${part.enableComments ? `
