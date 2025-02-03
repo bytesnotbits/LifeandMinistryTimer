@@ -58,7 +58,39 @@
 <body class="bg-gray-100 p-4">
     <main class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
 
-<!---  Template Section --->
+
+        <!-- Timer Display Section -->
+        <section aria-labelledby="timer-heading" class="space-y-4 mt-8">
+            <h2 id="timer-heading" class="text-xl font-bold">Meeting Timer</h2>
+            <div id="partsDisplay" 
+                 class="space-y-4"
+                 role="region" 
+                 aria-label="Active timers">
+                <!-- Timer displays will be inserted here -->
+            </div>
+        </section>
+
+        <!--- Comment History Section --->
+
+<section aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg">
+    <h2 id="comment-heading" class="text-lg font-bold mb-4">Total Meeting Comments</h2>
+    <div id="globalCommentStats" class="mb-4 flex flex-wrap gap-4">
+        <p class="whitespace-nowrap">
+            Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span>
+        </p>
+        <p class="whitespace-nowrap">
+            Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span>
+        </p>
+    </div>
+    <div id="commentHistory" 
+         class="space-y-2 max-h-40 overflow-y-auto"
+         role="log" 
+         aria-label="Comment history list">
+        <!-- Comments will be listed here -->
+    </div>
+</section>
+        
+        <!---  Template Section --->
 
         <section aria-labelledby="template-heading" class="space-y-6">
             <header class="flex justify-between items-center">
@@ -90,40 +122,13 @@
                 Add Part
             </button>
         </section>
-
-<!--- Comment History Section --->
-
-        <section aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg">
-            <h2 id="comment-heading" class="text-lg font-bold mb-4">Comment History</h2>
-            <div id="globalCommentStats" class="mb-4">
-                <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p>
-                <p>Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span></p>
-            </div>
-            <div id="commentHistory" 
-                 class="space-y-2 max-h-40 overflow-y-auto"
-                 role="log" 
-                 aria-label="Comment history list">
-                <!-- Comments will be listed here -->
-            </div>
-        </section>
-        
-        <!-- Timer Display Section -->
-        <section aria-labelledby="timer-heading" class="space-y-4 mt-8">
-            <h2 id="timer-heading" class="text-xl font-bold">Meeting Timer</h2>
-            <div id="partsDisplay" 
-                 class="space-y-4"
-                 role="region" 
-                 aria-label="Active timers">
-                <!-- Timer displays will be inserted here -->
-            </div>
-        </section>
     </main>
 
-   <footer class="bg-gray-100 p-4 text-sm text-center">
-        Version: 1.0.1 (2025)
-        Implemented Elapsed Time and shows it on the right of the progress bars.
-        This line calculates the remaining time by subtracting the elapsed time from the total duration.
-        Next update: Remove "Begin Next Part" on last part.
+    <footer class="bg-gray-100 p-4 text-sm text-center">
+        Version: 1.0.2 (2025)
+        Visual Update: Comment Section now renders below meeting timer bars.
+        Visual Update: Total meeting comments tracked on one line when screen allows.
+        New Feature: Comments and their statistics are now also tracked per part.
     </footer>
 </body>
 
@@ -151,6 +156,7 @@ const DOM = {
 //----------------------------------------------------------------------------------------------        
 // BEGIN UTILITY FUNCTIONS
         
+// This function throttles the execution of a function to a specified limit
 function throttle(func, limit) {
     let inThrottle;
     return function(...args) {
@@ -162,6 +168,7 @@ function throttle(func, limit) {
     };
 }
 
+// This function tracks errors and logs them to the console
 function trackError(fn, context = 'unknown') {
     return function(...args) {
         try {
@@ -174,6 +181,7 @@ function trackError(fn, context = 'unknown') {
     };
 }
 
+// This function sanitizes input to prevent XSS attacks
 function sanitizeInput(input) {
     if (typeof input !== 'string') return input;
     return input
@@ -185,6 +193,7 @@ function sanitizeInput(input) {
         .trim();
 }
 
+// This function formats the time in minutes and seconds
 function formatTime(seconds) {
     // Add NaN protection
     const safeSeconds = Number.isFinite(seconds) ? seconds : 0;
@@ -192,6 +201,22 @@ function formatTime(seconds) {
     const secs = Math.abs(safeSeconds) % 60;
     const sign = safeSeconds < 0 ? '-' : '';
     return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// This function calculates the total number of comments and the average duration of comments for a given part
+function getPartStatistics(partIndex) {
+    const partComments = comments.filter(comment => comment.partIndex === partIndex);
+    if (partComments.length === 0) return null;
+    
+    const totalComments = partComments.length;
+    const averageDuration = Math.floor(
+        partComments.reduce((sum, comment) => sum + comment.duration, 0) / totalComments
+    );
+    
+    return {
+        count: totalComments,
+        average: averageDuration
+    };
 }
 
 // END UTILITY FUNCTIONS
@@ -405,10 +430,21 @@ const performanceMonitor = {
                      role="region"
                      aria-label="Timer for ${sanitizeInput(part.name)}"
                      aria-selected="${activePart === index}">
-                    <div class="flex justify-between mb-2">
+<!--- Adds the per-part comment statistics --->
+                <div class="flex justify-between mb-2">
+                    <div class="flex items-center gap-2">
                         <span class="font-medium">${sanitizeInput(part.name)}</span>
-                        <span aria-label="Speaker">${sanitizeInput(part.speaker)}</span>
+                        ${part.enableComments ? (() => {
+                            const stats = getPartStatistics(index);
+                            return stats ? 
+                                `<span class="text-sm text-gray-600">
+                                    (${stats.count} comments, avg ${formatTime(stats.average)})
+                                </span>` : 
+                                '';
+                        })() : ''}
                     </div>
+                    <span aria-label="Speaker">${sanitizeInput(part.speaker)}</span>
+                </div>
                     <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative progress-bar"
                          role="progressbar"
                          aria-valuemin="0"
@@ -473,24 +509,33 @@ const performanceMonitor = {
             ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / commentCount)
             : 0;
 
-        if (DOM.globalCommentCount.textContent !== commentCount.toString()) {
-            DOM.globalCommentCount.textContent = commentCount;
-        }
-        
-        const formattedAverage = formatTime(averageDuration);
-        if (DOM.globalAverageDuration.textContent !== formattedAverage) {
-            DOM.globalAverageDuration.textContent = formattedAverage;
-        }
+        DOM.globalCommentCount.textContent = commentCount;
+        DOM.globalAverageDuration.textContent = formatTime(averageDuration);
 
-        const historyHTML = comments.map((comment, i) => `
-            <div class="bg-white p-2 rounded shadow-sm">
-                <div class="flex justify-between text-sm">
-                    <span>Comment ${i+1}</span>
-                    <span>${formatTime(comment.duration)}</span>
-                </div>
-                <div class="text-xs text-gray-500">
-                    ${new Date(comment.timestamp).toLocaleTimeString()}
-                </div>
+        // Group comments by part
+        const groupedComments = comments.reduce((acc, comment) => {
+            const partName = comment.partName || 'Unknown Part';
+            if (!acc[partName]) {
+                acc[partName] = [];
+            }
+            acc[partName].push(comment);
+            return acc;
+        }, {});
+
+        const historyHTML = Object.entries(groupedComments).map(([partName, partComments]) => `
+            <div class="mb-4">
+                <h3 class="font-semibold text-gray-700 mb-2">${sanitizeInput(partName)}</h3>
+                ${partComments.map((comment, i) => `
+                    <div class="bg-white p-2 rounded shadow-sm mb-2">
+                        <div class="flex justify-between text-sm">
+                            <span>Comment ${i+1}</span>
+                            <span>${formatTime(comment.duration)}</span>
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            ${new Date(comment.timestamp).toLocaleTimeString()}
+                        </div>
+                    </div>
+                `).join('')}
             </div>
         `).join('');
 
@@ -779,15 +824,20 @@ function toggleComment(partIndex) {
     if (activeComment) {
         // Calculate duration based on elapsed time
         const duration = elapsedTimes[partIndex] - activeComment.startElapsed;
-        if (duration < 5) {
+
+/*        if (duration < 5) {
             alert('Comment too short!');
             return;
+            
         }
+*/
+
         const finalDuration = Math.min(duration, COMMENT_LIMIT);
         comments.push({
             duration: finalDuration,
             timestamp: Date.now(),
-            partName: meetingParts[partIndex].name
+            partName: meetingParts[partIndex].name,
+            partIndex: partIndex  // Track which part the comment was made on
         });
         localStorage.setItem('meetingComments', JSON.stringify(comments));
         activeComment = null;
