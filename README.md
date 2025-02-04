@@ -1,5 +1,5 @@
 # Meeting Timer Web App
-I am not a coder but am not too bad at using AI to code. I've got a working branch. [main] but I want to refactor the code to make it easier to maintain and modify. This is a work in progress and will take me quite a bit of time to complete as I only work on this in my spare time which is limited.
+I am not a coder but know enough to employ AI to code for me. I've got a working branch, [main] but I want to refactor the code to make it easier to maintain and modify. This is a work in progress and will take me quite a bit of time to complete as I only work on this in my spare time which is limited.
 
 
 ## Overview
