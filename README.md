@@ -1,5 +1,8 @@
 # Meeting Timer Web App
 
+## Purpose of this branch
+Remove the "Begin Next Part" button if the active part also happens to be the last part.
+
 ## Overview
 
 The Meeting Timer Web App is designed to help organize and manage meetings efficiently. It provides tools to create timed sections within a meeting, track elapsed time, record comments, and maintain a history of comments with their durations.
