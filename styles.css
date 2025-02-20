@@ -1,0 +1,39 @@
+.progress-bar span {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #000000
+    }
+    .progress-bar span.countdown {
+    right: 8px;
+    color: #000000;
+    font-weight: 500;
+    z-index: 2;
+    }
+    .progress-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    }
+    .part-card {
+    border: 2px solid #000000; /* Initial 2px black border */
+    transition: border-color 0.2s ease, border-width 0.2s ease;
+    will-change: transform, border-color, border-width;
+    }
+    #commentSection {
+    transition: all 0.3s ease;
+    }
+    #commentHistory::-webkit-scrollbar {
+    width: 6px;
+    }
+    #commentHistory::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    }
+    #commentHistory::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+    }
+    #commentHistory::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+    }
