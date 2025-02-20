@@ -1,6 +1,5 @@
-<script src="js/lifeMinistryTimer.js" defer></script>
-<link rel="stylesheet" href="css/styles.css">
-
+<script src="lifeMinistryTimer.js" defer></script>
+<link rel="stylesheet" href="styles.css">
 
 <!DOCTYPE html>
 <html lang="en">
@@ -10,7 +9,7 @@
     <title>Life and Ministry Timer</title>
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="data:,">
     
     <!-- Tailwind CSS -->
@@ -37,9 +36,19 @@
 
         <!-- Meeting Template Section -->
         <section id="templateSection" aria-labelledby="template-heading" class="mt-8">
-            <h1 id="template-heading" class="text-xl font-bold">Meeting Template</h1>
-            <div id="partsTemplate" class="space-y-2"></div>
-            <button id="addPartBtn" class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            <header class="flex justify-between items-center">
+                <h1 id="template-heading" class="text-xl font-bold">Meeting Template</h1>
+                <div class="space-x-2">
+                    <button onclick="resetData()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" aria-label="Reset all timers">
+                        Reset Timers
+                    </button>
+                    <button onclick="clearLocalStorage()" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" aria-label="Clear template and reset all data">
+                        Clear Template
+                    </button>
+                </div>
+            </header>
+            <div id="partsTemplate" class="space-y-2" role="form" aria-label="Meeting parts template"></div>
+            <button id="addPartBtn" onclick="addPart()" class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" aria-label="Add new meeting part">
                 Add Part
             </button>
         </section>
@@ -50,7 +59,5 @@
         Version: 1.0.3 (2025)
     </footer>
 
-    <!-- JavaScript -->
-    <script src="js/lifeMinistryTimer.js" defer></script>
 </body>
 </html>
