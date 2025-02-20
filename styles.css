@@ -1,95 +1,39 @@
-/* General Styles */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f7f7f7;
-    margin: 0;
-    padding: 0;
-}
-
-/* Main Container */
-main {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    max-width: 600px;
-    margin: 20px auto;
-}
-
-/* Section Headings */
-h2 {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 10px;
-}
-
-/* Timer Display */
-#partsDisplay {
+.progress-bar span {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #000000
+    }
+    .progress-bar span.countdown {
+    right: 8px;
+    color: #000000;
+    font-weight: 500;
+    z-index: 2;
+    }
+    .progress-bar {
+    position: relative;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-/* Individual Timer Block */
-.timer-block {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    background: #eef2ff;
-    border-left: 4px solid #3b82f6;
-    border-radius: 5px;
-}
-
-/* Buttons */
-button {
-    padding: 8px 12px;
-    font-size: 1rem;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: all 0.2s ease-in-out;
-}
-
-button:hover {
-    opacity: 0.8;
-}
-
-/* Primary Buttons */
-button.start {
-    background: #3b82f6;
-    color: white;
-}
-
-button.stop {
-    background: #ef4444;
-    color: white;
-}
-
-/* Form Inputs */
-input {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 1rem;
-    width: 100%;
-}
-
-/* Comment History */
-#commentHistory {
-    max-height: 150px;
-    overflow-y: auto;
-    border: 1px solid #ccc;
-    padding: 10px;
-    background: #fafafa;
-    border-radius: 5px;
-}
-
-/* Footer */
-footer {
-    text-align: center;
-    font-size: 0.9rem;
-    color: #555;
-    margin-top: 20px;
-}
+    justify-content: space-between;
+    }
+    .part-card {
+    border: 2px solid #000000; /* Initial 2px black border */
+    transition: border-color 0.2s ease, border-width 0.2s ease;
+    will-change: transform, border-color, border-width;
+    }
+    #commentSection {
+    transition: all 0.3s ease;
+    }
+    #commentHistory::-webkit-scrollbar {
+    width: 6px;
+    }
+    #commentHistory::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    }
+    #commentHistory::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+    }
+    #commentHistory::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+    }
