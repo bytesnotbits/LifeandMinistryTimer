@@ -1,39 +1,201 @@
-.progress-bar span {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #000000
-    }
-    .progress-bar span.countdown {
-    right: 8px;
-    color: #000000;
-    font-weight: 500;
-    z-index: 2;
-    }
-    .progress-bar {
+/* Base styles */
+:root {
+    --color-primary: #3b82f6;
+    --color-primary-dark: #2563eb;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-danger-dark: #dc2626;
+    --color-neutral: #6b7280;
+    --color-neutral-light: #f3f4f6;
+    --color-text-dark: #1f2937;
+    --color-text-light: #ffffff;
+    --transition-speed: 0.3s;
+    --border-radius: 0.375rem;
+}
+
+/* Enhanced accessibility for focus states */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Progress bar styling */
+.progress-bar {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    }
-    .part-card {
-    border: 2px solid #000000; /* Initial 2px black border */
-    transition: border-color 0.2s ease, border-width 0.2s ease;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.progress-bar-bg {
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    transition: width var(--transition-speed) ease-out;
+}
+
+.progress-bar span {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-dark);
+    font-weight: 500;
+    z-index: 2;
+}
+
+.progress-bar span.left-label {
+    left: 8px;
+    color: var(--color-text-light);
+}
+
+.progress-bar span.countdown {
+    right: 8px;
+    color: var(--color-text-dark);
+}
+
+/* Part card styling */
+.part-card {
+    border: 2px solid var(--color-neutral);
+    transition: border-color var(--transition-speed) ease, 
+                border-width var(--transition-speed) ease,
+                transform var(--transition-speed) ease;
     will-change: transform, border-color, border-width;
-    }
-    #commentSection {
-    transition: all 0.3s ease;
-    }
-    #commentHistory::-webkit-scrollbar {
+}
+
+.part-card.active {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.part-card:hover {
+    transform: translateY(-1px);
+}
+
+/* Comment section styling */
+#commentSection {
+    transition: all var(--transition-speed) ease;
+}
+
+#commentHistory {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f1f1;
+}
+
+#commentHistory::-webkit-scrollbar {
     width: 6px;
-    }
-    #commentHistory::-webkit-scrollbar-track {
+}
+
+#commentHistory::-webkit-scrollbar-track {
     background: #f1f1f1;
-    }
-    #commentHistory::-webkit-scrollbar-thumb {
+    border-radius: var(--border-radius);
+}
+
+#commentHistory::-webkit-scrollbar-thumb {
     background: #cbd5e1;
-    border-radius: 4px;
-    }
-    #commentHistory::-webkit-scrollbar-thumb:hover {
+    border-radius: var(--border-radius);
+}
+
+#commentHistory::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+}
+
+/* Timer adjustment buttons */
+.timer-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.time-adjust-button {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.increment-button {
+    background-color: var(--color-success);
+    color: var(--color-text-light);
+}
+
+.increment-button:hover {
+    background-color: #0d9668; /* Darker green */
+}
+
+.decrement-button {
+    background-color: var(--color-danger);
+    color: var(--color-text-light);
+}
+
+.decrement-button:hover {
+    background-color: var(--color-danger-dark);
+}
+
+.reset-button {
+    background-color: var(--color-neutral);
+    color: var(--color-text-light);
+}
+
+.reset-button:hover {
+    background-color: #4b5563; /* Darker gray */
+}
+
+/* Comment item styling */
+.comment-item {
+    position: relative;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.comment-item:hover {
+    background-color: #f9fafb;
+}
+
+.comment-item .delete-button {
+    opacity: 0;
+    transition: opacity var(--transition-speed) ease;
+}
+
+.comment-item:hover .delete-button {
+    opacity: 1;
+}
+
+/* Modal styling */
+.modal {
+    transition: opacity var(--transition-speed) ease;
+}
+
+.modal-content {
+    transform: scale(0.95);
+    transition: transform var(--transition-speed) ease;
+}
+
+.modal.active .modal-content {
+    transform: scale(1);
+}
+
+/* Animation for newly added items */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn var(--transition-speed) ease forwards;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .timer-controls {
+        flex-wrap: wrap;
     }
+    
+    .timer-controls button {
+        flex: 1 0 auto;
+    }
+}
