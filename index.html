@@ -1,54 +1,65 @@
-<script src="lifeMinistryTimer.js" defer></script>
-<link rel="stylesheet" href="styles.css">
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life and Ministry Timer</title>
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="styles.css">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life and Ministry Timer</title>
+
+<!-- Styles -->
+<link rel="stylesheet" href="styles.css">
+<script src="lifeMinistryTimer.js" defer></script>
     <link rel="icon" href="data:,">
     
     <!-- Tailwind CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 p-4">
-    <main class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+<body class="bg-gray-100 p-4"> 
+    <main class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6"> <!-- Main Container -->
 
         <!-- Timer Display Section -->
-        <section id="timerSection" aria-labelledby="timer-heading" class="mt-8">
-            <h2 id="timer-heading" class="text-xl font-bold">Meeting Timer</h2>
-            <div id="partsDisplay" class="space-y-4" role="region" aria-label="Active timers"></div>
+        <section id="timerSection" aria-labelledby="timer-heading" class="mt-8"> <!-- Timer Section -->
+            <h2 id="timer-heading" class="text-xl font-bold">Meeting Timer</h2> <!-- Timer Heading -->
+            <div id="partsDisplay" class="space-y-4" role="region" aria-label="Active timers"> <!-- Active Timers -->
+                <!-- Active timer with increment/decrement buttons -->
+                <div class="timer-item">
+                    <p>Timer 1: <span class="timer-value">00:00</span></p> <!-- Timer 1 -->
+                    <div class="mt-4 flex space-x-2"> <!-- Timer Buttons -->
+                       <!-- <button onclick="incrementTimer(activePart)" class="px-2 py-1 bg-green-500 text-white rounded" aria-label="Increment timer by 5 seconds">+5s</button>
+                        <button onclick="decrementTimer(activePart)" class="px-2 py-1 bg-red-500 text-white rounded" aria-label="Decrement timer by 5 seconds">-5s</button>
+                        -->
+                        <button onclick="incrementTimer(this)" class="px-2 py-1 bg-green-500 text-white rounded" aria-label="Increment timer by 5 seconds">+5s</button>
+                        <button onclick="decrementTimer(this)" class="px-2 py-1 bg-red-500 text-white rounded" aria-label="Decrement timer by 5 seconds">-5s</button> 
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Comment History Section -->
-        <section id="commentSection" aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg">
-            <h2 id="comment-heading" class="text-lg font-bold mb-4">Total Meeting Comments</h2>
-            <div id="globalCommentStats" class="mb-4 flex flex-wrap gap-4">
-                <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p>
-                <p>Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span></p>
+        <section id="commentSection" aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg"> <!-- Comment Section -->
+            <h2 id="comment-heading" class="text-lg font-bold mb-4">Total Meeting Comments</h2> <!-- Comment Heading -->
+            <div id="globalCommentStats" class="mb-4 flex flex-wrap gap-4"> <!-- Comment Statistics -->
+                <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p> <!-- Total Comments -->
+                <p>Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span></p> <!-- Average Duration -->
             </div>
-            <div id="commentHistory" class="space-y-2 max-h-40 overflow-y-auto" role="log" aria-label="Comment history"></div>
+            <div id="commentHistory" class="space-y-2 max-h-40 overflow-y-auto" role="log" aria-label="Comment history"></div> <!-- Comment History -->
         </section>
 
         <!-- Meeting Template Section -->
         <section id="templateSection" aria-labelledby="template-heading" class="mt-8">
-            <header class="flex justify-between items-center">
-                <h1 id="template-heading" class="text-xl font-bold">Meeting Template</h1>
-                <div class="space-x-2">
-                    <button onclick="resetData()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" aria-label="Reset all timers">
+            <header class="flex justify-between items-center"> <!-- Template Header -->
+                <h1 id="template-heading" class="text-xl font-bold">Meeting Template</h1> <!-- Template Heading -->
+                <div class="space-x-2"> <!-- Template Buttons -->
+                    <button onclick="resetData()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" aria-label="Reset all timers"> <!-- Reset Timers Button -->
                         Reset Timers
                     </button>
-                    <button onclick="clearLocalStorage()" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" aria-label="Clear template and reset all data">
+                    <button onclick="clearLocalStorage()" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" aria-label="Clear template and reset all data"> <!-- Clear Template Button -->
                         Clear Template
                     </button>
                 </div>
             </header>
-            <div id="partsTemplate" class="space-y-2" role="form" aria-label="Meeting parts template"></div>
-            <button id="addPartBtn" onclick="addPart()" class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" aria-label="Add new meeting part">
+            <div id="partsTemplate" class="space-y-2" role="form" aria-label="Meeting parts template"></div> <!-- Meeting Parts Template -->
+            <button id="addPartBtn" onclick="addPart()" class="w-full px-4 py-2 bg-blue-500 text-white rounded" aria-label="Add new meeting part"> <!-- Add Part Button -->
                 Add Part
             </button>
         </section>
@@ -56,27 +67,21 @@
     </main>
 
     <footer class="bg-gray-100 p-4 text-sm text-left mt-4">
-        <div>Version: 1.0.4 (2025)</div>
-        <div>--</div>
-        <div>Stage 1 Code refactoring complete
-        <div>Large Javascript functions broken up into smaller, more managable functions</div>
-        <div>Javascript and CSS separated into their own files</div>
-        <div>--</div>
-        <div>Fixed bug:</div>
-        <div>Timer only functioned when website was active</div>
-        <div>--</div>
-        <div>Bugs to fix:</div>
-        <div>Clear Template button only works once per refresh</div>
-        <div>--</div>
+        <div>Testing Version: 1.0.6.4 (2025)</div>
+        <div>Implemented: Manually adjust time (+5 & -5) to parts and comments (currently adjusts all active timers)</div>
+        <div></div>
         <div>Roadmap:</div>
+        <div>Manually adjust comment timer only (+5 & -5)</div>
+        <div>Implement ability to reset specific meeting part timer</div>
+        <div>Implement ability to save/load multiple user-defined templates</div>
         <div>Confirm page refresh if isRunning = true</div>
-        <div>Remove "Begin Next Part" button on last part</div>
         <div>Implement end-of-meeting reports</div>
         <div>Allow others to see timers in real-time (view-only)</div>
-        <div>Manually adjust time (+5 & -5) to parts and comments</div>
-        <div>Implement ability to reset specific timer only</div>
         <div>Move template and meeting statistics to separate pages</div>
-        <div>Implement ability to save/load multiple user-defined templates</div>
+        <div></div>
+        <div>Bug Fixes:</div>
+        <div>v1.0.4 Timer only functioned when website was active</div>
+        <div>v1.0.5 Remove "Begin Next Part" button on last part</div>
     </footer>
 
 </body>
