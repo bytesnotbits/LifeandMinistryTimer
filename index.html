@@ -1,88 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Life and Ministry Meeting Timer application for tracking meeting parts and comments">
+    <title>Life and Ministry Timer</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Life and Ministry Timer</title>
-
-<!-- Styles -->
-<link rel="stylesheet" href="styles.css">
-<script src="lifeMinistryTimer.js" defer></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="data:,">
     
     <!-- Tailwind CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    
+    <!-- Defer JavaScript loading -->
+    <script src="lifeMinistryTimer.js" defer></script>
 </head>
-<body class="bg-gray-100 p-4"> 
-    <main class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6"> <!-- Main Container -->
-
+<body class="bg-gray-100 p-4">
+    <main class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
         <!-- Timer Display Section -->
-        <section id="timerSection" aria-labelledby="timer-heading" class="mt-8"> <!-- Timer Section -->
-            <h2 id="timer-heading" class="text-xl font-bold">Meeting Timer</h2> <!-- Timer Heading -->
-            <div id="partsDisplay" class="space-y-4" role="region" aria-label="Active timers"> <!-- Active Timers -->
-                <!-- Active timer with increment/decrement buttons -->
-                <div class="timer-item">
-                    <p>Timer 1: <span class="timer-value">00:00</span></p> <!-- Timer 1 -->
-                    <div class="mt-4 flex space-x-2"> <!-- Timer Buttons -->
-                       <!-- <button onclick="incrementTimer(activePart)" class="px-2 py-1 bg-green-500 text-white rounded" aria-label="Increment timer by 5 seconds">+5s</button>
-                        <button onclick="decrementTimer(activePart)" class="px-2 py-1 bg-red-500 text-white rounded" aria-label="Decrement timer by 5 seconds">-5s</button>
-                        -->
-                        <button onclick="incrementTimer(this)" class="px-2 py-1 bg-green-500 text-white rounded" aria-label="Increment timer by 5 seconds">+5s</button>
-                        <button onclick="decrementTimer(this)" class="px-2 py-1 bg-red-500 text-white rounded" aria-label="Decrement timer by 5 seconds">-5s</button> 
-                    </div>
-                </div>
-            </div>
+        <section id="timerSection" aria-labelledby="timer-heading" class="mt-8">
+            <h2 id="timer-heading" class="text-xl font-bold">Meeting Timer</h2>
+            <div id="partsDisplay" class="space-y-4" role="region" aria-label="Active timers"></div>
         </section>
 
         <!-- Comment History Section -->
-        <section id="commentSection" aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg"> <!-- Comment Section -->
-            <h2 id="comment-heading" class="text-lg font-bold mb-4">Total Meeting Comments</h2> <!-- Comment Heading -->
-            <div id="globalCommentStats" class="mb-4 flex flex-wrap gap-4"> <!-- Comment Statistics -->
-                <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p> <!-- Total Comments -->
-                <p>Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span></p> <!-- Average Duration -->
+        <section id="commentSection" aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h2 id="comment-heading" class="text-lg font-bold mb-4">Total Meeting Comments</h2>
+            <div id="globalCommentStats" class="mb-4 flex flex-wrap gap-4">
+                <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p>
+                <p>Average Duration: <span id="globalAverageDuration" class="font-semibold" aria-live="polite">0:00</span></p>
             </div>
-            <div id="commentHistory" class="space-y-2 max-h-40 overflow-y-auto" role="log" aria-label="Comment history"></div> <!-- Comment History -->
+            <div id="commentHistory" class="space-y-2 max-h-40 overflow-y-auto" role="log" aria-label="Comment history"></div>
         </section>
 
         <!-- Meeting Template Section -->
         <section id="templateSection" aria-labelledby="template-heading" class="mt-8">
-            <header class="flex justify-between items-center"> <!-- Template Header -->
-                <h1 id="template-heading" class="text-xl font-bold">Meeting Template</h1> <!-- Template Heading -->
-                <div class="space-x-2"> <!-- Template Buttons -->
-                    <button onclick="resetData()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" aria-label="Reset all timers"> <!-- Reset Timers Button -->
+            <header class="flex justify-between items-center flex-wrap gap-2">
+                <h2 id="template-heading" class="text-xl font-bold">Meeting Template</h2>
+                <div class="flex flex-wrap gap-2">
+                    <button id="saveTemplateBtn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600" aria-label="Save current template">
+                        Save Template
+                    </button>
+                    <button id="loadTemplateBtn" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" aria-label="Load saved template">
+                        Load Template
+                    </button>
+                    <button id="resetTimersBtn" onclick="resetData()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" aria-label="Reset all timers">
                         Reset Timers
                     </button>
-                    <button onclick="clearLocalStorage()" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" aria-label="Clear template and reset all data"> <!-- Clear Template Button -->
+                    <button id="clearTemplateBtn" onclick="clearLocalStorage()" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" aria-label="Clear template and reset all data">
                         Clear Template
                     </button>
                 </div>
             </header>
-            <div id="partsTemplate" class="space-y-2" role="form" aria-label="Meeting parts template"></div> <!-- Meeting Parts Template -->
-            <button id="addPartBtn" onclick="addPart()" class="w-full px-4 py-2 bg-blue-500 text-white rounded" aria-label="Add new meeting part"> <!-- Add Part Button -->
+            <div id="partsTemplate" class="space-y-2 mt-4" role="form" aria-label="Meeting parts template"></div>
+            <button id="addPartBtn" onclick="addPart()" class="w-full px-4 py-2 bg-blue-500 text-white rounded mt-4 hover:bg-blue-600" aria-label="Add new meeting part">
                 Add Part
             </button>
         </section>
 
+        <!-- Template Manager Modal -->
+        <div id="templateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <h3 class="text-lg font-bold mb-4">Template Manager</h3>
+                <div id="templatesList" class="mb-4 space-y-2"></div>
+                <div class="mb-4">
+                    <label for="templateName" class="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+                    <input type="text" id="templateName" class="w-full px-3 py-2 border rounded" placeholder="Enter template name">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button id="closeTemplateModal" class="px-4 py-2 bg-gray-200 rounded">Close</button>
+                    <button id="saveNewTemplate" class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h3 class="text-lg font-bold mb-4" id="confirmationTitle">Confirmation</h3>
+                <p id="confirmationMessage" class="mb-4">Are you sure you want to proceed?</p>
+                <div class="flex justify-end space-x-2">
+                    <button id="cancelConfirmation" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
+                    <button id="confirmAction" class="px-4 py-2 bg-red-500 text-white rounded">Confirm</button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <footer class="bg-gray-100 p-4 text-sm text-left mt-4">
-        <div>Testing Version: 1.0.6.4 (2025)</div>
-        <div>Implemented: Manually adjust time (+5 & -5) to parts and comments (currently adjusts all active timers)</div>
-        <div></div>
-        <div>Roadmap:</div>
-        <div>Manually adjust comment timer only (+5 & -5)</div>
-        <div>Implement ability to reset specific meeting part timer</div>
-        <div>Implement ability to save/load multiple user-defined templates</div>
-        <div>Confirm page refresh if isRunning = true</div>
-        <div>Implement end-of-meeting reports</div>
-        <div>Allow others to see timers in real-time (view-only)</div>
-        <div>Move template and meeting statistics to separate pages</div>
-        <div></div>
-        <div>Bug Fixes:</div>
-        <div>v1.0.4 Timer only functioned when website was active</div>
-        <div>v1.0.5 Remove "Begin Next Part" button on last part</div>
+        <div>Version: 2.0.0 (2025)</div>
+        <div class="font-bold mt-2">New Features:</div>
+        <ul class="list-disc pl-5 mt-1">
+            <li>Added ability to manually adjust comment timer (+5 & -5 seconds)</li>
+            <li>Added ability to reset specific meeting part timer</li>
+            <li>Added ability to remove comments from history</li>
+            <li>Added confirmation dialog when refreshing with active timer</li>
+            <li>Implemented save/load multiple user-defined templates</li>
+            <li>Improved accessibility and responsive design</li>
+            <li>Enhanced error handling and performance optimizations</li>
+        </ul>
+        <div class="font-bold mt-2">Roadmap:</div>
+        <ul class="list-disc pl-5 mt-1">
+            <li>Implement end-of-meeting reports</li>
+            <li>Allow others to see timers in real-time (view-only)</li>
+            <li>Move template and meeting statistics to separate pages</li>
+        </ul>
     </footer>
-
 </body>
 </html>
