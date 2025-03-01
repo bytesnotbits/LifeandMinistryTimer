@@ -1,973 +1,1239 @@
-//---------------------------------------------------------------------------------------------- 
+/**
+ * Life and Ministry Timer
+ * Version 2.0.0
+ * 
+ * A comprehensive timer application for managing meeting parts,
+ * tracking comments, and maintaining meeting templates.
+ */
+
+'use strict';
+
 //----------------------------------------------------------------------------------------------
-// BEGIN DOM CACHE
+// DOM CACHE - Centralized access to DOM elements
+//----------------------------------------------------------------------------------------------
 const DOM = {
+    elements: {},
+    
     init() {
-        // Initialize DOM cache with null checks
-        // This prevents null reference errors if elements are missing from the HTML
-        this.partsTemplate = document.getElementById('partsTemplate') || null;
-        this.partsDisplay = document.getElementById('partsDisplay') || null;
-        this.commentHistory = document.getElementById('commentHistory') || null;
-        this.globalCommentCount = document.getElementById('globalCommentCount') || null;
-        this.globalAverageDuration = document.getElementById('globalAverageDuration') || null;
+        // Timer section elements
+        this.elements.partsTemplate = document.getElementById('partsTemplate');
+        this.elements.partsDisplay = document.getElementById('partsDisplay');
         
-        // Log warning for missing elements
-        if (!this.partsTemplate) console.warn('Element #partsTemplate not found');
-        if (!this.partsDisplay) console.warn('Element #partsDisplay not found');
-        if (!this.commentHistory) console.warn('Element #commentHistory not found');
-        if (!this.globalCommentCount) console.warn('Element #globalCommentCount not found');
-        if (!this.globalAverageDuration) console.warn('Element #globalAverageDuration not found');
+        // Comment section elements
+        this.elements.commentHistory = document.getElementById('commentHistory');
+        this.elements.globalCommentCount = document.getElementById('globalCommentCount');
+        this.elements.globalAverageDuration = document.getElementById('globalAverageDuration');
+        
+        // Template management elements
+        this.elements.saveTemplateBtn = document.getElementById('saveTemplateBtn');
+        this.elements.loadTemplateBtn = document.getElementById('loadTemplateBtn');
+        
+        // Modal elements
+        this.elements.templateModal = document.getElementById('templateModal');
+        this.elements.templatesList = document.getElementById('templatesList');
+        this.elements.templateName = document.getElementById('templateName');
+        this.elements.closeTemplateModal = document.getElementById('closeTemplateModal');
+        this.elements.saveNewTemplate = document.getElementById('saveNewTemplate');
+        
+        this.elements.confirmationModal = document.getElementById('confirmationModal');
+        this.elements.confirmationTitle = document.getElementById('confirmationTitle');
+        this.elements.confirmationMessage = document.getElementById('confirmationMessage');
+        this.elements.cancelConfirmation = document.getElementById('cancelConfirmation');
+        this.elements.confirmAction = document.getElementById('confirmAction');
+        
+        // Add event listeners to buttons
+        this._setupEventListeners();
+        
+        // Log warning for missing critical elements
+        this._checkForMissingElements();
+    },
+    
+    _setupEventListeners() {
+        // Template management buttons
+        if (this.elements.saveTemplateBtn) {
+            this.elements.saveTemplateBtn.addEventListener('click', () => {
+                this.elements.templateName.value = '';
+                this._showModal(this.elements.templateModal);
+            });
+        }
+        
+        if (this.elements.loadTemplateBtn) {
+            this.elements.loadTemplateBtn.addEventListener('click', () => {
+                templateManager.populateTemplatesList();
+                this._showModal(this.elements.templateModal);
+            });
+        }
+        
+        // Modal buttons
+        if (this.elements.closeTemplateModal) {
+            this.elements.closeTemplateModal.addEventListener('click', () => {
+                this._hideModal(this.elements.templateModal);
+            });
+        }
+        
+        if (this.elements.saveNewTemplate) {
+            this.elements.saveNewTemplate.addEventListener('click', () => {
+                const name = this.elements.templateName.value.trim();
+                if (name) {
+                    templateManager.saveTemplate(name);
+                    this._hideModal(this.elements.templateModal);
+                } else {
+                    notify.show('Please enter a template name', 'error');
+                }
+            });
+        }
+        
+        if (this.elements.cancelConfirmation) {
+            this.elements.cancelConfirmation.addEventListener('click', () => {
+                this._hideModal(this.elements.confirmationModal);
+            });
+        }
+    },
+    
+    _checkForMissingElements() {
+        const criticalElements = [
+            'partsTemplate', 'partsDisplay', 'commentHistory', 
+            'globalCommentCount', 'globalAverageDuration'
+        ];
+        
+        criticalElements.forEach(elementName => {
+            if (!this.elements[elementName]) {
+                console.warn(`Critical element #${elementName} not found in the DOM`);
+            }
+        });
+    },
+    
+    _showModal(modalElement) {
+        if (modalElement) {
+            modalElement.classList.remove('hidden');
+            modalElement.classList.add('active');
+        }
+    },
+    
+    _hideModal(modalElement) {
+        if (modalElement) {
+            modalElement.classList.remove('active');
+            modalElement.classList.add('hidden');
+        }
+    },
+    
+    showConfirmation(title, message, onConfirm) {
+        if (!this.elements.confirmationModal) return;
+        
+        this.elements.confirmationTitle.textContent = title;
+        this.elements.confirmationMessage.textContent = message;
+        
+        // Set up the confirm action button
+        const confirmBtn = this.elements.confirmAction;
+        
+        // Remove any existing event listeners
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        this.elements.confirmAction = newConfirmBtn;
+        
+        // Add the new event listener
+        newConfirmBtn.addEventListener('click', () => {
+            onConfirm();
+            this._hideModal(this.elements.confirmationModal);
+        });
+        
+        this._showModal(this.elements.confirmationModal);
     }
 };
 
-// END DOM CACHE
-//----------------------------------------------------------------------------------------------  
-//----------------------------------------------------------------------------------------------        
-// BEGIN UTILITY FUNCTIONS
-  // Increments the timer by 5 seconds (Modified so that the increment/decrement functions are flexible enough to handle both types of parameters.)
-  function incrementTimer(param) {
-    let index;
-    if (typeof param === 'number') {
-        index = param;
-    } else {
-        // Find the closest timer-item parent to get index
-        const timerItem = param.closest('.timer-item');
-        const allTimerItems = Array.from(document.querySelectorAll('.timer-item'));
-        index = allTimerItems.indexOf(timerItem);
-    }
+//----------------------------------------------------------------------------------------------
+// CONSTANTS AND APPLICATION STATE
+//----------------------------------------------------------------------------------------------
+const DEFAULT_PARTS = [
+    { name: 'Opening Comments', duration: 60, speaker: '', enableComments: false },
+    { name: 'Treasures', duration: 600, speaker: '', enableComments: false },
+    { name: 'Spiritual Gems', duration: 600, speaker: '', enableComments: true },
+    { name: 'Bible Reading', duration: 300, speaker: '', enableComments: false },
+    { name: 'Apply yourself 1', duration: 180, speaker: '', enableComments: false },
+    { name: 'Apply yourself 2', duration: 180, speaker: '', enableComments: false },
+    { name: 'Student Talk', duration: 300, speaker: '', enableComments: false },
+    { name: 'CBS', duration: 1800, speaker: '', enableComments: false }
+];
+
+const COMMENT_LIMIT = 240; // Limit comments to 4 minutes
+const TIMER_UPDATE_INTERVAL = 1000; // 1 second interval for timer updates
+const COMMENT_DISPLAY_UPDATE_INTERVAL = 200; // 200ms for smoother comment timer display
+
+// Application state
+let state = {
+    meetingParts: [],
+    activePart: 0,
+    isRunning: false,
+    elapsedTimes: {},
+    timerInterval: null,
+    commentInterval: null,
+    activeComment: null,
+    comments: [],
     
-    if (index < 0 || index >= meetingParts.length) return; // Check bounds
-    const maxDuration = meetingParts[index].duration; // Get the maximum duration
-    elapsedTimes[index] = Math.min((elapsedTimes[index] || 0) + 5, maxDuration); // Increment by 5 seconds
-    render.timerDisplay(); // Render the timer display
-}
-
-// Decrements the timer by 5 seconds
-function decrementTimer(param) {
-    let index;
-    if (typeof param === 'number') {
-        index = param;
-    } else {
-        // Find the closest timer-item parent to get index
-        const timerItem = param.closest('.timer-item');
-        const allTimerItems = Array.from(document.querySelectorAll('.timer-item'));
-        index = allTimerItems.indexOf(timerItem);
-    }
+    // Initialize application state
+    init() {
+        this.loadState();
+    },
     
-    if (index < 0 || index >= meetingParts.length) return; // Check bounds
-    elapsedTimes[index] = Math.max((elapsedTimes[index] || 0) - 5, 0); // Decrement by 5 seconds
-    render.timerDisplay(); // Render the timer display
-}
-
-// Throttles the execution of a function to a specified limit
-function throttle(func, limit) {
-    let inThrottle; // Flag to track throttling
-    return function(...args) {
-        if (!inThrottle) { // If not throttling
-            func.apply(this, args); // Execute the function
-            inThrottle = true; // Set throttling flag
-            setTimeout(() => inThrottle = false, limit); // Reset throttling after limit
-        } // Otherwise, ignore the call
-    }; // Return the throttled function
-}
-
-// Tracks errors and logs them to the console
-function trackError(fn, context = 'unknown') {
-    return function(...args) {
+    // Load state from localStorage
+    loadState() {
         try {
-            return fn.apply(this, args);
+            // Load meeting parts
+            const savedTemplate = localStorage.getItem('meetingTemplate');
+            this.meetingParts = savedTemplate ? JSON.parse(savedTemplate) : DEFAULT_PARTS;
+            
+            // Load elapsed times
+            const savedTimes = localStorage.getItem('elapsedTimes');
+            this.elapsedTimes = savedTimes ? JSON.parse(savedTimes) : {};
+            
+            // Load active part
+            this.activePart = parseInt(localStorage.getItem('activePart')) || 0;
+            
+            // Load comments
+            const savedComments = localStorage.getItem('meetingComments');
+            this.comments = savedComments ? JSON.parse(savedComments) : [];
+            
         } catch (error) {
-            console.error(`Error in ${context}:`, error);
-            // You could add additional error handling here, like sending to an error tracking service
-            throw error; // Re-throw to maintain original behavior
+            console.error('Error loading state:', error);
+            // Fallback to defaults if loading fails
+            this.meetingParts = DEFAULT_PARTS;
+            this.elapsedTimes = {};
+            this.activePart = 0;
+            this.comments = [];
         }
-    };
+    },
+    
+    // Save current state to localStorage
+    saveState() {
+        try {
+            localStorage.setItem('elapsedTimes', JSON.stringify(this.elapsedTimes));
+            localStorage.setItem('activePart', this.activePart.toString());
+            localStorage.setItem('meetingComments', JSON.stringify(this.comments));
+        } catch (error) {
+            console.error('Error saving state:', error);
+            notify.show('Failed to save state to local storage', 'error');
+        }
+    },
+    
+    // Reset timer data (keeps template)
+    resetTimers() {
+        this.elapsedTimes = {};
+        this.comments = [];
+        this.activeComment = null;
+        this.stopTimer();
+        this.activePart = 0;
+        this.saveState();
+    },
+    
+    // Reset a specific timer
+    resetTimer(partIndex) {
+        if (partIndex >= 0 && partIndex < this.meetingParts.length) {
+            this.elapsedTimes[partIndex] = 0;
+            this.saveState();
+        }
+    },
+    
+    // Clear all data and reset to defaults
+    clearAllData() {
+        localStorage.removeItem('meetingTemplate');
+        localStorage.removeItem('elapsedTimes');
+        localStorage.removeItem('activePart');
+        localStorage.removeItem('meetingComments');
+        
+        this.meetingParts = DEFAULT_PARTS;
+        this.resetTimers();
+    },
+    
+    // Start the timer
+    startTimer() {
+        if (this.activePart !== null) {
+            this.isRunning = true;
+            
+            // Clear any existing interval
+            clearInterval(this.timerInterval);
+            
+            this.timerInterval = setInterval(() => {
+                this.elapsedTimes[this.activePart] = (this.elapsedTimes[this.activePart] || 0) + 1;
+                this.saveState();
+                render.timerDisplay();
+            }, TIMER_UPDATE_INTERVAL);
+        }
+    },
+    
+    // Stop the timer
+    stopTimer() {
+        this.isRunning = false;
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+        
+        // Also stop any active comment
+        if (this.activeComment) {
+            this.finalizeComment();
+        }
+    },
+    
+    // Toggle timer on/off
+    toggleTimer() {
+        if (this.isRunning) {
+            this.stopTimer();
+        } else {
+            this.startTimer();
+        }
+        render.timerDisplay();
+    },
+    
+    // Move to the next part
+    startNextPart() {
+        if (this.activePart < this.meetingParts.length - 1) {
+            this.activePart++;
+            
+            // Ensure we have an elapsed time for the new part
+            if (!this.elapsedTimes[this.activePart]) {
+                this.elapsedTimes[this.activePart] = 0;
+            }
+            
+            this.saveState();
+            
+            // If timer wasn't running, start it
+            if (!this.isRunning) {
+                this.startTimer();
+            }
+            
+            render.timerDisplay();
+        }
+    },
+    
+    // Select a specific part
+    selectPart(index) {
+        if (!this.isRunning && index >= 0 && index < this.meetingParts.length) {
+            this.activePart = index;
+            this.saveState();
+            render.timerDisplay();
+        }
+    },
+    
+    // Start or stop comment for current part
+    toggleComment(partIndex) {
+        if (!this.isRunning || this.activePart !== partIndex) {
+            return;
+        }
+        
+        if (this.activeComment) {
+            this.finalizeComment();
+        } else {
+            this.startComment(partIndex);
+        }
+        
+        render.timerDisplay();
+    },
+    
+    // Start a new comment
+    startComment(partIndex) {
+        this.activeComment = {
+            startElapsed: this.elapsedTimes[partIndex] || 0,
+            partIndex: partIndex
+        };
+        
+        clearInterval(this.commentInterval);
+        
+        this.commentInterval = setInterval(() => {
+            const currentElement = document.getElementById(`currentComment-${partIndex}`);
+            if (currentElement && this.activeComment) {
+                const currentElapsed = this.elapsedTimes[partIndex] || 0;
+                const commentDuration = currentElapsed - this.activeComment.startElapsed;
+                currentElement.textContent = formatTime(Math.max(0, commentDuration));
+            }
+        }, COMMENT_DISPLAY_UPDATE_INTERVAL);
+    },
+    
+    // Finalize the active comment
+    finalizeComment() {
+        if (!this.activeComment) return;
+        
+        const partIndex = this.activeComment.partIndex;
+        const duration = (this.elapsedTimes[partIndex] || 0) - this.activeComment.startElapsed;
+        
+        // Only add comment if duration is at least 1 second
+        if (duration >= 1) {
+            const finalDuration = Math.min(duration, COMMENT_LIMIT);
+            
+            this.comments.push({
+                duration: finalDuration,
+                timestamp: Date.now(),
+                partName: this.meetingParts[partIndex].name,
+                partIndex: partIndex,
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9) // Unique ID
+            });
+            
+            this.saveState();
+            render.comments();
+        }
+        
+        clearInterval(this.commentInterval);
+        this.commentInterval = null;
+        this.activeComment = null;
+    },
+    
+    // Delete a comment
+    deleteComment(commentId) {
+        const initialCount = this.comments.length;
+        this.comments = this.comments.filter(comment => comment.id !== commentId);
+        
+        if (initialCount !== this.comments.length) {
+            this.saveState();
+            render.comments();
+        }
+    },
+    
+    // Adjust timer by given seconds
+    adjustTimer(partIndex, seconds) {
+        if (partIndex < 0 || partIndex >= this.meetingParts.length) return;
+        
+        const currentValue = this.elapsedTimes[partIndex] || 0;
+        const maxDuration = this.meetingParts[partIndex].duration;
+        
+        // Ensure we don't go below 0 or above max duration
+        this.elapsedTimes[partIndex] = Math.max(0, Math.min(currentValue + seconds, maxDuration));
+        
+        this.saveState();
+        render.timerDisplay();
+    },
+    
+    // Adjust active comment timer
+    adjustCommentTimer(seconds) {
+        if (!this.activeComment) return;
+        
+        const partIndex = this.activeComment.partIndex;
+        const currentPartTime = this.elapsedTimes[partIndex] || 0;
+        
+        // Calculate the new start elapsed time to adjust comment duration
+        // For example, if we want to add 5 seconds, we subtract 5 from the start time
+        const newStartElapsed = Math.max(0, this.activeComment.startElapsed - seconds);
+        
+        // Ensure we don't make the comment longer than COMMENT_LIMIT
+        const potentialDuration = currentPartTime - newStartElapsed;
+        if (potentialDuration <= COMMENT_LIMIT) {
+            this.activeComment.startElapsed = newStartElapsed;
+        }
+        
+        // Update display immediately
+        const currentElement = document.getElementById(`currentComment-${partIndex}`);
+        if (currentElement) {
+            const commentDuration = currentPartTime - this.activeComment.startElapsed;
+            currentElement.textContent = formatTime(Math.max(0, commentDuration));
+        }
+    }
+};
+
+//----------------------------------------------------------------------------------------------
+// TEMPLATE MANAGEMENT
+//----------------------------------------------------------------------------------------------
+const templateManager = {
+    // Get all saved templates
+    getTemplates() {
+        try {
+            const templates = localStorage.getItem('savedTemplates');
+            return templates ? JSON.parse(templates) : {};
+        } catch (error) {
+            console.error('Error loading templates:', error);
+            return {};
+        }
+    },
+    
+    // Save current template with a name
+    saveTemplate(name) {
+        try {
+            const templates = this.getTemplates();
+            templates[name] = state.meetingParts;
+            localStorage.setItem('savedTemplates', JSON.stringify(templates));
+            notify.show(`Template "${name}" saved successfully`, 'success');
+        } catch (error) {
+            console.error('Error saving template:', error);
+            notify.show('Failed to save template', 'error');
+        }
+    },
+    
+    // Load a template by name
+    loadTemplate(name) {
+        try {
+            const templates = this.getTemplates();
+            if (templates[name]) {
+                state.meetingParts = templates[name];
+                localStorage.setItem('meetingTemplate', JSON.stringify(state.meetingParts));
+                state.resetTimers();
+                render.template();
+                render.timerDisplay();
+                notify.show(`Template "${name}" loaded successfully`, 'success');
+            }
+        } catch (error) {
+            console.error('Error loading template:', error);
+            notify.show('Failed to load template', 'error');
+        }
+    },
+    
+    // Delete a template by name
+    deleteTemplate(name) {
+        try {
+            const templates = this.getTemplates();
+            if (templates[name]) {
+                delete templates[name];
+                localStorage.setItem('savedTemplates', JSON.stringify(templates));
+                this.populateTemplatesList();
+                notify.show(`Template "${name}" deleted`, 'success');
+            }
+        } catch (error) {
+            console.error('Error deleting template:', error);
+            notify.show('Failed to delete template', 'error');
+        }
+    },
+    
+    // Populate the templates list in the modal
+    populateTemplatesList() {
+        const templatesListElement = DOM.elements.templatesList;
+        if (!templatesListElement) return;
+        
+        const templates = this.getTemplates();
+        let html = '';
+        
+        if (Object.keys(templates).length === 0) {
+            html = '<p class="text-gray-500">No saved templates</p>';
+        } else {
+            html = Object.keys(templates).map(name => `
+                <div class="flex justify-between items-center p-2 border rounded mb-2">
+                    <span class="template-name">${sanitizeInput(name)}</span>
+                    <div class="flex space-x-2">
+                        <button 
+                            class="px-2 py-1 bg-blue-500 text-white rounded text-sm"
+                            data-action="load" 
+                            data-template="${sanitizeInput(name)}">
+                            Load
+                        </button>
+                        <button 
+                            class="px-2 py-1 bg-red-500 text-white rounded text-sm"
+                            data-action="delete" 
+                            data-template="${sanitizeInput(name)}">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        templatesListElement.innerHTML = html;
+        
+        // Add event listeners to template actions
+        templatesListElement.querySelectorAll('[data-action]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const action = e.target.getAttribute('data-action');
+                const templateName = e.target.getAttribute('data-template');
+                
+                if (action === 'load') {
+                    if (state.isRunning) {
+                        DOM.showConfirmation(
+                            'Load Template',
+                            'Loading a new template will stop the current timer. Continue?',
+                            () => this.loadTemplate(templateName)
+                        );
+                    } else {
+                        this.loadTemplate(templateName);
+                    }
+                } else if (action === 'delete') {
+                    DOM.showConfirmation(
+                        'Delete Template',
+                        `Are you sure you want to delete the template "${templateName}"?`,
+                        () => this.deleteTemplate(templateName)
+                    );
+                }
+            });
+        });
+    }
+};
+
+//----------------------------------------------------------------------------------------------
+// MEETING PARTS MANAGEMENT
+//----------------------------------------------------------------------------------------------
+function addPart() {
+    state.meetingParts.push({
+        name: '',
+        duration: 180,
+        speaker: '',
+        enableComments: false
+    });
+    
+    localStorage.setItem('meetingTemplate', JSON.stringify(state.meetingParts));
+    render.template();
+    render.timerDisplay();
 }
 
-// Sanitizes input to prevent XSS attacks
+function updatePart(index, field, value) {
+    if (index < 0 || index >= state.meetingParts.length) return;
+    
+    let processedValue = value;
+    
+    if (field === 'duration') {
+        // Convert minutes to seconds, ensure it's a positive number
+        processedValue = Math.round(Math.max(0, parseFloat(value) || 0) * 60);
+    } else if (field === 'enableComments') {
+        processedValue = Boolean(value);
+    } else {
+        processedValue = sanitizeInput(value);
+    }
+    
+    state.meetingParts[index][field] = processedValue;
+    localStorage.setItem('meetingTemplate', JSON.stringify(state.meetingParts));
+    
+    render.template();
+    render.timerDisplay();
+}
+
+function movePart(index, direction) {
+    if (index < 0 || index >= state.meetingParts.length) return;
+    if ((direction === -1 && index === 0) || 
+        (direction === 1 && index === state.meetingParts.length - 1)) {
+        return;
+    }
+    
+    const newIndex = index + direction;
+    
+    // Swap meeting parts
+    [state.meetingParts[index], state.meetingParts[newIndex]] = 
+    [state.meetingParts[newIndex], state.meetingParts[index]];
+    
+    // Swap elapsed times
+    const tempElapsed = state.elapsedTimes[index];
+    state.elapsedTimes[index] = state.elapsedTimes[newIndex];
+    state.elapsedTimes[newIndex] = tempElapsed;
+    
+    // Update active part if needed
+    if (state.activePart === index) {
+        state.activePart = newIndex;
+    } else if (state.activePart === newIndex) {
+        state.activePart = index;
+    }
+    
+    localStorage.setItem('meetingTemplate', JSON.stringify(state.meetingParts));
+    state.saveState();
+    
+    render.template();
+    render.timerDisplay();
+}
+
+function removePart(index) {
+    if (index < 0 || index >= state.meetingParts.length) return;
+    
+    // Show confirmation if timer is running for this part
+    if (state.isRunning && state.activePart === index) {
+        DOM.showConfirmation(
+            'Remove Part',
+            'This part is currently active. Removing it will stop the timer. Continue?',
+            () => executeRemovePart(index)
+        );
+    } else {
+        executeRemovePart(index);
+    }
+}
+
+function executeRemovePart(index) {
+    // Remove the part
+    state.meetingParts.splice(index, 1);
+    
+    // Adjust elapsed times
+    const newElapsedTimes = {};
+    Object.keys(state.elapsedTimes).forEach(key => {
+        const numKey = parseInt(key, 10);
+        if (numKey < index) {
+            newElapsedTimes[numKey] = state.elapsedTimes[key];
+        } else if (numKey > index) {
+            newElapsedTimes[numKey - 1] = state.elapsedTimes[key];
+        }
+    });
+    state.elapsedTimes = newElapsedTimes;
+    
+    // Adjust active part
+    if (state.meetingParts.length === 0) {
+        state.activePart = null;
+        state.stopTimer();
+    } else if (state.activePart >= index) {
+        state.activePart = Math.max(0, state.activePart - 1);
+    }
+    
+    localStorage.setItem('meetingTemplate', JSON.stringify(state.meetingParts));
+    state.saveState();
+    
+    render.template();
+    render.timerDisplay();
+}
+
+//----------------------------------------------------------------------------------------------
+// TIMER CONTROL FUNCTIONS - User interface functions that call state methods
+//----------------------------------------------------------------------------------------------
+function toggleTimer() {
+    state.toggleTimer();
+}
+
+function startNextPart() {
+    state.startNextPart();
+}
+
+function selectPart(index) {
+    state.selectPart(index);
+}
+
+function toggleComment(partIndex) {
+    state.toggleComment(partIndex);
+}
+
+function incrementTimer(partIndex) {
+    state.adjustTimer(partIndex, 5);
+}
+
+function decrementTimer(partIndex) {
+    state.adjustTimer(partIndex, -5);
+}
+
+function incrementCommentTimer() {
+    state.adjustCommentTimer(5);
+}
+
+function decrementCommentTimer() {
+    state.adjustCommentTimer(-5);
+}
+
+function resetPartTimer(partIndex) {
+    if (state.isRunning && state.activePart === partIndex) {
+        DOM.showConfirmation(
+            'Reset Timer',
+            'This will reset the timer for the current part. Continue?',
+            () => state.resetTimer(partIndex)
+        );
+    } else {
+        state.resetTimer(partIndex);
+        render.timerDisplay();
+    }
+}
+
+function deleteComment(commentId) {
+    DOM.showConfirmation(
+        'Delete Comment',
+        'Are you sure you want to delete this comment?',
+        () => state.deleteComment(commentId)
+    );
+}
+
+function resetData() {
+    if (state.isRunning) {
+        DOM.showConfirmation(
+            'Reset Timers',
+            'This will stop all timers and clear all comments. Continue?',
+            () => {
+                state.resetTimers();
+                render.timerDisplay();
+                render.comments();
+            }
+        );
+    } else {
+        state.resetTimers();
+        render.timerDisplay();
+        render.comments();
+    }
+}
+
+function clearLocalStorage() {
+    DOM.showConfirmation(
+        'Clear Template',
+        'This will reset all data including the meeting template. Continue?',
+        () => {
+            state.clearAllData();
+            render.template();
+            render.timerDisplay();
+            render.comments();
+        }
+    );
+}
+
+//----------------------------------------------------------------------------------------------
+// UTILITY FUNCTIONS
+//----------------------------------------------------------------------------------------------
 function sanitizeInput(input) {
-    if (typeof input !== 'string') return input; // Return input if not a string
-    return input // Otherwise, sanitize the input
-        .replace(/&/g, '&amp;') // Replace special characters
-        .replace(/</g, '&lt;')  // Replace less than
-        .replace(/>/g, '&gt;') // Replace greater than
-        .replace(/"/g, '&quot;') // Replace double quotes
-        .replace(/'/g, '&#039;') // Replace single quotes
-        .trim(); // Trim whitespace
+    if (typeof input !== 'string') return input;
+    
+    return input
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .trim();
 }
 
-// Formats the time in minutes and seconds
 function formatTime(seconds) {
     // Add NaN protection
-    const safeSeconds = Number.isFinite(seconds) ? seconds : 0; // Convert NaN to 0
-    const mins = Math.floor(Math.abs(safeSeconds) / 60); // Get the whole minutes
-    const secs = Math.abs(safeSeconds) % 60; // Get the remainder
-    const sign = safeSeconds < 0 ? '-' : ''; // Add sign for negative times
-    return `${sign}${mins}:${secs.toString().padStart(2, '0')}`; // Format as MM:SS
+    const safeSeconds = Number.isFinite(seconds) ? seconds : 0;
+    const mins = Math.floor(Math.abs(safeSeconds) / 60);
+    const secs = Math.abs(safeSeconds) % 60;
+    const sign = safeSeconds < 0 ? '-' : '';
+    
+    return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Calculates the total number of comments and the average duration of comments for a given part
+function getProgressInfo(elapsed, duration, partIndex = null) {
+    const progress = Math.min((elapsed / duration) * 100, 100);
+    const timeRemaining = duration - elapsed;
+    let color = 'bg-blue-500';
+    
+    if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
+        color = 'bg-yellow-500';
+    } else if (timeRemaining <= 0) {
+        color = 'bg-red-500';
+    }
+    
+    return { progress, color };
+}
+
 function getPartStatistics(partIndex) {
     // Filter comments for the specified part
-    const partComments = comments.filter(comment => comment.partIndex === partIndex); // Filter by partIndex
-    if (partComments.length === 0) return null; // Return null if no comments
+    const partComments = state.comments.filter(comment => comment.partIndex === partIndex);
+    if (partComments.length === 0) return null;
     
-    // Calculate total comments and average duration
-    const totalComments = partComments.length; // Total number of comments
-    const averageDuration = Math.floor( // Round down to nearest second
-        partComments.reduce((sum, comment) => sum + comment.duration, 0) / totalComments // Average duration
+    const totalComments = partComments.length;
+    const averageDuration = Math.floor(
+        partComments.reduce((sum, comment) => sum + comment.duration, 0) / totalComments
     );
     
     return {
-        // Return the total number of comments and the average duration
         count: totalComments,
         average: averageDuration
     };
 }
 
-function renderTimerDisplay(part, index) {
-    const elapsed = elapsedTimes[index] || 0;
-    const { progress, color } = getProgressInfo(elapsed, part.duration, index);
-    return `
-        <div class="p-4 border rounded-lg part-card timer-item ${activePart === index ? 'border-blue-500' : 'border-gray-200'}"
-             onclick="selectPart(${index})"
-             role="region"
-             aria-label="Timer for ${sanitizeInput(part.name)}"
-             aria-selected="${activePart === index}">
-            ${renderTimerHeader(part, index)}
-            ${renderProgressBar(part, elapsed, progress, color)}
-            ${part.enableComments ? renderCommentControls(index) : ''}
-            ${activePart === index ? renderTimerControls() : ''}
-        </div>
-    `;
-}
-
-// END UTILITY FUNCTIONS
 //----------------------------------------------------------------------------------------------
+// NOTIFICATION SYSTEM
 //----------------------------------------------------------------------------------------------
-// BEGIN PROGRESS MANAGEMENT
-
-// Cache progress calculations
-const progressCache = {
-    // Cache for progress calculations
-    lastUpdate: {},
-    getProgressInfo(elapsed, duration, partIndex) { // Get progress info for a part
-        // Check cache for existing result
-        const cacheKey = `${elapsed}-${duration}-${partIndex}`; // Create cache key
-        if (this.lastUpdate[partIndex] === cacheKey) { // If cache key matches
-            return this.lastUpdate[`${partIndex}-result`]; // Return cached result
-        } // Otherwise, calculate progress and color
-        
-        const progress = Math.min((elapsed / duration) * 100, 100); // Calculate progress
-        const timeRemaining = duration - elapsed; // Calculate time remaining
-        let color = 'bg-blue-500'; // Default color
-        
-        // Update color based on time remaining
-        if (timeRemaining <= duration * 0.1 && timeRemaining > 0) { // Less than 10% time remaining
-            color = 'bg-yellow-500'; // Change to yellow
-        } else if (timeRemaining <= 0) { // Time is up
-            color = 'bg-red-500'; // Change to red
+const notify = {
+    container: null,
+    
+    init() {
+        // Create notification container if it doesn't exist
+        if (!this.container) {
+            this.container = document.createElement('div');
+            this.container.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2';
+            document.body.appendChild(this.container);
         }
-
-        const result = { progress, color }; // Create result object
-        this.lastUpdate[partIndex] = cacheKey; // Update cache key
-        this.lastUpdate[`${partIndex}-result`] = result; // Update cached result
-        return result; // Return the result
+    },
+    
+    show(message, type = 'info', duration = 3000) {
+        this.init();
+        
+        const colors = {
+            success: 'bg-green-500',
+            error: 'bg-red-500',
+            warning: 'bg-yellow-500',
+            info: 'bg-blue-500'
+        };
+        
+        const notificationElement = document.createElement('div');
+        notificationElement.className = `${colors[type]} text-white rounded-lg px-4 py-2 shadow-lg transform transition-all duration-300 fade-in`;
+        notificationElement.textContent = message;
+        
+        this.container.appendChild(notificationElement);
+        
+        // Remove notification after duration
+        setTimeout(() => {
+            notificationElement.style.opacity = '0';
+            notificationElement.style.transform = 'translateY(10px)';
+            
+            setTimeout(() => {
+                if (notificationElement.parentNode === this.container) {
+                    this.container.removeChild(notificationElement);
+                }
+            }, 300);
+        }, duration);
     }
 };
 
-function getProgressInfo(elapsed, duration, partIndex = null) { // Get progress info for a part
-    if (partIndex !== null) { // If partIndex is provided
-        return progressCache.getProgressInfo(elapsed, duration, partIndex); // Use cached calculation
-    } // Otherwise, calculate progress and color
+//----------------------------------------------------------------------------------------------
+// VISIBILITY MANAGEMENT
+//----------------------------------------------------------------------------------------------
+let hiddenStartTime = null;
 
-    // Fallback for cases where partIndex isn't provided
-    const progress = Math.min((elapsed / duration) * 100, 100); // Calculate progress
-    const timeRemaining = duration - elapsed; // Calculate time remaining
-    let color = 'bg-blue-500'; // Default color
-    
-    if (timeRemaining <= duration * 0.1 && timeRemaining > 0) { // Less than 10% time remaining
-        color = 'bg-yellow-500'; // Change to yellow
-    } else if (timeRemaining <= 0) { // Time is up
-        color = 'bg-red-500'; // Change to red
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        hiddenStartTime = Date.now();
+        
+        // Save state when tab becomes hidden
+        if (state.isRunning) {
+            state.saveState();
+        }
+    } else if (document.visibilityState === 'visible' && hiddenStartTime && state.isRunning) {
+        const hiddenDuration = Math.round((Date.now() - hiddenStartTime) / 1000);
+        
+        if (state.activePart !== null) {
+            state.elapsedTimes[state.activePart] = (state.elapsedTimes[state.activePart] || 0) + hiddenDuration;
+            state.saveState();
+        }
+        
+        // Restart the timer
+        state.startTimer();
+        render.timerDisplay();
     }
+});
 
-    return { progress, color };
-}
- 
-// END PROGRESS MANAGEMENT
-//----------------------------------------------------------------------------------------------        
 //----------------------------------------------------------------------------------------------
-// BEGIN PERFORMANCE MONITOR OBJECT DEFINITION
-
-const performanceMonitor = {
-    // Performance monitoring object
-    renderTimes: new Map(), // Using Map for better performance
-    maxSamples: 100, // Maximum number of samples to store
-    warningThreshold: 16.67, // 60fps threshold in ms
-    
-    logRenderTime(startTime, operation) { // Log the render time for an operation
-        const duration = Date.now() - startTime; // Calculate the duration
+// RENDERING FUNCTIONS
+//----------------------------------------------------------------------------------------------
+const render = {
+    template() {
+        const templateElement = DOM.elements.partsTemplate;
+        if (!templateElement) return;
         
-        if (!this.renderTimes.has(operation)) { // If operation doesn't exist
-            this.renderTimes.set(operation, []); // Create a new entry
-        }
-        const times = this.renderTimes.get(operation); // Get the render times
-        
-        times.push(duration); // Add the duration to the list of render times
-        if (times.length > this.maxSamples) { // If the list is too long
-            times.shift(); // Remove the oldest sample
-        } // Log warning for slow renders
-        
-        if (duration > this.warningThreshold) { // If duration exceeds warning threshold
-            console.warn(`Slow ${operation} render: ${duration}ms`); // Log a warning
-            this.logPerformanceData(operation); // Log performance data
-        } // Log the render time
+        const templateHTML = state.meetingParts.map((part, index) => this.renderPartTemplate(part, index)).join('');
+        templateElement.innerHTML = templateHTML;
     },
     
-    getAverageRenderTime(operation) { // Calculate the average render time for an operation
-        const times = this.renderTimes.get(operation); // Get the render times
-        if (!times || times.length === 0) return 0; // Return 0 if no times
-        
-        const sum = times.reduce((acc, curr) => acc + curr, 0); // Calculate the sum
-        return sum / times.length; // Return the average
+    renderPartTemplate(part, index) {
+        return `
+            <div class="flex items-center space-x-2 flex-wrap" role="group" aria-label="Meeting part ${index + 1}">
+                <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2 sm:mb-0">
+                    <div class="flex flex-col">
+                        <label for="part-name-${index}" class="text-xs text-gray-600">Part Name</label>
+                        <input
+                            id="part-name-${index}"
+                            type="text"
+                            value="${sanitizeInput(part.name)}"
+                            onchange="updatePart(${index}, 'name', this.value)"
+                            placeholder="Part Name"
+                            class="px-3 py-2 border rounded"
+                            aria-label="Name for part ${index + 1}"
+                        />
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="part-duration-${index}" class="text-xs text-gray-600">Duration (min)</label>
+                        <input
+                            id="part-duration-${index}"
+                            type="number"
+                            value="${part.duration / 60}"
+                            onchange="updatePart(${index}, 'duration', this.value)"
+                            placeholder="Minutes"
+                            class="px-3 py-2 border rounded"
+                            aria-label="Duration in minutes for part ${index + 1}"
+                            min="0"
+                            step="0.5"
+                        />
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="part-speaker-${index}" class="text-xs text-gray-600">Speaker</label>
+                        <input
+                            id="part-speaker-${index}"
+                            type="text"
+                            value="${sanitizeInput(part.speaker)}"
+                            onchange="updatePart(${index}, 'speaker', this.value)"
+                            placeholder="Speaker"
+                            class="px-3 py-2 border rounded"
+                            aria-label="Speaker name for part ${index + 1}"
+                        />
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label class="flex items-center space-x-2">
+                        <input
+                            type="checkbox"
+                            ${part.enableComments ? 'checked' : ''}
+                            onchange="updatePart(${index}, 'enableComments', this.checked)"
+                            class="form-checkbox"
+                            aria-label="Enable comments for this part"
+                        />
+                        <span class="text-sm">Comments</span>
+                    </label>
+                    <button 
+                        onclick="movePart(${index}, -1)" 
+                        ${index === 0 ? 'disabled' : ''} 
+                        class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+                        aria-label="Move part up ${index + 1}"
+                        ${index === 0 ? 'aria-disabled="true"' : ''}>
+                        ↑
+                    </button>
+                    <button 
+                        onclick="movePart(${index}, 1)" 
+                        ${index === state.meetingParts.length - 1 ? 'disabled' : ''} 
+                        class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+                        aria-label="Move part down ${index + 1}"
+                        ${index === state.meetingParts.length - 1 ? 'aria-disabled="true"' : ''}>
+                        ↓
+                    </button>
+                    <button 
+                        onclick="removePart(${index})" 
+                        class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                        aria-label="Remove part ${index + 1}">
+                        ×
+                    </button>
+                </div>
+            </div>
+        `;
     },
     
-    logPerformanceData(operation) { // Log performance data for an operation
-        const times = this.renderTimes.get(operation); // Get the render times
-        if (!times) return; // Return if no times
+    timerDisplay() {
+        const displayElement = DOM.elements.partsDisplay;
+        if (!displayElement) return;
         
-        const avg = this.getAverageRenderTime(operation); // Calculate the average
-        const max = Math.max(...times); // Calculate the maximum
-        const min = Math.min(...times); // Calculate the minimum
+        const displayHTML = state.meetingParts.map((part, index) => this.renderTimerDisplay(part, index)).join('');
+        displayElement.innerHTML = displayHTML;
+    },
+    
+    renderTimerDisplay(part, index) {
+        const elapsed = state.elapsedTimes[index] || 0;
+        const { progress, color } = getProgressInfo(elapsed, part.duration, index);
+        const isActive = state.activePart === index;
         
-        console.group(`Performance data for ${operation}`); // Log performance data
-        console.log(`Average: ${avg.toFixed(2)}ms`); // Log the average
-        console.log(`Max: ${max}ms`); // Log the maximum
-        console.log(`Min: ${min}ms`); // Log the minimum
-        console.log(`Samples: ${times.length}`); // Log the number of samples
-        console.groupEnd(); // End the group
-    } // Log the performance data
-};
-
-// END PERFORMANCE MONITOR OBJECT DEFINITION
-//----------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------
-// BEGIN RENDER OBJECT
-
-const render = { // Render object for updating the UI
-    template: function() { // Update the template for meeting parts
-        if (!DOM.partsTemplate) return; // Return if template element doesn't exist
-        const template = meetingParts.map((part, index) => renderPartTemplate(part, index)).join(''); // Generate the template
-        if (DOM.partsTemplate.innerHTML !== template) { // If the content has changed
-            DOM.partsTemplate.innerHTML = template; // Update the template
-        }
+        return `
+            <div class="p-4 border rounded-lg part-card ${isActive ? 'active border-blue-500' : 'border-gray-200'}"
+                 onclick="selectPart(${index})"
+                 role="region"
+                 aria-label="Timer for ${sanitizeInput(part.name)}"
+                 aria-selected="${isActive}">
+                ${this.renderTimerHeader(part, index)}
+                ${this.renderProgressBar(part, elapsed, progress, color)}
+                ${part.enableComments ? this.renderCommentControls(index) : ''}
+                ${this.renderTimerControls(index, isActive)}
+            </div>
+        `;
     },
-
-    timerDisplay: function() { // Update the timer display for meeting parts
-        if (!DOM.partsDisplay) return; // Return if display element doesn't exist
-        const display = meetingParts.map((part, index) => renderTimerDisplay(part, index)).join('');  // Generate the display
-        if (DOM.partsDisplay.innerHTML !== display) { // If the content has changed
-            DOM.partsDisplay.innerHTML = display; // Update the display
-        }
+    
+    renderTimerHeader(part, index) {
+        return `
+            <div class="flex justify-between mb-2 flex-wrap">
+                <div class="flex flex-col">
+                    <span class="font-medium">${sanitizeInput(part.name)}</span>
+                    ${part.enableComments ? this.renderPartStatistics(index) : ''}
+                </div>
+                <span aria-label="Speaker" class="text-gray-600">${sanitizeInput(part.speaker)}</span>
+            </div>
+        `;
     },
-
-    comments: function() { // Update the comments and comment history
-        if (!DOM.commentHistory || !DOM.globalCommentCount || !DOM.globalAverageDuration) return; // Return if elements don't exist
-        const commentCount = comments.length; // Get the total number of comments
-        const averageDuration = commentCount > 0 // If there are comments
-            ? Math.floor(comments.reduce((a, b) => a + b.duration, 0) / commentCount) // Calculate the average
-            : 0; // Otherwise, set to 0
-
-        DOM.globalCommentCount.textContent = commentCount; // Update the comment count
-        DOM.globalAverageDuration.textContent = formatTime(averageDuration); // Update the average duration
-
-        const historyHTML = renderCommentHistory(); // Generate the comment history
-        // Only update if the content has changed to prevent unnecessary reflows
-        if (DOM.commentHistory.innerHTML !== historyHTML) { // If the content has changed
-            DOM.commentHistory.innerHTML = historyHTML; // Update the comment history
-        }
-},
-
-timerControls: function() { // Update the timer controls (e.g., Start/Stop button text)
-    // Update the timer controls (e.g., Start/Stop button text when the website returns to the foreground)
-    const timerButton = document.querySelector('[aria-label="Start timer"], [aria-label="Stop timer"]'); // Find the timer button
-    if (timerButton) { // If the button exists
-        timerButton.textContent = isRunning ? 'Stop' : 'Start'; // Update the button text
-        timerButton.setAttribute('aria-label', isRunning ? 'Stop timer' : 'Start timer'); // Update the button label
-    }
-}
-};
-
-function renderPartTemplate(part, index) { // Render the template for a meeting part
-    return `
-        <div class="flex items-center space-x-2" role="group" aria-label="Meeting part ${index + 1}">
-            <div class="flex-1 grid grid-cols-3 gap-2">
-                ${renderPartInput('part-name', index, part.name, 'Part Name', 'Name for part')}
-                ${renderPartInput('part-duration', index, part.duration / 60, 'Minutes', 'Duration in minutes for part', 'number', 'min="0"')}
-                ${renderPartInput('part-speaker', index, part.speaker, 'Speaker', 'Speaker name for part')}
-                ${renderCommentsCheckbox(part, index)}
-            </div>
-            ${renderMoveButton(index, -1, 'Move part up', '↑')}
-            ${renderMoveButton(index, 1, 'Move part down', '↓')}
-            ${renderRemoveButton(index)}
-        </div>
-    `;
-}
-
-function renderPartInput(idPrefix, index, value, placeholder, ariaLabel, type = 'text', extraAttributes = '') { // Render an input field for a meeting part
-    return `
-        <div class="flex flex-col">
-            <label for="${idPrefix}-${index}" class="sr-only">${placeholder}</label>
-            <input
-                id="${idPrefix}-${index}"
-                type="${type}"
-                value="${sanitizeInput(value)}"
-                onchange="updatePart(${index}, '${idPrefix.split('-')[1]}', this.value)"
-                placeholder="${placeholder}"
-                class="px-3 py-2 border rounded"
-                aria-label="${ariaLabel} ${index + 1}"
-                ${extraAttributes}
-            />
-        </div>
-    `;
-}
-
-function renderCommentsCheckbox(part, index) { // Render a checkbox to enable comments for a meeting part
-    return `
-        <div class="flex flex-col">
-            <label class="flex items-center space-x-2">
-                <input
-                    type="checkbox"
-                    ${part.enableComments ? 'checked' : ''}
-                    onchange="updatePart(${index}, 'enableComments', this.checked)"
-                    class="form-checkbox"
-                    aria-label="Enable comments for this part"
-                />
-                <span class="text-sm">Comments</span>
-            </label>
-        </div>
-    `;
-}
-
-function renderMoveButton(index, direction, ariaLabel, symbol) { // Render a button to move a meeting part up or down
-    const disabled = (direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1);
-    return `
-        <button 
-            onclick="movePart(${index}, ${direction})" 
-            ${disabled ? 'disabled' : ''} 
-            class="px-3 py-2 bg-gray-200 rounded"
-            aria-label="${ariaLabel} ${index + 1}"
-            ${disabled ? 'aria-disabled="true"' : ''}>
-            ${symbol}
-        </button>
-    `;
-}
-
-function renderRemoveButton(index) { // Render a button to remove a meeting part
-    return `
-        <button 
-            onclick="removePart(${index})" 
-            class="px-3 py-2 bg-gray-200 rounded"
-            aria-label="Remove part ${index + 1}">
-            ×
-        </button>
-    `;
-}
-
-function renderTimerControls() { // Render the timer controls
-    const isLastPart = activePart >= meetingParts.length - 1; // Check if the active part is the last part
-    return `
-        <div class="mt-4 flex space-x-2">
-            <button onclick="event.stopPropagation(); toggleTimer()" 
-                    class="px-4 py-2 ${isRunning ? 'bg-red-500' : 'bg-blue-500'} text-white rounded"
-                    aria-label="${isRunning ? 'Stop timer' : 'Start timer'}">
-                ${isRunning ? 'Stop' : 'Start'}
-            </button>
-            ${!isLastPart ? `
-            <button onclick="event.stopPropagation(); startNextPart()" 
-                    class="px-4 py-2 bg-green-500 text-white rounded"
-                    aria-label="Begin next part">
-                Begin Next Part
-            </button>` : ''}
-            <button onclick="incrementTimer(activePart)" class="px-2 py-1 bg-green-500 text-white rounded" aria-label="Increment timer by 5 seconds">+5s</button>
-            <button onclick="decrementTimer(activePart)" class="px-2 py-1 bg-red-500 text-white rounded" aria-label="Decrement timer by 5 seconds">-5s</button>
-        </div>
-    `;
-}
-
-function renderTimerHeader(part, index) { // Render the header for a meeting part
-    return `
-        <div class="flex justify-between mb-2">
-            <div class="flex items-center gap-2">
-                <span class="font-medium">${sanitizeInput(part.name)}</span>
-                ${part.enableComments ? renderPartStatistics(index) : ''}
-            </div>
-            <span aria-label="Speaker">${sanitizeInput(part.speaker)}</span>
-        </div>
-    `;
-}
-
-function renderPartStatistics(index) { // Render the statistics for a meeting part
-    const stats = getPartStatistics(index); // Get the part statistics
-    return stats ? // If statistics exist
-        `<span class="text-sm text-gray-600">
-            (${stats.count} comments, avg ${formatTime(stats.average)})
-        </span>` : 
-        '';
-}
-
-function renderProgressBar(part, elapsed, progress, color) { // Render the progress bar for a meeting part
-    return `
-        <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative progress-bar"
-             role="progressbar"
-             aria-valuemin="0"
-             aria-valuemax="${part.duration}"
-             aria-valuenow="${elapsed}"
-             aria-label="Progress for ${sanitizeInput(part.name)}">
-            <div class="h-full ${color} progress-bar absolute" style="width: ${progress}%">
-                <span class="absolute left-2 text-white">${formatTime(elapsed)}</span>
-            </div>
-            <span class="countdown absolute right-2 text-black font-medium" 
-                  aria-label="Time remaining">
-                ${formatTime(part.duration - elapsed)}
-            </span>
-        </div>
-    `;
-}
-
-function renderCommentControls(index) { // Render the comment controls for a meeting part
-    return `
-        <div class="mt-4 space-y-2">
-            <div class="flex items-center gap-2">
-                <button onclick="event.stopPropagation(); toggleComment(${index})" 
-                    class="px-4 py-2 ${activeComment?.partIndex === index ? 'bg-red-500' : 'bg-purple-500'} text-white rounded"
-                    aria-label="${activeComment?.partIndex === index ? 'Stop comment' : 'Start comment'}">
-                    ${activeComment?.partIndex === index ? 'Stop Comment' : 'Start Comment'}
-                </button>
-                <span id="currentComment-${index}" 
-                      class="text-sm ${activeComment ? '' : 'invisible'}"
-                      aria-live="polite"
-                      role="timer">
-                    ${activeComment ? formatTime((elapsedTimes[index] || 0) - activeComment.startElapsed) : '0:00'}
+    
+    renderPartStatistics(index) {
+        const stats = getPartStatistics(index);
+        return stats ? 
+            `<span class="text-sm text-gray-600">
+                (${stats.count} comments, avg ${formatTime(stats.average)})
+            </span>` : 
+            '';
+    },
+    
+    renderProgressBar(part, elapsed, progress, color) {
+        return `
+            <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative progress-bar"
+                 role="progressbar"
+                 aria-valuemin="0"
+                 aria-valuemax="${part.duration}"
+                 aria-valuenow="${elapsed}"
+                 aria-label="Progress for ${sanitizeInput(part.name)}">
+                <div class="h-full ${color} progress-bar-bg" style="width: ${progress}%"></div>
+                <span class="left-label">${formatTime(elapsed)}</span>
+                <span class="countdown" aria-label="Time remaining">
+                    ${formatTime(part.duration - elapsed)}
                 </span>
             </div>
-        </div>
-    `;
-}
-
-function renderCommentHistory() { // Render the comment history
-    const groupedComments = comments.reduce((acc, comment) => { // Group comments by part
-        const partName = comment.partName || 'Unknown Part'; // Get the part name
-        if (!acc[partName]) { // If the part doesn't exist
-            acc[partName] = []; // Create a new array
-        }
-        acc[partName].push(comment); // Add the comment to the part
-        return acc; // Return the accumulator
-    }, {}); // Initialize the accumulator
-
-    // Sort comments by timestamp
-    return Object.entries(groupedComments).map(([partName, partComments]) => `
-        <div class="mb-4">
-            <h3 class="font-semibold text-gray-700 mb-2">${sanitizeInput(partName)}</h3>
-            ${partComments.map((comment, i) => renderComment(comment, i)).join('')}
-        </div>
-    `).join(''); // Render the comments
-}
-
-function renderComment(comment, index) { // Render a comment\
-    return `
-        <div class="bg-white p-2 rounded shadow-sm mb-2">
-            <div class="flex justify-between text-sm">
-                <span>Comment ${index + 1}</span>
-                <span>${formatTime(comment.duration)}</span>
-            </div>
-            <div class="text-xs text-gray-500">
-                ${new Date(comment.timestamp).toLocaleTimeString()}
-            </div>
-        </div>
-    `;
-}
-
-// END RENDER OBJECT       
-//----------------------------------------------------------------------------------------------
-//BEGIN VISIBILITY MANAGEMENT
-/*
-The hiddenStartTime variable records the time when the page becomes hidden.
-When the page becomes visible again, the hiddenDuration is calculated as the difference between the current time and hiddenStartTime.
-The hiddenDuration is added to the elapsed time for the active part.
-The resumeTimer function is called to resume the timer if it was running before the page became hidden.
-This should ensure that the timer accounts for the time the page was not visible and continues correctly when the user returns to the webpage.
-*/
-
-let hiddenStartTime = null; // Variable to store the time when the page becomes hidden
-
-document.addEventListener('visibilitychange', handleVisibilityChange); // Listen for visibility change events
-
-function handleVisibilityChange() { // Function to handle visibility changes
-    if (document.visibilityState === 'hidden') { // If the page is hidden
-        hiddenStartTime = Date.now(); // Record the time
-    } else if (document.visibilityState === 'visible' && isRunning) { // If the page is visible and the timer is running
-        const hiddenDuration = Math.round((Date.now() - hiddenStartTime) / 1000); // Convert to seconds and round
-        if (activePart !== null) { // If an active part exists
-            elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + hiddenDuration; // Add the hidden duration
-            render.timerDisplay(); // Update the timer display
-        }
-        resumeTimer(); // Resume the timer
-    }
-}
-
-function resumeTimer() { // Function to resume the timer
-    if (activePart !== null) { // If an active part exists
-        startTimer(); // Start the timer
-    }
-}
-
-function startTimer() { // Function to start the timer
-    if (activePart !== null) { // If an active part exists
-        isRunning = true; // Set the running flag
-        timerInterval = setInterval(updateTimer, 1000); // Start the timer interval
-        render.timerControls(); // Update the timer controls
-    }
-}
-
-function stopTimer() { // Function to stop the timer
-    isRunning = false; // Clear the running flag
-    clearInterval(timerInterval); // Clear the timer interval
-    render.timerControls(); // Update the timer controls
-}
-
-function toggleTimer() { // Function to toggle the timer
-    if (isRunning) { // If the timer is running
-        stopTimer(); // Stop the timer
-    } else { // Otherwise
-        startTimer(); // Start the timer
-    }
-}
-
-function updateTimer() { // Function to update the timer
-    if (activePart !== null) { // If an active part exists
-        elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1; // Increment the elapsed time
-        render.timerDisplay(); // Update the timer display
-    }
-}
-
-//END VISIBILITY MANAGEMENT
-//----------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------
-//BEGIN PERFORMANCE MONITORING CODE
-        
- // Update render methods to include performance monitoring
-Object.keys(render).forEach(key => { // Iterate over render methods
-    const originalMethod = render[key]; // Get the original method
-    render[key] = function(...args) { // Replace the method with a new function
-        const startTime = Date.now(); // Record the start time
-        const result = originalMethod.apply(this, args); // Call the original method
-        performanceMonitor.logRenderTime(startTime, key); // Log the render time
-        return result; // Return the result
-    };
-});
-
-// Add performance monitoring to key functions
-['toggleTimer', 'startNextPart', 'toggleComment'].forEach(fnName => { // Iterate over functions
-    const originalFn = window[fnName]; // Get the original function
-    window[fnName] = trackError(function(...args) { // Replace the function with a new function
-        const startTime = Date.now(); // Record the start time
-        const result = originalFn.apply(this, args); // Call the original function
-        performanceMonitor.logRenderTime(startTime, fnName); // Log the render time (Fixed parameter order)
-        return result;
-    }, fnName);
-});
+        `;
+    },
     
-    // Add periodic performance logging
-    setInterval(() => { // Set an interval to log performance data
-        if (isRunning) { // If the timer is running
-            Object.keys(render).forEach(key => { // Iterate over render methods
-                performanceMonitor.logPerformanceData(key); // Log performance data
-            });
-        }
-    }, 60000); // Log every minute while running
-
-// Add debounced save function to reduce storage operations
-const debouncedSave = (function() { // Create a debounced save function
-    let timeout; // Initialize timeout variable
-    return function(data, key) { // Return a debounced save function
-        clearTimeout(timeout); // Clear the timeout
-        timeout = setTimeout(() => { // Set a new timeout
-            try { // Try to save the data
-                localStorage.setItem(key, JSON.stringify(data)); // Save the data to local storage
-            } catch (error) { // Catch any errors
-                console.error('Failed to save to localStorage:', error); // Log the error
-            } // Save the data
-        }, 1000); // Wait 1 second after last change before saving
-    };
-})(); // Return the debounced save function
-
-//END PERFORMANCE MONITORING CODE
-//----------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------
-//BEGIN CONSTANTS AND STATE
+    renderCommentControls(index) {
+        const isActiveComment = state.activeComment?.partIndex === index;
         
-    const DEFAULT_PARTS = [
-        { name: 'Opening Comments', duration: 60, speaker: '', enableComments: false },
-        { name: 'Treasures', duration: 600, speaker: '', enableComments: false },
-        { name: 'Spiritual Gems', duration: 600, speaker: '', enableComments: true},
-        { name: 'Bible Reading', duration: 300, speaker: '', enableComments: false },
-        { name: 'Apply yourself 1', duration: 180, speaker: '', enableComments: false },
-        { name: 'Apply yourself 2', duration: 180, speaker: '', enableComments: false },
-        { name: 'Student Talk', duration: 300, speaker: '', enableComments: false },
-        { name: 'CBS', duration: 1800, speaker: '', enableComments: false }
-   ];
-        const COMMENT_LIMIT = 240; // Limit comments to 4 minutes
-        
-        let meetingParts = [];
-        let activePart = 0;
-        let isRunning = false;
-        let elapsedTimes = {};
-        let timerInterval = null;
-        let commentInterval = null;
-        
-        // Comment Management
-        let comments = JSON.parse(localStorage.getItem('meetingComments')) || []; // Load comments from local storage
-        let activeComment = null; // Active comment object
-
-//END CONSTANTS AND STATE
-//----------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------
-// BEGIN STATE MANAGEMENT
-
-function saveState() { // Save the current state to local storage
-    localStorage.setItem('elapsedTimes', JSON.stringify(elapsedTimes)); // Save elapsed times
-    localStorage.setItem('activePart', activePart); // Save active part
-} // Save the current state
-
-function loadState() { // Load the previous state from local storage
-    const savedTimes = localStorage.getItem('elapsedTimes'); // Get saved elapsed times
-    if (savedTimes) { // If saved times exist
-        elapsedTimes = JSON.parse(savedTimes); // Parse the saved times
-    } // Load the saved times
-    activePart = parseInt(localStorage.getItem('activePart')) || 0; // Get the active part
-} // Load the previous state
-
-function saveTemplate() { // Save the meeting template to local storage
-    localStorage.setItem('meetingTemplate', JSON.stringify(meetingParts)); // Save the meeting template
-}
-
-function loadTemplate() { // Load the meeting template from local storage
-    const saved = localStorage.getItem('meetingTemplate'); // Get the saved template
-    meetingParts = saved ? JSON.parse(saved) : DEFAULT_PARTS; // Parse the saved template or use default
-    activePart = meetingParts.length > 0 ? 0 : null; // Set active part to first part or null
-    render.template(); // Render the template
-    render.timerDisplay(); // Render the timer display
-} // Load the meeting template
-
-function resetData() { // Reset all data to default values
-    elapsedTimes = {}; // Reset elapsed times
-    comments = []; // Reset comments
-    activeComment = null; // Reset active comment
-    localStorage.removeItem('meetingComments'); // Remove comments from local storage
-    render.comments(); // Render the comments
-    activePart = null; // Reset active part
-    isRunning = false; // Reset running flag
-    clearInterval(timerInterval); // Clear the timer interval
-    clearInterval(commentInterval); // Clear the comment interval
-    commentInterval = null; // Reset comment interval
-    render.timerDisplay(); // Render the timer display
-}
-
-function clearLocalStorage() { // Clear all data from local storage
-    localStorage.removeItem('meetingTemplate'); // Remove the meeting template
-    meetingParts = DEFAULT_PARTS; // Reset meeting parts to default
-    resetData(); // Reset all data
-    render.template(); // Render the template
-    render.timerDisplay(); // Render the timer display
-}
-
-// END STATE MANAGEMENT
-//----------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------
-// BEGIN TEMPLATE MANAGEMENT
-
-function addPart() { // Add a new part to the meeting template
-    meetingParts.push({ // Add a new part to the meeting template
-        name: '',   // Initialize with default values
-        duration: 180,  // Default duration is 3 minutes
-        speaker: '',  // Default speaker is empty
-        enableComments: false // Default comments are disabled
-    }); // Add a new part
-    saveTemplate(); // Save the template
-    render.template(); // Render the template
-    render.timerDisplay(); // Render the timer display
-}
-
-function updatePart(index, field, value) { // Update a part in the meeting template
-    if (field === 'duration') { // If the field is duration
-        value = Math.round(Math.max(0, parseFloat(value) || 0) * 60); // Convert minutes to seconds
-    } else if (field === 'enableComments') { // If the field is enableComments
-        value = Boolean(value); // Ensure boolean type
-    } else { // Otherwise
-        value = sanitizeInput(value); // Sanitize the input
-    }
-    meetingParts[index][field] = value; // Update the part
-    saveTemplate(); // Save the template
-    render.template(); // Render the template
-    render.timerDisplay(); // Render the timer display
-}
-
-function movePart(index, direction) { // Move a part in the meeting template
-    if ((direction === -1 && index === 0) || (direction === 1 && index === meetingParts.length - 1)) return; // Check bounds
-    const newIndex = index + direction; // Calculate new index
-
-    [meetingParts[index], meetingParts[newIndex]] = [meetingParts[newIndex], meetingParts[index]]; // Swap parts
-
-    // Swap elapsed times
-    const tempElapsed = elapsedTimes[index];
-    elapsedTimes[index] = elapsedTimes[newIndex];
-    elapsedTimes[newIndex] = tempElapsed;
-
-    // Update activePart if moved
-    if (activePart === index) { // If active part is moved
-        activePart = newIndex; // Update active part
-    } else if (activePart === newIndex) { // If active part is moved
-        activePart = index; // Update active part
-    }
-
-    saveTemplate(); // Save the template
-    saveState(); // Save the state
-    render.template(); // Render the template
-    render.timerDisplay(); // Render the timer display
-}
-
-function removePart(index) { // Remove a part from the meeting template
-    meetingParts.splice(index, 1); // Remove the part
-
-    // Adjust elapsedTimes indices
-    const newElapsedTimes = {}; // Create a new object
-    Object.keys(elapsedTimes).forEach(key => { // Iterate over elapsed times
-        const numKey = parseInt(key, 10); // Parse the key
-        if (numKey < index) newElapsedTimes[numKey] = elapsedTimes[key]; // Update the index
-        else if (numKey > index) newElapsedTimes[numKey - 1] = elapsedTimes[key]; // Update the index
-    }); // Adjust elapsed times
-    elapsedTimes = newElapsedTimes; // Update elapsed times
-
-    // Adjust activePart
-    if (activePart >= index) { // If active part is greater than or equal to index
-        activePart = meetingParts.length === 0 ? null : Math.max(0, activePart - 1); // Update active part
-    }
-
-    saveTemplate(); // Save the template
-    saveState(); // Save the state
-    render.template(); // Render the template
-    render.timerDisplay(); // Render the timer display
-}
-        
-// END TEMPLATE MANAGEMENT
-//----------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------
-// BEGIN TIMER AND COMMENT CONTROLS
-
-function toggleTimer() { // Toggle the timer
-    if (activePart === null) { // If no active part
-        activePart = 0; // Set active part to first part
-        elapsedTimes[activePart] = elapsedTimes[activePart] || 0; // Initialize elapsed time
-    } // Set active part and initialize elapsed time
-
-    isRunning = !isRunning; // Toggle running flag
-
-    if (isRunning) { // If timer is running
-        timerInterval = setInterval(updateTimer, 1000); // Start the timer interval
-    } else { // Otherwise
-        clearInterval(timerInterval); // Clear the timer interval
-        // Stop active comment if exists
-        if (activeComment) { // If active comment exists
-            const partIndex = activeComment.partIndex; // Get the part index
-            const duration = elapsedTimes[partIndex] - activeComment.startElapsed; // Calculate duration
-            if (duration >= 1) { // If duration is at least 1 second
-                const finalDuration = Math.min(duration, COMMENT_LIMIT); // Limit duration
-                comments.push({ // Add comment to list
-                    duration: finalDuration, // Add comment duration
-                    timestamp: Date.now(), // Add comment timestamp
-                    partName: meetingParts[partIndex].name // Add part name
-                }); // Add comment
-                localStorage.setItem('meetingComments', JSON.stringify(comments)); // Save comments
-                render.comments(); // Render comments
-            } // Add comment
-            clearInterval(commentInterval); // Clear the comment interval
-            activeComment = null; // Reset active comment
-            render.timerDisplay(); // Render the timer display
-        } // Stop active comment if exists
-    } // Toggle running flag
-    render.timerDisplay(); // Render the timer display
-}
-
-function updateTimer() { // Update the timer
-    if (activePart === null) return; // Return if no active part
-    elapsedTimes[activePart] = (elapsedTimes[activePart] || 0) + 1; // Increment elapsed time
-    render.timerDisplay(); // Render the timer display
-}
-
-function startNextPart() { // Start the next part
-    if (activePart === null || activePart >= meetingParts.length - 1) return; // Return if no active part or at end
-    activePart++; // Increment active part
-    if (!isRunning) toggleTimer(); // Start the timer if not running
-    render.timerDisplay(); // Render the timer display
-}
-
-function selectPart(index) { // Select a part
-    if (isRunning) { // If timer is running
-        return; // Return without changing active part
-    }
-    activePart = index; // Set active part
-    render.timerDisplay(); // Render the timer display
-}
-
-/*
-function toggleComment(partIndex) { // Toggle a comment
-    if (activePart !== partIndex || !isRunning) { // If part is not active or timer is not running
-        return; // Return without toggling comment
-    }
-
-    if (activeComment) { // If active comment exists
-        // Calculate duration based on elapsed time
-        const duration = elapsedTimes[partIndex] - activeComment.startElapsed; // Calculate duration
-
-        const finalDuration = Math.min(duration, COMMENT_LIMIT); // Limit duration
-        comments.push({ // Add comment to list
-            duration: finalDuration, // Add comment duration
-            timestamp: Date.now(), // Add comment timestamp
-            partName: meetingParts[partIndex].name, // Add part name
-            partIndex: partIndex  // Track which part the comment was made on
-        }); // Add comment
-        localStorage.setItem('meetingComments', JSON.stringify(comments)); // Save comments
-        activeComment = null; // Reset active comment
-        clearInterval(commentInterval); // Clear the comment interval
-        render.comments(); // Render comments
-    } else { // Otherwise
-        activeComment = { // Set active comment
-            startElapsed: elapsedTimes[partIndex] || 0, // Set start elapsed time
-            partIndex: partIndex // Set part index
-        };
-        commentInterval = setInterval(() => { // Set interval to update comment duration
-            const currentElement = document.getElementById(`currentComment-${partIndex}`); // Get current comment element
-            if (currentElement) { // If element exists
-                const currentElapsed = elapsedTimes[partIndex] || 0; // Get current elapsed time
-                const commentDuration = currentElapsed - activeComment.startElapsed; // Calculate comment duration
-                currentElement.textContent = formatTime(Math.max(0, commentDuration)); // Update comment duration
-            } // Update comment duration
-        }, 200); // Update every 200ms
-    } // Toggle comment
-    render.timerDisplay(); // Render the timer display
-}
-*/
-
-//This adds better error checking and improves clarity of the function's logic.
-function toggleComment(partIndex) { // Toggle a comment
-    // Ensure timer is running
-    if (!isRunning) { // If timer is not running
-        return; // Return without toggling comment
-    }
+        return `
+            <div class="mt-4 space-y-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="event.stopPropagation(); toggleComment(${index})" 
+                        class="px-4 py-2 ${isActiveComment ? 'bg-red-500' : 'bg-purple-500'} text-white rounded hover:${isActiveComment ? 'bg-red-600' : 'bg-purple-600'}"
+                        aria-label="${isActiveComment ? 'Stop comment' : 'Start comment'}">
+                        ${isActiveComment ? 'Stop Comment' : 'Start Comment'}
+                    </button>
+                    <span id="currentComment-${index}" 
+                          class="text-sm font-medium ${isActiveComment ? '' : 'invisible'}"
+                          aria-live="polite"
+                          role="timer">
+                        ${isActiveComment ? formatTime((state.elapsedTimes[index] || 0) - state.activeComment.startElapsed) : '0:00'}
+                    </span>
+                    ${isActiveComment ? `
+                        <div class="flex space-x-1">
+                            <button onclick="event.stopPropagation(); incrementCommentTimer()" 
+                                class="time-adjust-button increment-button"
+                                aria-label="Add 5 seconds to comment">
+                                +5s
+                            </button>
+                            <button onclick="event.stopPropagation(); decrementCommentTimer()" 
+                                class="time-adjust-button decrement-button"
+                                aria-label="Subtract 5 seconds from comment">
+                                -5s
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    },
     
-    // Check if active part matches the part index
-    if (activePart !== partIndex) { // If active part does not match part index
-        console.warn(`Active part (${activePart}) does not match comment part (${partIndex})`); // Log warning
-        return; // Return without toggling comment
-    }
-
-    if (activeComment) { // If active comment exists
-        // Calculate duration based on elapsed time and limit to COMMENT_LIMIT
-        const duration = elapsedTimes[partIndex] - activeComment.startElapsed; // Calculate duration
-        const finalDuration = Math.min(duration, COMMENT_LIMIT); // Limit duration
-        
-        // Only add comment if duration is meaningful
-        if (finalDuration >= 1) { // If duration is at least 1 second
-            comments.push({ // Add comment to list
-                duration: finalDuration, // Add comment duration
-                timestamp: Date.now(), // Add comment timestamp
-                partName: meetingParts[partIndex].name, // Add part name
-                partIndex: partIndex // Track which part the comment was made on
-            });
-            localStorage.setItem('meetingComments', JSON.stringify(comments)); // Save comments
-            render.comments(); // Render comments
+    renderTimerControls(index, isActive) {
+        if (!isActive) {
+            return `
+                <div class="mt-4">
+                    <button onclick="event.stopPropagation(); resetPartTimer(${index})" 
+                            class="time-adjust-button reset-button"
+                            aria-label="Reset timer for this part">
+                        Reset Timer
+                    </button>
+                </div>
+            `;
         }
         
-        activeComment = null; // Reset active comment
-        clearInterval(commentInterval); // Clear the comment interval
-    } else { // Otherwise
-        activeComment = { // Set active comment
-            startElapsed: elapsedTimes[partIndex] || 0, // Set start elapsed time
-            partIndex: partIndex // Set part index
-        };
+        const isLastPart = index >= state.meetingParts.length - 1;
         
-        commentInterval = setInterval(() => { // Set interval to update comment duration
-            const currentElement = document.getElementById(`currentComment-${partIndex}`); // Get current comment element
-            if (currentElement) { // If element exists
-                const currentElapsed = elapsedTimes[partIndex] || 0; // Get current elapsed time
-                const commentDuration = currentElapsed - activeComment.startElapsed; // Calculate comment duration
-                currentElement.textContent = formatTime(Math.max(0, commentDuration)); // Update comment duration
+        return `
+            <div class="mt-4 timer-controls">
+                <button onclick="event.stopPropagation(); toggleTimer()" 
+                        class="px-4 py-2 ${state.isRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} text-white rounded"
+                        aria-label="${state.isRunning ? 'Stop timer' : 'Start timer'}">
+                    ${state.isRunning ? 'Stop' : 'Start'}
+                </button>
+                ${!isLastPart ? `
+                <button onclick="event.stopPropagation(); startNextPart()" 
+                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                        aria-label="Begin next part">
+                    Begin Next Part
+                </button>` : ''}
+                <button onclick="event.stopPropagation(); incrementTimer(${index})" 
+                        class="time-adjust-button increment-button"
+                        aria-label="Add 5 seconds to timer">
+                    +5s
+                </button>
+                <button onclick="event.stopPropagation(); decrementTimer(${index})" 
+                        class="time-adjust-button decrement-button"
+                        aria-label="Subtract 5 seconds from timer">
+                    -5s
+                </button>
+                <button onclick="event.stopPropagation(); resetPartTimer(${index})" 
+                        class="time-adjust-button reset-button"
+                        aria-label="Reset timer for this part">
+                    Reset
+                </button>
+            </div>
+        `;
+    },
+    
+    comments() {
+        const commentHistoryElement = DOM.elements.commentHistory;
+        const globalCommentCountElement = DOM.elements.globalCommentCount;
+        const globalAverageDurationElement = DOM.elements.globalAverageDuration;
+        
+        if (!commentHistoryElement || !globalCommentCountElement || !globalAverageDurationElement) return;
+        
+        const commentCount = state.comments.length;
+        const averageDuration = commentCount > 0
+            ? Math.floor(state.comments.reduce((a, b) => a + b.duration, 0) / commentCount)
+            : 0;
+        
+        globalCommentCountElement.textContent = commentCount;
+        globalAverageDurationElement.textContent = formatTime(averageDuration);
+        
+        commentHistoryElement.innerHTML = this.renderCommentHistory();
+    },
+    
+    renderCommentHistory() {
+        // Group comments by part
+        const groupedComments = state.comments.reduce((acc, comment) => {
+            const partName = comment.partName || 'Unknown Part';
+            if (!acc[partName]) {
+                acc[partName] = [];
             }
-        }, 200); // Update every 200ms
+            acc[partName].push(comment);
+            return acc;
+        }, {});
+        
+        // No comments
+        if (Object.keys(groupedComments).length === 0) {
+            return '<p class="text-gray-500 text-center p-4">No comments recorded yet</p>';
+        }
+        
+        // Sort by part name and render each group
+        return Object.entries(groupedComments).map(([partName, partComments]) => `
+            <div class="mb-4">
+                <h3 class="font-semibold text-gray-700 mb-2">${sanitizeInput(partName)}</h3>
+                ${partComments.map((comment, i) => this.renderComment(comment, i)).join('')}
+            </div>
+        `).join('');
+    },
+    
+    renderComment(comment, index) {
+        return `
+            <div class="bg-white p-2 rounded shadow-sm mb-2 comment-item" data-comment-id="${comment.id || ''}">
+                <div class="flex justify-between text-sm">
+                    <span>Comment ${index + 1}</span>
+                    <div class="flex items-center">
+                        <span class="mr-2">${formatTime(comment.duration)}</span>
+                        <button 
+                            onclick="deleteComment('${comment.id || ''}')" 
+                            class="text-red-500 delete-button text-sm"
+                            aria-label="Delete this comment">
+                            ×
+                        </button>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-500">
+                    ${new Date(comment.timestamp).toLocaleTimeString()}
+                </div>
+            </div>
+        `;
     }
-    
-    render.timerDisplay(); // Render the timer display
-}
+};
 
-// END TIMER AND COMMENT CONTROLS
 //----------------------------------------------------------------------------------------------
+// EVENT LISTENERS AND INITIALIZATION
 //----------------------------------------------------------------------------------------------
-// BEGIN APPLICATION LIFECYCLE MANAGEMENT
-
-function cleanupResources() { // Cleanup resources when the application is hidden or closed
-    // Clear all intervals
-    clearInterval(timerInterval); // Clear the timer interval
-    clearInterval(commentInterval); // Clear the comment interval
-    
-    // Clear performance monitoring data
-    performanceMonitor.renderTimes.clear(); // Clear render times
-    
-    // Save state before cleanup
-    if (isRunning) { // If timer is running
-        saveState(); // Save the state
-    }
-}
-
-function initializeApplication() { // Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
     // Initialize DOM cache
-    DOM.init(); // Initialize the DOM cache
+    DOM.init();
     
-    // Load saved data
-    loadTemplate(); // Load the template
-    loadState(); // Load the state
+    // Initialize application state
+    state.init();
     
-    // Initialize UI
-    render.comments(); // Render the comments
-    render.timerDisplay(); // Render the timer display
+    // Render the UI
+    render.template();
+    render.timerDisplay();
+    render.comments();
     
     // Add keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && e.target === document.body) {
+        // Space to toggle timer when not in a form field
+        if (e.code === 'Space' && 
+            !['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(document.activeElement.tagName)) {
             e.preventDefault();
             toggleTimer();
         }
+        
+        // Escape to close any open modals
+        if (e.key === 'Escape') {
+            if (!DOM.elements.templateModal.classList.contains('hidden')) {
+                DOM.elements.templateModal.classList.add('hidden');
+            }
+            if (!DOM.elements.confirmationModal.classList.contains('hidden')) {
+                DOM.elements.confirmationModal.classList.add('hidden');
+            }
+        }
     });
-}
-
-// Event Listeners
-document.addEventListener('DOMContentLoaded', initializeApplication);
-
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        cleanupResources();
-    }
+    
+    // Confirm page refresh if timer is running
+    window.addEventListener('beforeunload', (e) => {
+        if (state.isRunning) {
+            // This will trigger a browser confirmation dialog
+            e.preventDefault();
+            e.returnValue = 'You have a timer running. Are you sure you want to leave?';
+            return e.returnValue;
+        }
+    });
 });
 
-window.addEventListener('beforeunload', (e) => {
-    cleanupResources();
-    if (isRunning) {
-        e.preventDefault();
-        e.returnValue = '';
-    }
-});
-
+//----------------------------------------------------------------------------------------------
+// ERROR HANDLING
+//----------------------------------------------------------------------------------------------
 window.addEventListener('error', (event) => {
     console.error('Global error caught:', {
         message: event.message,
@@ -977,17 +1243,21 @@ window.addEventListener('error', (event) => {
         error: event.error
     });
     
+    // Display error to user
+    notify.show('An error occurred. Attempting to recover...', 'error');
+    
     // Attempt recovery
     try {
-        resetData();
+        clearInterval(state.timerInterval);
+        clearInterval(state.commentInterval);
+        state.isRunning = false;
+        
+        // Re-render the interface
         render.template();
         render.timerDisplay();
-        alert('An error occurred. The application has been reset.');
+        render.comments();
     } catch (recoveryError) {
         console.error('Recovery failed:', recoveryError);
-        alert('Application error. Please refresh the page.');
+        notify.show('Application error. Please refresh the page.', 'error');
     }
 });
-  
-// END APPLICATION LIFECYCLE MANAGEMENT
-//---------------------------------------------------------------------------------------------- 
