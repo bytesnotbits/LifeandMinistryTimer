@@ -467,6 +467,43 @@ main {
     color: white;
 }
 
+/* Sound tooltip styles */
+.sound-tooltip {
+    visibility: hidden;
+    position: absolute;
+    top: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--bg-card);
+    color: var(--text-color);
+    text-align: center;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 5px var(--shadow-color);
+    white-space: nowrap;
+    z-index: 101;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.sound-tooltip::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--border-color) transparent transparent transparent;
+}
+
+.sound-control:hover .sound-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
 /* Utility classes */
 .hidden {
     display: none !important;
