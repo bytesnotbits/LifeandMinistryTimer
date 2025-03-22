@@ -97,13 +97,20 @@ const soundManager = {
         
         const soundOnIcon = soundToggle.querySelector('.sound-on-icon');
         const soundOffIcon = soundToggle.querySelector('.sound-off-icon');
+        const soundTooltip = document.getElementById('soundTooltip');
         
         if (this.isSoundEnabled) {
             soundOnIcon.classList.remove('hidden');
             soundOffIcon.classList.add('hidden');
+            if (soundTooltip) {
+                soundTooltip.textContent = 'Sound enabled';
+            }
         } else {
             soundOnIcon.classList.add('hidden');
             soundOffIcon.classList.remove('hidden');
+            if (soundTooltip) {
+                soundTooltip.textContent = 'Sound disabled';
+            }
         }
     },
     
