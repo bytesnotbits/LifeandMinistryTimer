@@ -82,6 +82,21 @@ const DOM = { // eslint-disable-line no-unused-vars
         this.elements.shortcutsModal = document.getElementById('shortcutsModal'); // Shortcuts modal
         this.elements.closeShortcutsModal = document.getElementById('closeShortcutsModal'); // Close shortcuts modal button
         
+        // Edit mode elements
+        this.elements.editModeToggle = document.getElementById('editModeToggle'); // Edit mode toggle
+        this.elements.editModeControls = document.getElementById('editModeControls'); // Edit mode controls
+        this.elements.editModeInstructions = document.getElementById('editModeInstructions'); // Edit mode instructions
+        this.elements.addPartBtn = document.getElementById('addPartBtn'); // Add part button
+        
+        // Part editor modal elements
+        this.elements.partEditorModal = document.getElementById('partEditorModal'); // Part editor modal
+        this.elements.editPartName = document.getElementById('editPartName'); // Edit part name input
+        this.elements.editPartSpeaker = document.getElementById('editPartSpeaker'); // Edit part speaker input
+        this.elements.editPartDuration = document.getElementById('editPartDuration'); // Edit part duration input
+        this.elements.editPartComments = document.getElementById('editPartComments'); // Edit part comments checkbox
+        this.elements.closePartEditorModal = document.getElementById('closePartEditorModal'); // Close part editor modal button
+        this.elements.savePartEdits = document.getElementById('savePartEdits'); // Save part edits button
+        
         // Add event listeners to buttons
         this._setupEventListeners(); // eslint-disable-line no-underscore-dangle
         
@@ -230,21 +245,46 @@ const DOM = { // eslint-disable-line no-unused-vars
             });
         }
         
+        // Edit mode toggle
+        if (this.elements.editModeToggle) { // Edit mode toggle
+            this.elements.editModeToggle.addEventListener('change', () => {
+                state.toggleEditMode(); // Toggle edit mode
+            });
+        }
+        
+        // Part editor modal buttons
+        if (this.elements.closePartEditorModal) { // Close part editor modal button
+            this.elements.closePartEditorModal.addEventListener('click', () => {
+                state.cancelPartEdits(); // Cancel part edits
+            });
+        }
+        
+        if (this.elements.savePartEdits) { // Save part edits button
+            this.elements.savePartEdits.addEventListener('click', () => {
+                state.savePartEdits(); // Save part edits
+            });
+        }
+        
         // Add part button
         const addPartBtn = document.getElementById('addPartBtn');
         if (addPartBtn) {
             addPartBtn.addEventListener('click', () => {
-                // Add a new part to the meeting parts
-                state.meetingParts.push({
-                    name: 'New Part',
-                    duration: 5*60,
-                    speaker: '',
-                    enableComments: false
-                });
-                
-                // Render the template editor
-                render.templateEditor();
-                render.timerDisplay();
+                if (state.isEditMode) {
+                    // Use the new addPart method when in edit mode
+                    state.addPart();
+                } else {
+                    // Legacy behavior for backward compatibility
+                    state.meetingParts.push({
+                        name: 'New Part',
+                        duration: 5*60,
+                        speaker: '',
+                        enableComments: false
+                    });
+                    
+                    // Render the template editor
+                    render.templateEditor();
+                    render.timerDisplay();
+                }
             });
         }
     },
@@ -342,6 +382,9 @@ let state = {
     commentInterval: null,
     activeComment: null,
     comments: [],
+    isEditMode: false,
+    editingPartIndex: null,
+    draggedPartIndex: null,
     
     // Initialize application state
     init() {
@@ -690,6 +733,222 @@ let state = {
         }
         
         return report;
+    },
+    
+    // Toggle edit mode
+    toggleEditMode() {
+        // Don't allow edit mode when timer is running
+        if (this.isRunning) {
+            notify.show('Please stop the timer before entering edit mode', 'warning');
+            return false;
+        }
+        
+        this.isEditMode = !this.isEditMode;
+        
+        // Update UI for edit mode
+        const editModeToggle = document.getElementById('editModeToggle');
+        if (editModeToggle) {
+            editModeToggle.checked = this.isEditMode;
+        }
+        
+        const editModeControls = document.getElementById('editModeControls');
+        if (editModeControls) {
+            if (this.isEditMode) {
+                editModeControls.classList.remove('hidden');
+            } else {
+                editModeControls.classList.add('hidden');
+            }
+        }
+        
+        const editModeInstructions = document.getElementById('editModeInstructions');
+        if (editModeInstructions) {
+            if (this.isEditMode) {
+                editModeInstructions.classList.remove('hidden');
+            } else {
+                editModeInstructions.classList.add('hidden');
+            }
+        }
+        
+        // Re-render the timer display with edit controls
+        render.timerDisplay();
+        
+        return true;
+    },
+
+    // Start editing a part
+    editPart(index) {
+        if (!this.isEditMode || index < 0 || index >= this.meetingParts.length) return;
+        
+        this.editingPartIndex = index;
+        const part = this.meetingParts[index];
+        
+        // Populate the edit modal
+        const nameInput = document.getElementById('editPartName');
+        const speakerInput = document.getElementById('editPartSpeaker');
+        const durationInput = document.getElementById('editPartDuration');
+        const commentsCheckbox = document.getElementById('editPartComments');
+        
+        if (nameInput) nameInput.value = part.name;
+        if (speakerInput) speakerInput.value = part.speaker || '';
+        if (durationInput) durationInput.value = Math.floor(part.duration / 60);
+        if (commentsCheckbox) commentsCheckbox.checked = part.enableComments;
+        
+        // Show the modal
+        const modal = document.getElementById('partEditorModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    },
+
+    // Save part edits
+    savePartEdits() {
+        if (this.editingPartIndex === null) return;
+        
+        const nameInput = document.getElementById('editPartName');
+        const speakerInput = document.getElementById('editPartSpeaker');
+        const durationInput = document.getElementById('editPartDuration');
+        const commentsCheckbox = document.getElementById('editPartComments');
+        
+        if (!nameInput || !durationInput) return;
+        
+        const name = nameInput.value.trim();
+        const speaker = speakerInput ? speakerInput.value.trim() : '';
+        const durationMinutes = parseInt(durationInput.value) || 1;
+        const enableComments = commentsCheckbox ? commentsCheckbox.checked : false;
+        
+        if (name) {
+            this.meetingParts[this.editingPartIndex] = {
+                name: name,
+                speaker: speaker,
+                duration: durationMinutes * 60,
+                enableComments: enableComments
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+            
+            // Re-render
+            render.timerDisplay();
+            
+            // Close the modal
+            const modal = document.getElementById('partEditorModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+            
+            this.editingPartIndex = null;
+        } else {
+            notify.show('Please enter a part name', 'error');
+        }
+    },
+
+    // Cancel part edits
+    cancelPartEdits() {
+        this.editingPartIndex = null;
+        
+        // Close the modal
+        const modal = document.getElementById('partEditorModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    },
+
+    // Add a new part at a specific position
+    addPartAt(index) {
+        if (!this.isEditMode) return;
+        
+        const newPart = {
+            name: 'New Part',
+            duration: 5 * 60,
+            speaker: '',
+            enableComments: false
+        };
+        
+        // Insert at the specified index
+        this.meetingParts.splice(index, 0, newPart);
+        
+        // Save to localStorage
+        localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+        
+        // Re-render
+        render.timerDisplay();
+        
+        // Edit the new part
+        this.editPart(index);
+    },
+
+    // Add a new part at the end
+    addPart() {
+        this.addPartAt(this.meetingParts.length);
+    },
+
+    // Remove a part
+    removePart(index) {
+        if (!this.isEditMode || index < 0 || index >= this.meetingParts.length) return;
+        
+        // Show confirmation dialog
+        DOM.showConfirmation(
+            'Remove Part',
+            `Are you sure you want to remove "${this.meetingParts[index].name}"?`,
+            () => {
+                this.meetingParts.splice(index, 1);
+                
+                // Adjust active part if needed
+                if (this.activePart >= this.meetingParts.length) {
+                    this.activePart = Math.max(0, this.meetingParts.length - 1);
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+                
+                // Re-render
+                render.timerDisplay();
+            }
+        );
+    },
+
+    // Start dragging a part
+    startDrag(index) {
+        if (!this.isEditMode || index < 0 || index >= this.meetingParts.length) return;
+        
+        this.draggedPartIndex = index;
+    },
+
+    // End dragging a part
+    endDrag() {
+        this.draggedPartIndex = null;
+    },
+
+    // Move a part to a new position
+    movePart(fromIndex, toIndex) {
+        if (!this.isEditMode || 
+            fromIndex < 0 || fromIndex >= this.meetingParts.length ||
+            toIndex < 0 || toIndex >= this.meetingParts.length ||
+            fromIndex === toIndex) return;
+        
+        // Get the part to move
+        const part = this.meetingParts[fromIndex];
+        
+        // Remove from current position
+        this.meetingParts.splice(fromIndex, 1);
+        
+        // Insert at new position
+        this.meetingParts.splice(toIndex, 0, part);
+        
+        // Adjust active part if needed
+        if (this.activePart === fromIndex) {
+            this.activePart = toIndex;
+        } else if (this.activePart > fromIndex && this.activePart <= toIndex) {
+            this.activePart--;
+        } else if (this.activePart < fromIndex && this.activePart >= toIndex) {
+            this.activePart++;
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+        
+        // Re-render
+        render.timerDisplay();
     }
 };
 
@@ -1443,6 +1702,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // R: Reset active timer
         if (e.key === 'r' || e.key === 'R') {
             state.resetTimer(state.activePart);
+        }
+        
+        // E: Toggle edit mode
+        if (e.key === 'e' || e.key === 'E') {
+            state.toggleEditMode();
         }
     });
 });
