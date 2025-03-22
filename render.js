@@ -123,7 +123,7 @@ const render = {
                 <div class="progress-bar h-8 mb-2">
                     <div class="progress-bar-bg ${progressColor}" style="width: ${progressPercent}%"></div>
                     <span class="left-label">${formatTime(elapsed)}</span>
-                    <span class="countdown">${formatTime(part.duration)}</span>
+                    <span class="countdown">${formatTimeWithSign(part.duration - elapsed)}</span>
                 </div>
                 
                 <div class="flex justify-between items-center">
@@ -243,6 +243,15 @@ function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// Format seconds as MM:SS with sign for negative values
+function formatTimeWithSign(seconds) {
+    const isNegative = seconds < 0;
+    const absSeconds = Math.abs(seconds);
+    const mins = Math.floor(absSeconds / 60);
+    const secs = absSeconds % 60;
+    return `${isNegative ? '-' : ''}${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 // Update part name
