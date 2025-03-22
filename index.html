@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,17 +15,83 @@
     
     <!-- Defer JavaScript loading -->
     <script src="lifeMinistryTimer.js" defer></script>
+    <script src="render.js" defer></script>
+    <script src="newFeatures.js" defer></script>
 </head>
-<body class="bg-gray-100 p-4">
-    <main class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+<body class="p-4">
+    <!-- Theme Toggle Button -->
+    <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun-icon">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="moon-icon hidden">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+    
+    <!-- Sound Control Button -->
+    <button id="soundToggle" class="sound-control" aria-label="Toggle sound">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sound-on-icon">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sound-off-icon hidden">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+    </button>
+    
+    <!-- Keyboard Shortcuts Button -->
+    <button id="shortcutsBtn" class="shortcuts-btn" aria-label="Show keyboard shortcuts" onclick="DOM.showShortcutsModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+            <path d="M6 8h.01"></path>
+            <path d="M10 8h.01"></path>
+            <path d="M14 8h.01"></path>
+            <path d="M18 8h.01"></path>
+            <path d="M6 12h.01"></path>
+            <path d="M10 12h.01"></path>
+            <path d="M14 12h.01"></path>
+            <path d="M18 12h.01"></path>
+            <path d="M6 16h.01"></path>
+            <path d="M10 16h.01"></path>
+            <path d="M14 16h.01"></path>
+            <path d="M18 16h.01"></path>
+        </svg>
+    </button>
+    
+    <!-- Audio elements for notifications -->
+    <audio id="timerEndSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3" type="audio/mpeg">
+    </audio>
+<!--  <audio id="commentStartSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="commentEndSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" type="audio/mpeg">
+    </audio>
+-->
+    
+    <!-- Main Content Container -->
+    <main class="max-w-4xl mx-auto rounded-lg shadow p-6">
         <!-- Timer Display Section -->
         <section id="timerSection" aria-labelledby="timer-heading" class="mt-8">
-            <h2 id="timer-heading" class="text-xl font-bold">Meeting Timer</h2>
+            <h2 id="timer-heading" class="text-xl font-bold">Life and Ministry Timer</h2>
             <div id="partsDisplay" class="space-y-4" role="region" aria-label="Active timers"></div>
         </section>
 
         <!-- Comment History Section -->
-        <section id="commentSection" aria-labelledby="comment-heading" class="mt-8 p-4 bg-gray-50 rounded-lg">
+        <section id="commentSection" aria-labelledby="comment-heading" class="mt-8 p-4 rounded-lg">
             <h2 id="comment-heading" class="text-lg font-bold mb-4">Total Meeting Comments</h2>
             <div id="globalCommentStats" class="mb-4 flex flex-wrap gap-4">
                 <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p>
@@ -45,6 +111,9 @@
                     <button id="loadTemplateBtn" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" aria-label="Load saved template">
                         Load Template
                     </button>
+                    <button id="generateReportBtn" onclick="reportManager.showReport()" class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600" aria-label="Generate meeting report">
+                        Meeting Report
+                    </button>
                     <button id="resetTimersBtn" onclick="resetData()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" aria-label="Reset all timers">
                         Reset Timers
                     </button>
@@ -54,23 +123,143 @@
                 </div>
             </header>
             <div id="partsTemplate" class="space-y-2 mt-4" role="form" aria-label="Meeting parts template"></div>
-            <button id="addPartBtn" onclick="addPart()" class="w-full px-4 py-2 bg-blue-500 text-white rounded mt-4 hover:bg-blue-600" aria-label="Add new meeting part">
+            <button id="addPartBtn" class="w-full px-4 py-2 bg-blue-500 text-white rounded mt-4 hover:bg-blue-600" aria-label="Add new meeting part">
                 Add Part
             </button>
         </section>
 
         <!-- Template Manager Modal -->
         <div id="templateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-            <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-                <h3 class="text-lg font-bold mb-4">Template Manager</h3>
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <header class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold">Template Manager</h3>
+                    <div class="flex space-x-2">
+                        <button id="importTemplateBtn" class="px-3 py-1 bg-purple-500 text-white rounded text-sm hover:bg-purple-600" aria-label="Import templates">
+                            Import
+                        </button>
+                        <button id="exportAllTemplatesBtn" class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600" aria-label="Export all templates">
+                            Export All
+                        </button>
+                    </div>
+                </header>
+                
+                <!-- Template Search and Filter -->
+                <div class="mb-4 flex flex-wrap gap-2">
+                    <div class="flex-1 min-w-[200px]">
+                        <input type="text" id="templateSearch" class="w-full px-3 py-2 border rounded" placeholder="Search templates...">
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <select id="templateCategoryFilter" class="w-full px-3 py-2 border rounded">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="templateSort" class="px-3 py-2 border rounded">
+                            <option value="name">Sort by Name</option>
+                            <option value="created">Sort by Created</option>
+                            <option value="modified">Sort by Modified</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Templates List -->
                 <div id="templatesList" class="mb-4 space-y-2"></div>
+                
+                <!-- New Template Form -->
+                <div class="border-t pt-4 mt-4">
+                    <h4 class="font-medium mb-2">Save Current Template</h4>
+                    <div class="space-y-3 mb-4">
+                        <div>
+                            <label for="templateName" class="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+                            <input type="text" id="templateName" class="w-full px-3 py-2 border rounded" placeholder="Enter template name">
+                        </div>
+                        <div>
+                            <label for="templateDescription" class="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+                            <textarea id="templateDescription" class="w-full px-3 py-2 border rounded" placeholder="Enter template description" rows="2"></textarea>
+                        </div>
+                        <div>
+                            <label for="templateCategory" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <div class="flex gap-2">
+                                <select id="templateCategory" class="flex-1 px-3 py-2 border rounded">
+                                    <option value="">Select Category</option>
+                                    <option value="Midweek Meeting">Midweek Meeting</option>
+                                    <option value="Weekend Meeting">Weekend Meeting</option>
+                                    <option value="Special Event">Special Event</option>
+                                </select>
+                                <button id="addCategoryBtn" class="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300" aria-label="Add new category">
+                                    +
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                        <button id="closeTemplateModal" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Close</button>
+                        <button id="saveNewTemplate" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Category Modal -->
+        <div id="categoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h3 class="text-lg font-bold mb-4">Add New Category</h3>
                 <div class="mb-4">
-                    <label for="templateName" class="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
-                    <input type="text" id="templateName" class="w-full px-3 py-2 border rounded" placeholder="Enter template name">
+                    <label for="newCategoryName" class="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                    <input type="text" id="newCategoryName" class="w-full px-3 py-2 border rounded" placeholder="Enter category name">
                 </div>
                 <div class="flex justify-end space-x-2">
-                    <button id="closeTemplateModal" class="px-4 py-2 bg-gray-200 rounded">Close</button>
-                    <button id="saveNewTemplate" class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+                    <button id="closeCategoryModal" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+                    <button id="saveNewCategory" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Add</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Template Preview Modal -->
+        <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <h3 class="text-lg font-bold mb-2" id="previewTitle">Template Preview</h3>
+                <p class="text-sm text-gray-600 mb-4" id="previewDescription"></p>
+                
+                <div class="flex flex-wrap gap-2 mb-4 text-sm">
+                    <div class="bg-gray-100 px-2 py-1 rounded" id="previewCategory"></div>
+                    <div class="bg-gray-100 px-2 py-1 rounded" id="previewCreated"></div>
+                    <div class="bg-gray-100 px-2 py-1 rounded" id="previewModified"></div>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <h4 class="font-medium mb-2">Meeting Parts</h4>
+                    <div id="previewParts" class="space-y-2 mb-4"></div>
+                    
+                    <div class="flex justify-between items-center text-sm text-gray-600 mb-4">
+                        <div>Total Parts: <span id="previewTotalParts">0</span></div>
+                        <div>Total Duration: <span id="previewTotalDuration">0:00</span></div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button id="closePreviewModal" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Close</button>
+                    <button id="loadPreviewedTemplate" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Load Template</button>
+                    <button id="exportPreviewedTemplate" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Export</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Import Template Modal -->
+        <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h3 class="text-lg font-bold mb-4">Import Templates</h3>
+                <div class="mb-4">
+                    <label for="importFile" class="block text-sm font-medium text-gray-700 mb-2">Select JSON file</label>
+                    <input type="file" id="importFile" class="w-full" accept=".json">
+                </div>
+                <div id="importPreview" class="mb-4 max-h-40 overflow-y-auto hidden">
+                    <h4 class="font-medium mb-2">Templates to import:</h4>
+                    <ul id="importList" class="list-disc pl-5"></ul>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button id="closeImportModal" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+                    <button id="confirmImport" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" disabled>Import</button>
                 </div>
             </div>
         </div>
@@ -88,29 +277,114 @@
         </div>
     </main>
 
-    <footer class="bg-gray-100 p-4 text-sm text-left mt-4">
-        <div>Version: 2.0.0 (2025)</div>
+    <footer class="p-4 text-sm text-left mt-4">
+        <div>Version: 2.1.0 (2025)</div>
         <div class="font-bold mt-2">New Features:</div>
         <ul class="list-disc pl-5 mt-1">
-            <li>Added ability to manually adjust comment timer (+5 & -5 seconds)</li>
-            <li>Added ability to reset specific meeting part timer</li>
-            <li>Added ability to remove comments from history</li>
-            <li>Added confirmation dialog when refreshing with active timer</li>
-            <li>Implemented save/load multiple user-defined templates</li>
+            <li>New feature: Dark mode for reduced eye strain</li>
+            <li>New feature: Sound notifications for timer events</li>
+            <li>New feature: End-of-meeting reports</li>
+            <li>New feature: Visual timer animations</li>
+            <li>New feature: Export comment data</li>
+            <li>New feature: Additional keyboard shortcuts</li>
+            <li>New feature: manually increase/decrease comment timer (+5 & -5 seconds)</li>
+            <li>New feature: reset individual part timers</li>
+            <li>New feature: remove individual comments</li>
+            <li>New feature: confirmation dialog confirming refreshing while actively timing</li>
+            <li>New feature: save/load multiple user-defined templates</li>
             <li>Improved accessibility and responsive design</li>
             <li>Enhanced error handling and performance optimizations</li>
         </ul>
         <div class="font-bold mt-2">Roadmap:</div>
         <ul class="list-disc pl-5 mt-1">
-            <li>Implement end-of-meeting reports</li>
-            <li>Allow others to see timers in real-time (view-only)</li>
-            <li>Move template and meeting statistics to separate pages</li>
+            <li>Allow real-time remote viewing</li>
+            <li>Improve meeting template editor</li>
+            <li>Add custom timer sounds</li>
         </ul>
-        <div class="font-bold mt-2">Be aware...</div>
-        <ul class="list-disc pl-5 mt-1">
-            <li>Currently: Timer adjustments made to active timer will also apply to the active comment timer.</li>
-        </ul>
-
     </footer>
+    
+    <!-- Report Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-content">
+            <h3 class="text-lg font-bold mb-4">Meeting Report</h3>
+            <div id="reportContent" class="mb-4">
+                <!-- Report content will be generated dynamically -->
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button id="closeReportModal" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Close</button>
+                <button id="exportReportBtn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Export Report</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcutsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="p-6 rounded-lg shadow-lg max-w-md w-full modal-content">
+            <h3 class="text-lg font-bold mb-4">Keyboard Shortcuts</h3>
+            <div class="mb-4">
+                <table class="w-full shortcuts-table">
+                    <thead>
+                        <tr>
+                            <th class="text-left py-2">Key</th>
+                            <th class="text-left py-2">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">Space</kbd></td>
+                            <td class="py-1">Start/Stop active timer</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1">Click on part card</td>
+                            <td class="py-1">Select part (when timer is not running)</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">Tab</kbd> + <kbd class="px-2 py-1 rounded kbd-key">Enter</kbd></td>
+                            <td class="py-1">Navigate and select parts with keyboard</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">N</kbd></td>
+                            <td class="py-1">Next part</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">C</kbd></td>
+                            <td class="py-1">Start/Stop comment</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">+</kbd></td>
+                            <td class="py-1">Add 5 seconds</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">-</kbd></td>
+                            <td class="py-1">Subtract 5 seconds</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">R</kbd></td>
+                            <td class="py-1">Reset active timer</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">D</kbd></td>
+                            <td class="py-1">Toggle dark mode</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">S</kbd></td>
+                            <td class="py-1">Toggle sound</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">?</kbd></td>
+                            <td class="py-1">Show keyboard shortcuts</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">Esc</kbd></td>
+                            <td class="py-1">Close modal</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end">
+                <button id="closeShortcutsModal" class="px-4 py-2 rounded modal-button">Close</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
