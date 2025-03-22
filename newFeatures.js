@@ -297,6 +297,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Add beforeunload event listener to confirm page refresh when timer is running
+    window.addEventListener('beforeunload', (event) => {
+        if (state.isRunning) {
+            // Standard way to show a confirmation dialog
+            const message = 'You have an active timer running. Are you sure you want to leave this page?';
+            event.returnValue = message; // Standard for most browsers
+            return message; // For older browsers
+        }
+        // If no timer is running, allow the page to refresh without confirmation
+    });
+    
     // Add keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         // Only handle shortcuts when not in an input field
