@@ -79,6 +79,11 @@ const render = {
         
         container.innerHTML = '';
         
+        // Add drop zone at the beginning if in edit mode
+        if (state.isEditMode) {
+            this._addDropZone(container, 0);
+        }
+        
         state.meetingParts.forEach((part, index) => {
             const elapsed = state.elapsedTimes[index] || 0;
             const isActive = index === state.activePart;
@@ -86,11 +91,37 @@ const render = {
             const progressPercent = Math.min(100, (elapsed / part.duration) * 100);
             
             const partElement = document.createElement('div');
-            partElement.className = `part-card p-4 rounded shadow ${isActive ? 'active' : ''} ${!isActive && !state.isRunning ? 'clickable' : ''}`;
+            partElement.className = `part-card p-4 rounded shadow ${isActive ? 'active' : ''} ${!isActive && !state.isRunning && !state.isEditMode ? 'clickable' : ''}`;
             partElement.setAttribute('data-part-index', index);
             
-            // Make the entire card clickable if timer is not running
-            if (!state.isRunning) {
+            // Add drag and drop attributes if in edit mode
+            if (state.isEditMode) {
+                partElement.setAttribute('draggable', 'true');
+                partElement.classList.add('edit-mode');
+                
+                // Add drag event listeners
+                partElement.addEventListener('dragstart', (e) => {
+                    state.startDrag(index);
+                    partElement.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', index);
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                partElement.addEventListener('dragend', () => {
+                    partElement.classList.remove('dragging');
+                    state.endDrag();
+                });
+                
+                // Edit part on click in edit mode
+                partElement.onclick = function(e) {
+                    // Only if the click is on the part itself, not on a button
+                    if (e.target === partElement || e.target.tagName !== 'BUTTON') {
+                        state.editPart(index);
+                    }
+                };
+            }
+            // Make the entire card clickable if timer is not running and not in edit mode
+            else if (!state.isRunning) {
                 partElement.onclick = function() { state.selectPart(index); };
                 partElement.setAttribute('role', 'button');
                 partElement.setAttribute('aria-label', `Select ${part.name} part`);
@@ -118,6 +149,13 @@ const render = {
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold">${part.name}</h3>
                     <div class="text-sm text-gray-600">${part.speaker}</div>
+                    ${state.isEditMode ? `
+                        <button onclick="state.removePart(${index})" 
+                            class="ml-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                            aria-label="Remove part">
+                            &times;
+                        </button>
+                    ` : ''}
                 </div>
                 
                 <div class="progress-bar h-8 mb-2">
@@ -128,7 +166,7 @@ const render = {
                 
                 <div class="flex justify-between items-center">
                     <div class="flex space-x-2">
-                        ${isActive ? `
+                        ${isActive && !state.isEditMode ? `
                             <button onclick="state.toggleTimer()" 
                                 class="px-2 py-1 ${state.isRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded"
                                 aria-label="${state.isRunning ? 'Stop timer' : 'Start timer'}">
@@ -143,9 +181,17 @@ const render = {
                                 </button>
                             ` : ''}
                         ` : ''}
+                        
+                        ${state.isEditMode ? `
+                            <button onclick="state.editPart(${index})" 
+                                class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                aria-label="Edit part">
+                                Edit
+                            </button>
+                        ` : ''}
                     </div>
                     
-                    ${part.enableComments && isActive ? `
+                    ${part.enableComments && isActive && !state.isEditMode ? `
                         <div class="flex items-center">
                             <button onclick="state.toggleComment(${index})" 
                                 class="px-2 py-1 ${state.activeComment ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-500 hover:bg-purple-600'} text-white rounded mr-2"
@@ -162,7 +208,7 @@ const render = {
                 </div>
                 
                 <div class="timer-controls">
-                    ${isActive ? `
+                    ${isActive && !state.isEditMode ? `
                         <button onclick="state.adjustTimer(${index}, 5)" 
                             class="time-adjust-button increment-button"
                             aria-label="Add 5 seconds">
@@ -174,17 +220,71 @@ const render = {
                             -5s
                         </button>
                     ` : ''}
-                    <button onclick="state.resetTimer(${index})" 
-                        class="time-adjust-button reset-button"
-                        aria-label="Reset timer">
-                        Reset
-                    </button>
+                    ${!state.isEditMode ? `
+                        <button onclick="state.resetTimer(${index})" 
+                            class="time-adjust-button reset-button"
+                            aria-label="Reset timer">
+                            Reset
+                        </button>
+                    ` : ''}
                 </div>
+                
+                ${state.isEditMode ? `
+                    <div class="edit-controls mt-2 flex justify-between">
+                        <button onclick="state.addPartAt(${index})" 
+                            class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                            aria-label="Add part before">
+                            Add Before
+                        </button>
+                        <button onclick="state.addPartAt(${index + 1})" 
+                            class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                            aria-label="Add part after">
+                            Add After
+                        </button>
+                    </div>
+                ` : ''}
             `;
             
             partElement.innerHTML = partHTML;
             container.appendChild(partElement);
+            
+            // Add drop zone after each part if in edit mode
+            if (state.isEditMode) {
+                this._addDropZone(container, index + 1);
+            }
         });
+    },
+    
+    // Add a drop zone for drag and drop
+    _addDropZone(container, index) {
+        const dropZone = document.createElement('div');
+        dropZone.className = 'drop-zone my-1';
+        dropZone.setAttribute('data-drop-index', index);
+        
+        // Add drop event listeners
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drop-zone-active');
+            e.dataTransfer.dropEffect = 'move';
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drop-zone-active');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drop-zone-active');
+            const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+            const toIndex = parseInt(dropZone.getAttribute('data-drop-index'));
+            
+            // Adjust toIndex if dropping after the dragged item
+            const adjustedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+            
+            state.movePart(fromIndex, adjustedToIndex);
+        });
+        
+        container.appendChild(dropZone);
     },
     
     // Render comments
