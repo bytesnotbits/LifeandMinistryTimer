@@ -310,6 +310,163 @@ main {
     background-color: #4b5563 !important;
 }
 
+/* Edit mode styles */
+.edit-mode-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 10rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 5px var(--shadow-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+}
+
+.edit-mode-toggle svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--text-color);
+}
+
+.edit-mode-controls {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 5px var(--shadow-color);
+}
+
+.edit-mode-instructions {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-left: 4px solid var(--primary-color);
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 0 0.25rem 0.25rem 0;
+}
+
+[data-theme="dark"] .edit-mode-instructions {
+    background-color: rgba(96, 165, 250, 0.1);
+}
+
+/* Part cards in edit mode */
+.part-card.edit-mode {
+    cursor: grab;
+    border: 2px dashed var(--border-color);
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.part-card.edit-mode:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.part-card.edit-mode.dragging {
+    opacity: 0.5;
+    border-style: solid;
+    cursor: grabbing;
+}
+
+/* Drop zones */
+.drop-zone {
+    height: 10px;
+    border-radius: 5px;
+    margin: 0.5rem 0;
+    transition: background-color 0.2s ease, height 0.2s ease;
+}
+
+.drop-zone-active {
+    background-color: var(--primary-color);
+    height: 20px;
+}
+
+/* Part editor modal */
+.part-editor-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.part-editor-content {
+    background-color: var(--bg-card);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.part-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.part-editor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.part-editor-form label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.part-editor-form input[type="text"],
+.part-editor-form input[type="number"] {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.part-editor-form input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+.part-editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.part-editor-actions button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+.part-editor-cancel {
+    background-color: var(--border-color);
+    color: var(--text-color);
+}
+
+.part-editor-save {
+    background-color: var(--primary-color);
+    color: white;
+}
+
 /* Utility classes */
 .hidden {
     display: none !important;
