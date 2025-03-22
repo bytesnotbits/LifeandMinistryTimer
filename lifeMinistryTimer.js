@@ -401,6 +401,11 @@ let state = {
     // Reset a specific timer
     resetTimer(partIndex) {
         if (partIndex >= 0 && partIndex < this.meetingParts.length) {
+            // Stop the timer if it's running
+            if (this.isRunning) {
+                this.stopTimer();
+            }
+            
             this.elapsedTimes[partIndex] = 0;
             this.saveState();
             render.timerDisplay(); // Explicitly re-render the timer display
