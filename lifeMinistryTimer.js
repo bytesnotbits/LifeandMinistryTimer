@@ -11,133 +11,297 @@
 //----------------------------------------------------------------------------------------------
 // DOM CACHE - Centralized access to DOM elements
 //----------------------------------------------------------------------------------------------
-const DOM = {
+const DOM = { // eslint-disable-line no-unused-vars
     elements: {},
     
     init() {
         // Timer section elements
-        this.elements.partsTemplate = document.getElementById('partsTemplate');
-        this.elements.partsDisplay = document.getElementById('partsDisplay');
+        this.elements.partsTemplate = document.getElementById('partsTemplate'); // Meeting parts template
+        this.elements.partsDisplay = document.getElementById('partsDisplay'); // Meeting parts display
         
         // Comment section elements
-        this.elements.commentHistory = document.getElementById('commentHistory');
-        this.elements.globalCommentCount = document.getElementById('globalCommentCount');
-        this.elements.globalAverageDuration = document.getElementById('globalAverageDuration');
+        this.elements.commentHistory = document.getElementById('commentHistory'); // Comment history display
+        this.elements.globalCommentCount = document.getElementById('globalCommentCount'); // Global comment count
+        this.elements.globalAverageDuration = document.getElementById('globalAverageDuration'); // Global average comment duration
         
         // Template management elements
-        this.elements.saveTemplateBtn = document.getElementById('saveTemplateBtn');
-        this.elements.loadTemplateBtn = document.getElementById('loadTemplateBtn');
+        this.elements.saveTemplateBtn = document.getElementById('saveTemplateBtn'); // Save template button
+        this.elements.loadTemplateBtn = document.getElementById('loadTemplateBtn'); // Load template button
         
-        // Modal elements
-        this.elements.templateModal = document.getElementById('templateModal');
-        this.elements.templatesList = document.getElementById('templatesList');
-        this.elements.templateName = document.getElementById('templateName');
-        this.elements.closeTemplateModal = document.getElementById('closeTemplateModal');
-        this.elements.saveNewTemplate = document.getElementById('saveNewTemplate');
+        // Template modal elements
+        this.elements.templateModal = document.getElementById('templateModal'); // Template management modal
+        this.elements.templatesList = document.getElementById('templatesList'); // List of saved templates
+        this.elements.templateName = document.getElementById('templateName'); // Input for template name
+        this.elements.templateDescription = document.getElementById('templateDescription'); // Input for template description
+        this.elements.templateCategory = document.getElementById('templateCategory'); // Select for template category
+        this.elements.templateSearch = document.getElementById('templateSearch'); // Input for template search
+        this.elements.templateCategoryFilter = document.getElementById('templateCategoryFilter'); // Select for category filter
+        this.elements.templateSort = document.getElementById('templateSort'); // Select for template sort
+        this.elements.closeTemplateModal = document.getElementById('closeTemplateModal'); // Close template modal button
+        this.elements.saveNewTemplate = document.getElementById('saveNewTemplate'); // Save new template button
+        this.elements.importTemplateBtn = document.getElementById('importTemplateBtn'); // Import template button
+        this.elements.exportAllTemplatesBtn = document.getElementById('exportAllTemplatesBtn'); // Export all templates button
+        this.elements.addCategoryBtn = document.getElementById('addCategoryBtn'); // Add category button
         
-        this.elements.confirmationModal = document.getElementById('confirmationModal');
-        this.elements.confirmationTitle = document.getElementById('confirmationTitle');
-        this.elements.confirmationMessage = document.getElementById('confirmationMessage');
-        this.elements.cancelConfirmation = document.getElementById('cancelConfirmation');
-        this.elements.confirmAction = document.getElementById('confirmAction');
+        // Category modal elements
+        this.elements.categoryModal = document.getElementById('categoryModal'); // Category modal
+        this.elements.newCategoryName = document.getElementById('newCategoryName'); // Input for new category name
+        this.elements.closeCategoryModal = document.getElementById('closeCategoryModal'); // Close category modal button
+        this.elements.saveNewCategory = document.getElementById('saveNewCategory'); // Save new category button
+        
+        // Preview modal elements
+        this.elements.previewModal = document.getElementById('previewModal'); // Preview modal
+        this.elements.previewTitle = document.getElementById('previewTitle'); // Preview title
+        this.elements.previewDescription = document.getElementById('previewDescription'); // Preview description
+        this.elements.previewCategory = document.getElementById('previewCategory'); // Preview category
+        this.elements.previewCreated = document.getElementById('previewCreated'); // Preview created date
+        this.elements.previewModified = document.getElementById('previewModified'); // Preview modified date
+        this.elements.previewParts = document.getElementById('previewParts'); // Preview parts
+        this.elements.previewTotalParts = document.getElementById('previewTotalParts'); // Preview total parts
+        this.elements.previewTotalDuration = document.getElementById('previewTotalDuration'); // Preview total duration
+        this.elements.closePreviewModal = document.getElementById('closePreviewModal'); // Close preview modal button
+        this.elements.loadPreviewedTemplate = document.getElementById('loadPreviewedTemplate'); // Load previewed template button
+        this.elements.exportPreviewedTemplate = document.getElementById('exportPreviewedTemplate'); // Export previewed template button
+        
+        // Import modal elements
+        this.elements.importModal = document.getElementById('importModal'); // Import modal
+        this.elements.importFile = document.getElementById('importFile'); // Import file input
+        this.elements.importPreview = document.getElementById('importPreview'); // Import preview
+        this.elements.importList = document.getElementById('importList'); // Import list
+        this.elements.closeImportModal = document.getElementById('closeImportModal'); // Close import modal button
+        this.elements.confirmImport = document.getElementById('confirmImport'); // Confirm import button
+        
+        // Confirmation modal elements
+        this.elements.confirmationModal = document.getElementById('confirmationModal'); // Confirmation modal
+        this.elements.confirmationTitle = document.getElementById('confirmationTitle'); // Confirmation title
+        this.elements.confirmationMessage = document.getElementById('confirmationMessage'); // Confirmation message
+        this.elements.cancelConfirmation = document.getElementById('cancelConfirmation'); // Cancel confirmation button
+        this.elements.confirmAction = document.getElementById('confirmAction'); // Confirm action button
+        
+        // Shortcuts modal elements
+        this.elements.shortcutsModal = document.getElementById('shortcutsModal'); // Shortcuts modal
+        this.elements.closeShortcutsModal = document.getElementById('closeShortcutsModal'); // Close shortcuts modal button
         
         // Add event listeners to buttons
-        this._setupEventListeners();
+        this._setupEventListeners(); // eslint-disable-line no-underscore-dangle
         
         // Log warning for missing critical elements
-        this._checkForMissingElements();
+        this._checkForMissingElements(); // eslint-disable-line no-underscore-dangle
     },
     
     _setupEventListeners() {
         // Template management buttons
-        if (this.elements.saveTemplateBtn) {
+        if (this.elements.saveTemplateBtn) { // Save template button
             this.elements.saveTemplateBtn.addEventListener('click', () => {
-                this.elements.templateName.value = '';
-                this._showModal(this.elements.templateModal);
+                this.elements.templateName.value = ''; // Clear the template name input
+                this.elements.templateDescription.value = ''; // Clear the template description input
+                this.elements.templateCategory.value = ''; // Clear the template category select
+                this._showModal(this.elements.templateModal); // Show the template modal
             });
         }
         
-        if (this.elements.loadTemplateBtn) {
+        if (this.elements.loadTemplateBtn) { // Load template button
             this.elements.loadTemplateBtn.addEventListener('click', () => {
-                templateManager.populateTemplatesList();
-                this._showModal(this.elements.templateModal);
+                templateManager.populateTemplatesList(); // Populate the templates list
+                this._showModal(this.elements.templateModal); // Show the template modal
             });
         }
         
-        // Modal buttons
-        if (this.elements.closeTemplateModal) {
+        // Template modal buttons
+        if (this.elements.closeTemplateModal) { // Close template modal button
             this.elements.closeTemplateModal.addEventListener('click', () => {
-                this._hideModal(this.elements.templateModal);
+                this._hideModal(this.elements.templateModal); // Hide the template modal
             });
         }
         
-        if (this.elements.saveNewTemplate) {
+        if (this.elements.saveNewTemplate) { // Save new template button
             this.elements.saveNewTemplate.addEventListener('click', () => {
-                const name = this.elements.templateName.value.trim();
-                if (name) {
-                    templateManager.saveTemplate(name);
-                    this._hideModal(this.elements.templateModal);
-                } else {
-                    notify.show('Please enter a template name', 'error');
+                const name = this.elements.templateName.value.trim(); // Get the template name
+                if (name) { // If name is not empty
+                    const description = this.elements.templateDescription.value.trim(); // Get the template description
+                    const category = this.elements.templateCategory.value.trim(); // Get the template category
+                    templateManager.saveTemplate(name, description, category); // Save the template
+                    this._hideModal(this.elements.templateModal); // Hide the template modal
+                } else { // If name is empty
+                    notify.show('Please enter a template name', 'error'); // Show an error notification
                 }
             });
         }
         
-        if (this.elements.cancelConfirmation) {
-            this.elements.cancelConfirmation.addEventListener('click', () => {
-                this._hideModal(this.elements.confirmationModal);
+        if (this.elements.importTemplateBtn) { // Import template button
+            this.elements.importTemplateBtn.addEventListener('click', () => {
+                this._hideModal(this.elements.templateModal); // Hide the template modal
+                this.elements.importFile.value = ''; // Clear the import file input
+                this.elements.importPreview.classList.add('hidden'); // Hide the import preview
+                this.elements.confirmImport.disabled = true; // Disable the confirm import button
+                this._showModal(this.elements.importModal); // Show the import modal
+            });
+        }
+        
+        if (this.elements.exportAllTemplatesBtn) { // Export all templates button
+            this.elements.exportAllTemplatesBtn.addEventListener('click', () => {
+                templateManager.exportAllTemplates(); // Export all templates
+            });
+        }
+        
+        if (this.elements.addCategoryBtn) { // Add category button
+            this.elements.addCategoryBtn.addEventListener('click', () => {
+                this.elements.newCategoryName.value = ''; // Clear the new category name input
+                this._showModal(this.elements.categoryModal); // Show the category modal
+            });
+        }
+        
+        // Template search and filter
+        if (this.elements.templateSearch) { // Template search input
+            this.elements.templateSearch.addEventListener('input', () => {
+                templateManager.populateTemplatesList(); // Populate the templates list
+            });
+        }
+        
+        if (this.elements.templateCategoryFilter) { // Template category filter select
+            this.elements.templateCategoryFilter.addEventListener('change', () => {
+                templateManager.populateTemplatesList(); // Populate the templates list
+            });
+        }
+        
+        if (this.elements.templateSort) { // Template sort select
+            this.elements.templateSort.addEventListener('change', () => {
+                templateManager.populateTemplatesList(); // Populate the templates list
+            });
+        }
+        
+        // Category modal buttons
+        if (this.elements.closeCategoryModal) { // Close category modal button
+            this.elements.closeCategoryModal.addEventListener('click', () => {
+                this._hideModal(this.elements.categoryModal); // Hide the category modal
+            });
+        }
+        
+        if (this.elements.saveNewCategory) { // Save new category button
+            this.elements.saveNewCategory.addEventListener('click', () => {
+                const name = this.elements.newCategoryName.value.trim(); // Get the new category name
+                if (name) { // If name is not empty
+                    templateManager.addCategory(name); // Add the category
+                    this._hideModal(this.elements.categoryModal); // Hide the category modal
+                } else { // If name is empty
+                    notify.show('Please enter a category name', 'error'); // Show an error notification
+                }
+            });
+        }
+        
+        // Preview modal buttons
+        if (this.elements.closePreviewModal) { // Close preview modal button
+            this.elements.closePreviewModal.addEventListener('click', () => {
+                this._hideModal(this.elements.previewModal); // Hide the preview modal
+            });
+        }
+        
+        // Import modal buttons
+        if (this.elements.importFile) { // Import file input
+            this.elements.importFile.addEventListener('change', (e) => {
+                templateManager.handleImportFile(e.target.files[0]); // Handle the import file
+            });
+        }
+        
+        if (this.elements.closeImportModal) { // Close import modal button
+            this.elements.closeImportModal.addEventListener('click', () => {
+                this._hideModal(this.elements.importModal); // Hide the import modal
+            });
+        }
+        
+        if (this.elements.confirmImport) { // Confirm import button
+            this.elements.confirmImport.addEventListener('click', () => {
+                templateManager.importTemplates(); // Import the templates
+                this._hideModal(this.elements.importModal); // Hide the import modal
+            });
+        }
+        
+        // Confirmation modal buttons
+        if (this.elements.cancelConfirmation) { // Cancel confirmation button
+            this.elements.cancelConfirmation.addEventListener('click', () => { // Add event listener
+                this._hideModal(this.elements.confirmationModal); // Hide the confirmation modal
+            });
+        }
+        
+        // Shortcuts modal buttons
+        if (this.elements.closeShortcutsModal) { // Close shortcuts modal button
+            this.elements.closeShortcutsModal.addEventListener('click', () => {
+                this._hideModal(this.elements.shortcutsModal); // Hide the shortcuts modal
+            });
+        }
+        
+        // Add part button
+        const addPartBtn = document.getElementById('addPartBtn');
+        if (addPartBtn) {
+            addPartBtn.addEventListener('click', () => {
+                // Add a new part to the meeting parts
+                state.meetingParts.push({
+                    name: 'New Part',
+                    duration: 5*60,
+                    speaker: '',
+                    enableComments: false
+                });
+                
+                // Render the template editor
+                render.templateEditor();
+                render.timerDisplay();
             });
         }
     },
     
-    _checkForMissingElements() {
-        const criticalElements = [
-            'partsTemplate', 'partsDisplay', 'commentHistory', 
+    _checkForMissingElements() { // eslint-disable-line no-unused-vars
+        const criticalElements = [ // List of critical elements
+            'partsTemplate', 'partsDisplay', 'commentHistory',
             'globalCommentCount', 'globalAverageDuration'
         ];
         
-        criticalElements.forEach(elementName => {
-            if (!this.elements[elementName]) {
-                console.warn(`Critical element #${elementName} not found in the DOM`);
+        criticalElements.forEach(elementName => { // Loop through each critical element
+            if (!this.elements[elementName]) { // If element is missing
+                console.warn(`Critical element #${elementName} not found in the DOM`); // Log a warning
             }
         });
     },
     
-    _showModal(modalElement) {
-        if (modalElement) {
-            modalElement.classList.remove('hidden');
-            modalElement.classList.add('active');
+    _showModal(modalElement) { // Show a modal
+        if (modalElement) { // If modal element exists
+            modalElement.classList.remove('hidden'); // Remove the hidden class
+            modalElement.classList.add('active'); // Add the active class
         }
     },
     
-    _hideModal(modalElement) {
-        if (modalElement) {
-            modalElement.classList.remove('active');
-            modalElement.classList.add('hidden');
+    _hideModal(modalElement) { // Hide a modal
+        if (modalElement) { // If modal element exists
+            modalElement.classList.remove('active'); // Remove the active class
+            modalElement.classList.add('hidden'); // Add the hidden class
         }
     },
     
-    showConfirmation(title, message, onConfirm) {
-        if (!this.elements.confirmationModal) return;
+    showConfirmation(title, message, onConfirm) { // Show a confirmation dialog
+        if (!this.elements.confirmationModal) return; // If confirmation modal doesn't exist
         
-        this.elements.confirmationTitle.textContent = title;
-        this.elements.confirmationMessage.textContent = message;
+        this.elements.confirmationTitle.textContent = title; // Set the confirmation title
+        this.elements.confirmationMessage.textContent = message; // Set the confirmation message
         
         // Set up the confirm action button
-        const confirmBtn = this.elements.confirmAction;
+        const confirmBtn = this.elements.confirmAction; // Get the confirm action button
         
         // Remove any existing event listeners
-        const newConfirmBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-        this.elements.confirmAction = newConfirmBtn;
+        const newConfirmBtn = confirmBtn.cloneNode(true); // Clone the confirm button
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn); // Replace the confirm button
+        this.elements.confirmAction = newConfirmBtn; // Set the new confirm button
         
         // Add the new event listener
-        newConfirmBtn.addEventListener('click', () => {
-            onConfirm();
-            this._hideModal(this.elements.confirmationModal);
+        newConfirmBtn.addEventListener('click', () => { // Add event listener
+            onConfirm(); // Call the onConfirm function
+            this._hideModal(this.elements.confirmationModal); // Hide the confirmation modal
         });
         
-        this._showModal(this.elements.confirmationModal);
+        this._showModal(this.elements.confirmationModal); // Show the confirmation modal
+    },
+    
+    showShortcutsModal() { // Show the keyboard shortcuts modal
+        if (!this.elements.shortcutsModal) return; // If shortcuts modal doesn't exist
+        this._showModal(this.elements.shortcutsModal); // Show the shortcuts modal
     }
 };
 
@@ -145,17 +309,26 @@ const DOM = {
 // CONSTANTS AND APPLICATION STATE
 //----------------------------------------------------------------------------------------------
 const DEFAULT_PARTS = [
-    { name: 'Opening Comments', duration: 60, speaker: '', enableComments: false },
-    { name: 'Treasures', duration: 600, speaker: '', enableComments: false },
-    { name: 'Spiritual Gems', duration: 600, speaker: '', enableComments: true },
-    { name: 'Bible Reading', duration: 300, speaker: '', enableComments: false },
-    { name: 'Apply yourself 1', duration: 180, speaker: '', enableComments: false },
-    { name: 'Apply yourself 2', duration: 180, speaker: '', enableComments: false },
-    { name: 'Student Talk', duration: 300, speaker: '', enableComments: false },
-    { name: 'CBS', duration: 1800, speaker: '', enableComments: false }
+    { name: 'Opening Comments', duration: 1*60, speaker: '', enableComments: false },
+    { name: 'Treasures', duration: 10*60, speaker: '', enableComments: false },
+    { name: 'Council', duration: 1*60, speaker: 'Chairman', enableComments: false },
+    { name: 'Spiritual Gems', duration: 10*60, speaker: '', enableComments: true },
+    { name: 'Council', duration: 1*60, speaker: 'Chairman', enableComments: false },
+    { name: 'Bible Reading', duration: 5*60, speaker: '', enableComments: false },
+    { name: 'Council', duration: 1*60, speaker: 'Chairman', enableComments: false },
+    { name: 'Apply yourself 1', duration: 3*60, speaker: '', enableComments: false },
+    { name: 'Council', duration: 1*60, speaker: 'Chairman', enableComments: false },
+    { name: 'Apply yourself 2', duration: 3*60, speaker: '', enableComments: false },
+    { name: 'Council', duration: 1*60, speaker: 'Chairman', enableComments: false },
+    { name: 'Student Talk', duration: 5*60, speaker: '', enableComments: false },
+    { name: 'Council', duration: 1*60, speaker: 'Chairman', enableComments: false },
+    { name: 'Living as Christians', duration: 15*60, speaker: '', enableComments: false },
+    { name: 'Chairman', duration: 1*60, speaker: 'Chairman', enableComments: false },
+    { name: 'CBS', duration: 30*60, speaker: '', enableComments: true },
+    { name: 'Closing Comments', duration: 3*60, speaker: 'Chairman', enableComments: false },
 ];
 
-const COMMENT_LIMIT = 240; // Limit comments to 4 minutes
+const COMMENT_LIMIT = 4*60; // Limit comments to 4 minutes
 const TIMER_UPDATE_INTERVAL = 1000; // 1 second interval for timer updates
 const COMMENT_DISPLAY_UPDATE_INTERVAL = 200; // 200ms for smoother comment timer display
 
@@ -230,6 +403,7 @@ let state = {
         if (partIndex >= 0 && partIndex < this.meetingParts.length) {
             this.elapsedTimes[partIndex] = 0;
             this.saveState();
+            render.timerDisplay(); // Explicitly re-render the timer display
         }
     },
     
@@ -254,9 +428,24 @@ let state = {
             
             this.timerInterval = setInterval(() => {
                 this.elapsedTimes[this.activePart] = (this.elapsedTimes[this.activePart] || 0) + 1;
+                
+                // Check if timer has reached the end
+                const currentPart = this.meetingParts[this.activePart];
+                const elapsed = this.elapsedTimes[this.activePart];
+                
+                if (elapsed >= currentPart.duration && soundManager && soundManager.isSoundEnabled) {
+                    soundManager.playTimerEndSound();
+                }
+                
                 this.saveState();
                 render.timerDisplay();
             }, TIMER_UPDATE_INTERVAL);
+            
+            // Add timer-active class to the active part
+            const activePartElement = document.querySelector(`.part-card.active`);
+            if (activePartElement) {
+                activePartElement.classList.add('timer-active');
+            }
         }
     },
     
@@ -270,6 +459,11 @@ let state = {
         if (this.activeComment) {
             this.finalizeComment();
         }
+        
+        // Remove timer-active class from all parts
+        document.querySelectorAll('.part-card.timer-active').forEach(element => {
+            element.classList.remove('timer-active');
+        });
     },
     
     // Toggle timer on/off
@@ -334,6 +528,11 @@ let state = {
             partIndex: partIndex
         };
         
+        /* //Play comment start sound if enabled
+        // if (soundManager && soundManager.isSoundEnabled) {
+        //     soundManager.playCommentStartSound();
+        } */
+        
         clearInterval(this.commentInterval);
         
         this.commentInterval = setInterval(() => {
@@ -342,6 +541,14 @@ let state = {
                 const currentElapsed = this.elapsedTimes[partIndex] || 0;
                 const commentDuration = currentElapsed - this.activeComment.startElapsed;
                 currentElement.textContent = formatTime(Math.max(0, commentDuration));
+                
+                // Add visual indication when approaching comment limit
+                if (commentDuration >= COMMENT_LIMIT - 30 && commentDuration < COMMENT_LIMIT) {
+                    currentElement.classList.add('text-yellow-500');
+                } else if (commentDuration >= COMMENT_LIMIT) {
+                    currentElement.classList.remove('text-yellow-500');
+                    currentElement.classList.add('text-red-500');
+                }
             }
         }, COMMENT_DISPLAY_UPDATE_INTERVAL);
     },
@@ -352,6 +559,11 @@ let state = {
         
         const partIndex = this.activeComment.partIndex;
         const duration = (this.elapsedTimes[partIndex] || 0) - this.activeComment.startElapsed;
+        
+        /* // Play comment end sound if enabled
+        if (soundManager && soundManager.isSoundEnabled) {
+           soundManager.playCommentEndSound();
+        } */
         
         // Only add comment if duration is at least 1 second
         if (duration >= 1) {
@@ -422,6 +634,57 @@ let state = {
             const commentDuration = currentPartTime - this.activeComment.startElapsed;
             currentElement.textContent = formatTime(Math.max(0, commentDuration));
         }
+    },
+    
+    // Generate a meeting report
+    generateReport() {
+        const report = {
+            date: new Date().toLocaleDateString(),
+            totalDuration: 0,
+            parts: [],
+            comments: {
+                total: this.comments.length,
+                average: 0,
+                byPart: {}
+            }
+        };
+        
+        // Calculate total meeting duration and part information
+        this.meetingParts.forEach((part, index) => {
+            const elapsed = this.elapsedTimes[index] || 0;
+            report.totalDuration += elapsed;
+            
+            // Get comments for this part
+            const partComments = this.comments.filter(comment => comment.partIndex === index);
+            
+            report.parts.push({
+                name: part.name,
+                speaker: part.speaker,
+                plannedDuration: part.duration,
+                actualDuration: elapsed,
+                variance: elapsed - part.duration,
+                comments: partComments.length,
+                commentsDuration: partComments.reduce((sum, comment) => sum + comment.duration, 0)
+            });
+            
+            // Add to comments by part
+            if (partComments.length > 0) {
+                report.comments.byPart[part.name] = {
+                    count: partComments.length,
+                    total: partComments.reduce((sum, comment) => sum + comment.duration, 0),
+                    average: Math.round(partComments.reduce((sum, comment) => sum + comment.duration, 0) / partComments.length)
+                };
+            }
+        });
+        
+        // Calculate average comment duration
+        if (this.comments.length > 0) {
+            report.comments.average = Math.round(
+                this.comments.reduce((sum, comment) => sum + comment.duration, 0) / this.comments.length
+            );
+        }
+        
+        return report;
     }
 };
 
@@ -429,23 +692,178 @@ let state = {
 // TEMPLATE MANAGEMENT
 //----------------------------------------------------------------------------------------------
 const templateManager = {
+    // Default categories
+    defaultCategories: ['Midweek Meeting', 'Weekend Meeting', 'Special Event'],
+    
+    // Current template being previewed
+    currentPreviewTemplate: null,
+    
+    // Templates to import
+    importTemplates: [],
+    
+    // Initialize template manager
+    init() {
+        // Migrate old templates to new format if needed
+        this.migrateTemplates();
+        
+        // Initialize categories
+        this.initCategories();
+    },
+    
+    // Migrate old templates to new format
+    migrateTemplates() {
+        try {
+            const oldTemplates = localStorage.getItem('savedTemplates');
+            if (oldTemplates) {
+                const oldTemplatesObj = JSON.parse(oldTemplates);
+                
+                // Check if we need to migrate (old format is an object with template names as keys)
+                if (oldTemplatesObj && typeof oldTemplatesObj === 'object' && !oldTemplatesObj.templates) {
+                    console.log('Migrating templates to new format...');
+                    
+                    // Create new templates object
+                    const newTemplates = {
+                        templates: {},
+                        categories: this.defaultCategories
+                    };
+                    
+                    // Convert old templates to new format
+                    Object.keys(oldTemplatesObj).forEach(name => {
+                        const templateId = 'template-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                        newTemplates.templates[templateId] = {
+                            name: name,
+                            parts: oldTemplatesObj[name],
+                            metadata: {
+                                description: '',
+                                categories: [],
+                                created: new Date().toISOString(),
+                                modified: new Date().toISOString(),
+                                version: 1
+                            }
+                        };
+                    });
+                    
+                    // Save new templates
+                    localStorage.setItem('savedTemplates', JSON.stringify(newTemplates));
+                    console.log('Templates migrated successfully');
+                }
+            }
+        } catch (error) {
+            console.error('Error migrating templates:', error);
+        }
+    },
+    
+    // Initialize categories
+    initCategories() {
+        try {
+            const templates = this.getTemplates();
+            
+            // If no categories exist, add default categories
+            if (!templates.categories || !Array.isArray(templates.categories)) {
+                templates.categories = this.defaultCategories;
+                localStorage.setItem('savedTemplates', JSON.stringify(templates));
+            }
+            
+            // Populate category dropdowns
+            this.populateCategoryDropdowns();
+        } catch (error) {
+            console.error('Error initializing categories:', error);
+        }
+    },
+    
+    // Populate category dropdowns
+    populateCategoryDropdowns() {
+        try {
+            const templates = this.getTemplates();
+            const categories = templates.categories || [];
+            
+            // Populate template category select
+            const templateCategorySelect = DOM.elements.templateCategory;
+            if (templateCategorySelect) {
+                // Clear existing options except the first one
+                while (templateCategorySelect.options.length > 1) {
+                    templateCategorySelect.remove(1);
+                }
+                
+                // Add categories
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    templateCategorySelect.appendChild(option);
+                });
+            }
+            
+            // Populate category filter select
+            const categoryFilterSelect = DOM.elements.templateCategoryFilter;
+            if (categoryFilterSelect) {
+                // Clear existing options except the first one
+                while (categoryFilterSelect.options.length > 1) {
+                    categoryFilterSelect.remove(1);
+                }
+                
+                // Add categories
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categoryFilterSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error populating category dropdowns:', error);
+        }
+    },
+    
     // Get all saved templates
     getTemplates() {
         try {
             const templates = localStorage.getItem('savedTemplates');
-            return templates ? JSON.parse(templates) : {};
+            if (templates) {
+                return JSON.parse(templates);
+            }
+            
+            // Return empty templates object if none exist
+            return {
+                templates: {},
+                categories: this.defaultCategories
+            };
         } catch (error) {
             console.error('Error loading templates:', error);
-            return {};
+            return {
+                templates: {},
+                categories: this.defaultCategories
+            };
         }
     },
     
-    // Save current template with a name
-    saveTemplate(name) {
+    // Generate a unique template ID
+    generateTemplateId() {
+        return 'template-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    },
+    
+    // Save current template with a name, description, and category
+    saveTemplate(name, description = '', category = '') {
         try {
             const templates = this.getTemplates();
-            templates[name] = state.meetingParts;
+            const templateId = this.generateTemplateId();
+            
+            // Create template object
+            templates.templates[templateId] = {
+                name: name,
+                parts: JSON.parse(JSON.stringify(state.meetingParts)), // Deep copy
+                metadata: {
+                    description: description,
+                    categories: category ? [category] : [],
+                    created: new Date().toISOString(),
+                    modified: new Date().toISOString(),
+                    version: 1
+                }
+            };
+            
+            // Save templates
             localStorage.setItem('savedTemplates', JSON.stringify(templates));
+            
             notify.show(`Template "${name}" saved successfully`, 'success');
         } catch (error) {
             console.error('Error saving template:', error);
@@ -453,17 +871,275 @@ const templateManager = {
         }
     },
     
-    // Load a template by name
-    loadTemplate(name) {
+    // Add a new category
+    addCategory(name) {
         try {
             const templates = this.getTemplates();
-            if (templates[name]) {
-                state.meetingParts = templates[name];
-                localStorage.setItem('meetingTemplate', JSON.stringify(state.meetingParts));
-                state.resetTimers();
-                render.template();
-                render.timerDisplay();
-                notify.show(`Template "${name}" loaded successfully`, 'success');
+            const categories = templates.categories || [];
+            
+            // Check if category already exists
+            if (categories.includes(name)) {
+                notify.show(`Category "${name}" already exists`, 'warning');
+                return;
+            }
+            
+            // Add category
+            categories.push(name);
+            templates.categories = categories;
+            localStorage.setItem('savedTemplates', JSON.stringify(templates));
+            
+            // Populate category dropdowns
+            this.populateCategoryDropdowns();
+            
+            // Set the new category as selected
+            const templateCategorySelect = DOM.elements.templateCategory;
+            if (templateCategorySelect) {
+                templateCategorySelect.value = name;
+            }
+            
+            notify.show(`Category "${name}" added successfully`, 'success');
+        } catch (error) {
+            console.error('Error adding category:', error);
+            notify.show('Failed to add category', 'error');
+        }
+    },
+    
+    // Populate templates list
+    populateTemplatesList() {
+        try {
+            const templatesList = DOM.elements.templatesList;
+            if (!templatesList) return;
+            
+            // Clear templates list
+            templatesList.innerHTML = '';
+            
+            // Get templates
+            const templates = this.getTemplates();
+            const templateObjects = templates.templates || {};
+            
+            // Get search, filter, and sort values
+            const searchValue = DOM.elements.templateSearch ? DOM.elements.templateSearch.value.toLowerCase() : '';
+            const categoryFilter = DOM.elements.templateCategoryFilter ? DOM.elements.templateCategoryFilter.value : '';
+            const sortBy = DOM.elements.templateSort ? DOM.elements.templateSort.value : 'name';
+            
+            // Filter and sort templates
+            const filteredTemplates = Object.entries(templateObjects)
+                .filter(([id, template]) => {
+                    // Search filter
+                    if (searchValue && !template.name.toLowerCase().includes(searchValue)) {
+                        return false;
+                    }
+                    
+                    // Category filter
+                    if (categoryFilter && !template.metadata.categories.includes(categoryFilter)) {
+                        return false;
+                    }
+                    
+                    return true;
+                })
+                .sort(([idA, a], [idB, b]) => {
+                    // Sort by name
+                    if (sortBy === 'name') {
+                        return a.name.localeCompare(b.name);
+                    }
+                    
+                    // Sort by created date
+                    if (sortBy === 'created') {
+                        return new Date(b.metadata.created) - new Date(a.metadata.created);
+                    }
+                    
+                    // Sort by modified date
+                    if (sortBy === 'modified') {
+                        return new Date(b.metadata.modified) - new Date(a.metadata.modified);
+                    }
+                    
+                    return 0;
+                });
+            
+            // Add templates to list
+            if (filteredTemplates.length === 0) {
+                templatesList.innerHTML = '<div class="text-center text-gray-500 py-4">No templates found</div>';
+                return;
+            }
+            
+            filteredTemplates.forEach(([id, template]) => {
+                const templateElement = document.createElement('div');
+                templateElement.className = 'bg-white p-4 rounded shadow';
+                
+                // Format dates
+                const created = new Date(template.metadata.created).toLocaleDateString();
+                const modified = new Date(template.metadata.modified).toLocaleDateString();
+                
+                // Calculate total duration
+                const totalDuration = template.parts.reduce((sum, part) => sum + part.duration, 0);
+                
+                templateElement.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-bold">${template.name}</h4>
+                            <div class="text-sm text-gray-600">
+                                ${template.parts.length} parts, ${formatTime(totalDuration)}
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="preview-template-btn px-2 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600" data-template-id="${id}">
+                                Preview
+                            </button>
+                            <button class="load-template-btn px-2 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600" data-template-id="${id}">
+                                Load
+                            </button>
+                            <button class="delete-template-btn px-2 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600" data-template-id="${id}">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                    ${template.metadata.description ? `<p class="text-sm mt-2">${template.metadata.description}</p>` : ''}
+                    <div class="flex flex-wrap gap-1 mt-2">
+                        ${template.metadata.categories.map(category => `
+                            <span class="bg-gray-100 text-xs px-2 py-1 rounded">${category}</span>
+                        `).join('')}
+                        <span class="bg-gray-100 text-xs px-2 py-1 rounded">Created: ${created}</span>
+                        <span class="bg-gray-100 text-xs px-2 py-1 rounded">Modified: ${modified}</span>
+                    </div>
+                `;
+                
+                // Add event listeners
+                const previewBtn = templateElement.querySelector('.preview-template-btn');
+                const loadBtn = templateElement.querySelector('.load-template-btn');
+                const deleteBtn = templateElement.querySelector('.delete-template-btn');
+                
+                if (previewBtn) {
+                    previewBtn.addEventListener('click', () => this.previewTemplate(id));
+                }
+                
+                if (loadBtn) {
+                    loadBtn.addEventListener('click', () => this.loadTemplate(id));
+                }
+                
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', () => this.deleteTemplate(id));
+                }
+                
+                templatesList.appendChild(templateElement);
+            });
+        } catch (error) {
+            console.error('Error populating templates list:', error);
+            notify.show('Failed to load templates', 'error');
+        }
+    },
+    
+    // Preview template
+    previewTemplate(templateId) {
+        try {
+            const templates = this.getTemplates();
+            const template = templates.templates[templateId];
+            
+            if (!template) {
+                notify.show('Template not found', 'error');
+                return;
+            }
+            
+            // Set current preview template
+            this.currentPreviewTemplate = templateId;
+            
+            // Set preview modal content
+            DOM.elements.previewTitle.textContent = template.name;
+            DOM.elements.previewDescription.textContent = template.metadata.description || 'No description';
+            
+            // Set category
+            const category = template.metadata.categories.length > 0 ? template.metadata.categories[0] : 'None';
+            DOM.elements.previewCategory.textContent = `Category: ${category}`;
+            
+            // Set dates
+            const created = new Date(template.metadata.created).toLocaleDateString();
+            const modified = new Date(template.metadata.modified).toLocaleDateString();
+            DOM.elements.previewCreated.textContent = `Created: ${created}`;
+            DOM.elements.previewModified.textContent = `Modified: ${modified}`;
+            
+            // Set parts
+            const previewParts = DOM.elements.previewParts;
+            previewParts.innerHTML = '';
+            
+            template.parts.forEach((part, index) => {
+                const partElement = document.createElement('div');
+                partElement.className = 'bg-white p-2 rounded shadow mb-2';
+                partElement.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div class="font-medium">${part.name}</div>
+                        <div class="text-sm text-gray-600">${formatTime(part.duration)}</div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm text-gray-600">
+                        <div>${part.speaker || 'No speaker'}</div>
+                        <div>Comments: ${part.enableComments ? 'Yes' : 'No'}</div>
+                    </div>
+                `;
+                previewParts.appendChild(partElement);
+            });
+            
+            // Set total parts and duration
+            const totalDuration = template.parts.reduce((sum, part) => sum + part.duration, 0);
+            DOM.elements.previewTotalParts.textContent = template.parts.length;
+            DOM.elements.previewTotalDuration.textContent = formatTime(totalDuration);
+            
+            // Set load button event listener
+            const loadBtn = DOM.elements.loadPreviewedTemplate;
+            if (loadBtn) {
+                // Remove existing event listeners
+                const newLoadBtn = loadBtn.cloneNode(true);
+                loadBtn.parentNode.replaceChild(newLoadBtn, loadBtn);
+                DOM.elements.loadPreviewedTemplate = newLoadBtn;
+                
+                // Add new event listener
+                newLoadBtn.addEventListener('click', () => {
+                    this.loadTemplate(templateId);
+                    DOM._hideModal(DOM.elements.previewModal);
+                });
+            }
+            
+            // Set export button event listener
+            const exportBtn = DOM.elements.exportPreviewedTemplate;
+            if (exportBtn) {
+                // Remove existing event listeners
+                const newExportBtn = exportBtn.cloneNode(true);
+                exportBtn.parentNode.replaceChild(newExportBtn, exportBtn);
+                DOM.elements.exportPreviewedTemplate = newExportBtn;
+                
+                // Add new event listener
+                newExportBtn.addEventListener('click', () => {
+                    this.exportTemplate(templateId);
+                });
+            }
+            
+            // Show preview modal
+            DOM._showModal(DOM.elements.previewModal);
+        } catch (error) {
+            console.error('Error previewing template:', error);
+            notify.show('Failed to preview template', 'error');
+        }
+    },
+    
+    // Load template
+    loadTemplate(templateId) {
+        try {
+            const templates = this.getTemplates();
+            const template = templates.templates[templateId];
+            
+            if (!template) {
+                notify.show('Template not found', 'error');
+                return;
+            }
+            
+            // Confirm if there are unsaved changes
+            if (state.isRunning) {
+                DOM.showConfirmation(
+                    'Load Template',
+                    'Loading a new template will stop the current timer and reset all timing data. Are you sure you want to continue?',
+                    () => {
+                        this._loadTemplate(template);
+                    }
+                );
+            } else {
+                this._loadTemplate(template);
             }
         } catch (error) {
             console.error('Error loading template:', error);
@@ -471,793 +1147,305 @@ const templateManager = {
         }
     },
     
-    // Delete a template by name
-    deleteTemplate(name) {
+    // Internal load template
+    _loadTemplate(template) {
+        // Stop timer if running
+        if (state.isRunning) {
+            state.stopTimer();
+        }
+        
+        // Set meeting parts
+        state.meetingParts = JSON.parse(JSON.stringify(template.parts)); // Deep copy
+        
+        // Reset timers
+        state.resetTimers();
+        
+        // Render template
+        render.templateEditor();
+        render.timerDisplay();
+        
+        // Hide template modal
+        DOM._hideModal(DOM.elements.templateModal);
+        
+        notify.show(`Template "${template.name}" loaded successfully`, 'success');
+    },
+    
+    // Delete template
+    deleteTemplate(templateId) {
         try {
             const templates = this.getTemplates();
-            if (templates[name]) {
-                delete templates[name];
-                localStorage.setItem('savedTemplates', JSON.stringify(templates));
-                this.populateTemplatesList();
-                notify.show(`Template "${name}" deleted`, 'success');
+            const template = templates.templates[templateId];
+            
+            if (!template) {
+                notify.show('Template not found', 'error');
+                return;
             }
+            
+            // Confirm deletion
+            DOM.showConfirmation(
+                'Delete Template',
+                `Are you sure you want to delete the template "${template.name}"?`,
+                () => {
+                    // Delete template
+                    delete templates.templates[templateId];
+                    
+                    // Save templates
+                    localStorage.setItem('savedTemplates', JSON.stringify(templates));
+                    
+                    // Repopulate templates list
+                    this.populateTemplatesList();
+                    
+                    notify.show(`Template "${template.name}" deleted successfully`, 'success');
+                }
+            );
         } catch (error) {
             console.error('Error deleting template:', error);
             notify.show('Failed to delete template', 'error');
         }
     },
     
-    // Populate the templates list in the modal
-    populateTemplatesList() {
-        const templatesListElement = DOM.elements.templatesList;
-        if (!templatesListElement) return;
-        
-        const templates = this.getTemplates();
-        let html = '';
-        
-        if (Object.keys(templates).length === 0) {
-            html = '<p class="text-gray-500">No saved templates</p>';
-        } else {
-            html = Object.keys(templates).map(name => `
-                <div class="flex justify-between items-center p-2 border rounded mb-2">
-                    <span class="template-name">${sanitizeInput(name)}</span>
-                    <div class="flex space-x-2">
-                        <button 
-                            class="px-2 py-1 bg-blue-500 text-white rounded text-sm"
-                            data-action="load" 
-                            data-template="${sanitizeInput(name)}">
-                            Load
-                        </button>
-                        <button 
-                            class="px-2 py-1 bg-red-500 text-white rounded text-sm"
-                            data-action="delete" 
-                            data-template="${sanitizeInput(name)}">
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+    // Export template
+    exportTemplate(templateId) {
+        try {
+            const templates = this.getTemplates();
+            const template = templates.templates[templateId];
+            
+            if (!template) {
+                notify.show('Template not found', 'error');
+                return;
+            }
+            
+            // Create export object
+            const exportObj = {
+                name: template.name,
+                parts: template.parts,
+                metadata: template.metadata
+            };
+            
+            // Convert to JSON
+            const json = JSON.stringify(exportObj, null, 2);
+            
+            // Create download link
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${template.name.replace(/\s+/g, '_')}.json`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            notify.show(`Template "${template.name}" exported successfully`, 'success');
+        } catch (error) {
+            console.error('Error exporting template:', error);
+            notify.show('Failed to export template', 'error');
         }
+    },
+    
+    // Export all templates
+    exportAllTemplates() {
+        try {
+            const templates = this.getTemplates();
+            
+            // Create export object
+            const exportObj = {
+                templates: templates.templates,
+                categories: templates.categories
+            };
+            
+            // Convert to JSON
+            const json = JSON.stringify(exportObj, null, 2);
+            
+            // Create download link
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'meeting_templates.json');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            notify.show('All templates exported successfully', 'success');
+        } catch (error) {
+            console.error('Error exporting all templates:', error);
+            notify.show('Failed to export templates', 'error');
+        }
+    },
+    
+    // Handle import file
+    handleImportFile(file) {
+        if (!file) return;
         
-        templatesListElement.innerHTML = html;
-        
-        // Add event listeners to template actions
-        templatesListElement.querySelectorAll('[data-action]').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const action = e.target.getAttribute('data-action');
-                const templateName = e.target.getAttribute('data-template');
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
                 
-                if (action === 'load') {
-                    if (state.isRunning) {
-                        DOM.showConfirmation(
-                            'Load Template',
-                            'Loading a new template will stop the current timer. Continue?',
-                            () => this.loadTemplate(templateName)
-                        );
-                    } else {
-                        this.loadTemplate(templateName);
-                    }
-                } else if (action === 'delete') {
-                    DOM.showConfirmation(
-                        'Delete Template',
-                        `Are you sure you want to delete the template "${templateName}"?`,
-                        () => this.deleteTemplate(templateName)
-                    );
+                // Check if it's a single template or multiple templates
+                if (data.templates) {
+                    // Multiple templates
+                    this.importTemplates = data;
+                    this.showImportPreview();
+                } else {
+                    // Single template
+                    this.importTemplates = {
+                        templates: {
+                            [this.generateTemplateId()]: data
+                        },
+                        categories: []
+                    };
+                    this.showImportPreview();
+                }
+            } catch (error) {
+                console.error('Error parsing import file:', error);
+                notify.show('Failed to parse import file', 'error');
+            }
+        };
+        reader.readAsText(file);
+    },
+    
+    // Show import preview
+    showImportPreview() {
+        try {
+            const importPreview = DOM.elements.importPreview;
+            const importList = DOM.elements.importList;
+            const confirmImport = DOM.elements.confirmImport;
+            
+            if (!importPreview || !importList || !confirmImport) return;
+            
+            // Clear import list
+            importList.innerHTML = '';
+            
+            // Get templates
+            const templates = this.importTemplates.templates || {};
+            
+            // Add templates to list
+            Object.values(templates).forEach(template => {
+                const li = document.createElement('li');
+                li.textContent = template.name;
+                importList.appendChild(li);
+            });
+            
+            // Show import preview
+            importPreview.classList.remove('hidden');
+            
+            // Enable confirm import button
+            confirmImport.disabled = false;
+        } catch (error) {
+            console.error('Error showing import preview:', error);
+            notify.show('Failed to show import preview', 'error');
+        }
+    },
+    
+    // Import templates
+    importTemplates() {
+        try {
+            const templates = this.getTemplates();
+            
+            // Get import templates
+            const importTemplates = this.importTemplates.templates || {};
+            const importCategories = this.importTemplates.categories || [];
+            
+            // Add import templates to templates
+            Object.entries(importTemplates).forEach(([_, template]) => {
+                const templateId = this.generateTemplateId();
+                templates.templates[templateId] = template;
+            });
+            
+            // Add import categories to categories
+            importCategories.forEach(category => {
+                if (!templates.categories.includes(category)) {
+                    templates.categories.push(category);
                 }
             });
-        });
-    }
-};
-
-//----------------------------------------------------------------------------------------------
-// MEETING PARTS MANAGEMENT
-//----------------------------------------------------------------------------------------------
-function addPart() {
-    state.meetingParts.push({
-        name: '',
-        duration: 180,
-        speaker: '',
-        enableComments: false
-    });
-    
-    localStorage.setItem('meetingTemplate', JSON.stringify(state.meetingParts));
-    render.template();
-    render.timerDisplay();
-}
-
-function updatePart(index, field, value) {
-    if (index < 0 || index >= state.meetingParts.length) return;
-    
-    let processedValue = value;
-    
-    if (field === 'duration') {
-        // Convert minutes to seconds, ensure it's a positive number
-        processedValue = Math.round(Math.max(0, parseFloat(value) || 0) * 60);
-    } else if (field === 'enableComments') {
-        processedValue = Boolean(value);
-    } else {
-        processedValue = sanitizeInput(value);
-    }
-    
-    state.meetingParts[index][field] = processedValue;
-    localStorage.setItem('meetingTemplate', JSON.stringify(state.meetingParts));
-    
-    render.template();
-    render.timerDisplay();
-}
-
-function movePart(index, direction) {
-    if (index < 0 || index >= state.meetingParts.length) return;
-    if ((direction === -1 && index === 0) || 
-        (direction === 1 && index === state.meetingParts.length - 1)) {
-        return;
-    }
-    
-    const newIndex = index + direction;
-    
-    // Swap meeting parts
-    [state.meetingParts[index], state.meetingParts[newIndex]] = 
-    [state.meetingParts[newIndex], state.meetingParts[index]];
-    
-    // Swap elapsed times
-    const tempElapsed = state.elapsedTimes[index];
-    state.elapsedTimes[index] = state.elapsedTimes[newIndex];
-    state.elapsedTimes[newIndex] = tempElapsed;
-    
-    // Update active part if needed
-    if (state.activePart === index) {
-        state.activePart = newIndex;
-    } else if (state.activePart === newIndex) {
-        state.activePart = index;
-    }
-    
-    localStorage.setItem('meetingTemplate', JSON.stringify(state.meetingParts));
-    state.saveState();
-    
-    render.template();
-    render.timerDisplay();
-}
-
-function removePart(index) {
-    if (index < 0 || index >= state.meetingParts.length) return;
-    
-    // Show confirmation if timer is running for this part
-    if (state.isRunning && state.activePart === index) {
-        DOM.showConfirmation(
-            'Remove Part',
-            'This part is currently active. Removing it will stop the timer. Continue?',
-            () => executeRemovePart(index)
-        );
-    } else {
-        executeRemovePart(index);
-    }
-}
-
-function executeRemovePart(index) {
-    // Remove the part
-    state.meetingParts.splice(index, 1);
-    
-    // Adjust elapsed times
-    const newElapsedTimes = {};
-    Object.keys(state.elapsedTimes).forEach(key => {
-        const numKey = parseInt(key, 10);
-        if (numKey < index) {
-            newElapsedTimes[numKey] = state.elapsedTimes[key];
-        } else if (numKey > index) {
-            newElapsedTimes[numKey - 1] = state.elapsedTimes[key];
-        }
-    });
-    state.elapsedTimes = newElapsedTimes;
-    
-    // Adjust active part
-    if (state.meetingParts.length === 0) {
-        state.activePart = null;
-        state.stopTimer();
-    } else if (state.activePart >= index) {
-        state.activePart = Math.max(0, state.activePart - 1);
-    }
-    
-    localStorage.setItem('meetingTemplate', JSON.stringify(state.meetingParts));
-    state.saveState();
-    
-    render.template();
-    render.timerDisplay();
-}
-
-//----------------------------------------------------------------------------------------------
-// TIMER CONTROL FUNCTIONS - User interface functions that call state methods
-//----------------------------------------------------------------------------------------------
-function toggleTimer() {
-    state.toggleTimer();
-}
-
-function startNextPart() {
-    state.startNextPart();
-}
-
-function selectPart(index) {
-    state.selectPart(index);
-}
-
-function toggleComment(partIndex) {
-    state.toggleComment(partIndex);
-}
-
-function incrementTimer(partIndex) {
-    state.adjustTimer(partIndex, 5);
-}
-
-function decrementTimer(partIndex) {
-    state.adjustTimer(partIndex, -5);
-}
-
-function incrementCommentTimer() {
-    state.adjustCommentTimer(5);
-}
-
-function decrementCommentTimer() {
-    state.adjustCommentTimer(-5);
-}
-
-function resetPartTimer(partIndex) {
-    if (state.isRunning && state.activePart === partIndex) {
-        DOM.showConfirmation(
-            'Reset Timer',
-            'This will reset the timer for the current part. Continue?',
-            () => state.resetTimer(partIndex)
-        );
-    } else {
-        state.resetTimer(partIndex);
-        render.timerDisplay();
-    }
-}
-
-function deleteComment(commentId) {
-    DOM.showConfirmation(
-        'Delete Comment',
-        'Are you sure you want to delete this comment?',
-        () => state.deleteComment(commentId)
-    );
-}
-
-function resetData() {
-    if (state.isRunning) {
-        DOM.showConfirmation(
-            'Reset Timers',
-            'This will stop all timers and clear all comments. Continue?',
-            () => {
-                state.resetTimers();
-                render.timerDisplay();
-                render.comments();
-            }
-        );
-    } else {
-        state.resetTimers();
-        render.timerDisplay();
-        render.comments();
-    }
-}
-
-function clearLocalStorage() {
-    DOM.showConfirmation(
-        'Clear Template',
-        'This will reset all data including the meeting template. Continue?',
-        () => {
-            state.clearAllData();
-            render.template();
-            render.timerDisplay();
-            render.comments();
-        }
-    );
-}
-
-//----------------------------------------------------------------------------------------------
-// UTILITY FUNCTIONS
-//----------------------------------------------------------------------------------------------
-function sanitizeInput(input) {
-    if (typeof input !== 'string') return input;
-    
-    return input
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;')
-        .trim();
-}
-
-function formatTime(seconds) {
-    // Add NaN protection
-    const safeSeconds = Number.isFinite(seconds) ? seconds : 0;
-    const mins = Math.floor(Math.abs(safeSeconds) / 60);
-    const secs = Math.abs(safeSeconds) % 60;
-    const sign = safeSeconds < 0 ? '-' : '';
-    
-    return `${sign}${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-function getProgressInfo(elapsed, duration, partIndex = null) {
-    const progress = Math.min((elapsed / duration) * 100, 100);
-    const timeRemaining = duration - elapsed;
-    let color = 'bg-blue-500';
-    
-    if (timeRemaining <= duration * 0.1 && timeRemaining > 0) {
-        color = 'bg-yellow-500';
-    } else if (timeRemaining <= 0) {
-        color = 'bg-red-500';
-    }
-    
-    return { progress, color };
-}
-
-function getPartStatistics(partIndex) {
-    // Filter comments for the specified part
-    const partComments = state.comments.filter(comment => comment.partIndex === partIndex);
-    if (partComments.length === 0) return null;
-    
-    const totalComments = partComments.length;
-    const averageDuration = Math.floor(
-        partComments.reduce((sum, comment) => sum + comment.duration, 0) / totalComments
-    );
-    
-    return {
-        count: totalComments,
-        average: averageDuration
-    };
-}
-
-//----------------------------------------------------------------------------------------------
-// NOTIFICATION SYSTEM
-//----------------------------------------------------------------------------------------------
-const notify = {
-    container: null,
-    
-    init() {
-        // Create notification container if it doesn't exist
-        if (!this.container) {
-            this.container = document.createElement('div');
-            this.container.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2';
-            document.body.appendChild(this.container);
-        }
-    },
-    
-    show(message, type = 'info', duration = 3000) {
-        this.init();
-        
-        const colors = {
-            success: 'bg-green-500',
-            error: 'bg-red-500',
-            warning: 'bg-yellow-500',
-            info: 'bg-blue-500'
-        };
-        
-        const notificationElement = document.createElement('div');
-        notificationElement.className = `${colors[type]} text-white rounded-lg px-4 py-2 shadow-lg transform transition-all duration-300 fade-in`;
-        notificationElement.textContent = message;
-        
-        this.container.appendChild(notificationElement);
-        
-        // Remove notification after duration
-        setTimeout(() => {
-            notificationElement.style.opacity = '0';
-            notificationElement.style.transform = 'translateY(10px)';
             
-            setTimeout(() => {
-                if (notificationElement.parentNode === this.container) {
-                    this.container.removeChild(notificationElement);
-                }
-            }, 300);
-        }, duration);
+            // Save templates
+            localStorage.setItem('savedTemplates', JSON.stringify(templates));
+            
+            // Populate category dropdowns
+            this.populateCategoryDropdowns();
+            
+            notify.show('Templates imported successfully', 'success');
+        } catch (error) {
+            console.error('Error importing templates:', error);
+            notify.show('Failed to import templates', 'error');
+        }
     }
 };
 
 //----------------------------------------------------------------------------------------------
-// VISIBILITY MANAGEMENT
-//----------------------------------------------------------------------------------------------
-let hiddenStartTime = null;
-
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-        hiddenStartTime = Date.now();
-        
-        // Save state when tab becomes hidden
-        if (state.isRunning) {
-            state.saveState();
-        }
-    } else if (document.visibilityState === 'visible' && hiddenStartTime && state.isRunning) {
-        const hiddenDuration = Math.round((Date.now() - hiddenStartTime) / 1000);
-        
-        if (state.activePart !== null) {
-            state.elapsedTimes[state.activePart] = (state.elapsedTimes[state.activePart] || 0) + hiddenDuration;
-            state.saveState();
-        }
-        
-        // Restart the timer
-        state.startTimer();
-        render.timerDisplay();
-    }
-});
-
-//----------------------------------------------------------------------------------------------
-// RENDERING FUNCTIONS
-//----------------------------------------------------------------------------------------------
-const render = {
-    template() {
-        const templateElement = DOM.elements.partsTemplate;
-        if (!templateElement) return;
-        
-        const templateHTML = state.meetingParts.map((part, index) => this.renderPartTemplate(part, index)).join('');
-        templateElement.innerHTML = templateHTML;
-    },
-    
-    renderPartTemplate(part, index) {
-        return `
-            <div class="flex items-center space-x-2 flex-wrap" role="group" aria-label="Meeting part ${index + 1}">
-                <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2 sm:mb-0">
-                    <div class="flex flex-col">
-                        <label for="part-name-${index}" class="text-xs text-gray-600">Part Name</label>
-                        <input
-                            id="part-name-${index}"
-                            type="text"
-                            value="${sanitizeInput(part.name)}"
-                            onchange="updatePart(${index}, 'name', this.value)"
-                            placeholder="Part Name"
-                            class="px-3 py-2 border rounded"
-                            aria-label="Name for part ${index + 1}"
-                        />
-                    </div>
-                    <div class="flex flex-col">
-                        <label for="part-duration-${index}" class="text-xs text-gray-600">Duration (min)</label>
-                        <input
-                            id="part-duration-${index}"
-                            type="number"
-                            value="${part.duration / 60}"
-                            onchange="updatePart(${index}, 'duration', this.value)"
-                            placeholder="Minutes"
-                            class="px-3 py-2 border rounded"
-                            aria-label="Duration in minutes for part ${index + 1}"
-                            min="0"
-                            step="0.5"
-                        />
-                    </div>
-                    <div class="flex flex-col">
-                        <label for="part-speaker-${index}" class="text-xs text-gray-600">Speaker</label>
-                        <input
-                            id="part-speaker-${index}"
-                            type="text"
-                            value="${sanitizeInput(part.speaker)}"
-                            onchange="updatePart(${index}, 'speaker', this.value)"
-                            placeholder="Speaker"
-                            class="px-3 py-2 border rounded"
-                            aria-label="Speaker name for part ${index + 1}"
-                        />
-                    </div>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <label class="flex items-center space-x-2">
-                        <input
-                            type="checkbox"
-                            ${part.enableComments ? 'checked' : ''}
-                            onchange="updatePart(${index}, 'enableComments', this.checked)"
-                            class="form-checkbox"
-                            aria-label="Enable comments for this part"
-                        />
-                        <span class="text-sm">Comments</span>
-                    </label>
-                    <button 
-                        onclick="movePart(${index}, -1)" 
-                        ${index === 0 ? 'disabled' : ''} 
-                        class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-                        aria-label="Move part up ${index + 1}"
-                        ${index === 0 ? 'aria-disabled="true"' : ''}>
-                        ↑
-                    </button>
-                    <button 
-                        onclick="movePart(${index}, 1)" 
-                        ${index === state.meetingParts.length - 1 ? 'disabled' : ''} 
-                        class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-                        aria-label="Move part down ${index + 1}"
-                        ${index === state.meetingParts.length - 1 ? 'aria-disabled="true"' : ''}>
-                        ↓
-                    </button>
-                    <button 
-                        onclick="removePart(${index})" 
-                        class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                        aria-label="Remove part ${index + 1}">
-                        ×
-                    </button>
-                </div>
-            </div>
-        `;
-    },
-    
-    timerDisplay() {
-        const displayElement = DOM.elements.partsDisplay;
-        if (!displayElement) return;
-        
-        const displayHTML = state.meetingParts.map((part, index) => this.renderTimerDisplay(part, index)).join('');
-        displayElement.innerHTML = displayHTML;
-    },
-    
-    renderTimerDisplay(part, index) {
-        const elapsed = state.elapsedTimes[index] || 0;
-        const { progress, color } = getProgressInfo(elapsed, part.duration, index);
-        const isActive = state.activePart === index;
-        
-        return `
-            <div class="p-4 border rounded-lg part-card ${isActive ? 'active border-blue-500' : 'border-gray-200'}"
-                 onclick="selectPart(${index})"
-                 role="region"
-                 aria-label="Timer for ${sanitizeInput(part.name)}"
-                 aria-selected="${isActive}">
-                ${this.renderTimerHeader(part, index)}
-                ${this.renderProgressBar(part, elapsed, progress, color)}
-                ${part.enableComments ? this.renderCommentControls(index) : ''}
-                ${this.renderTimerControls(index, isActive)}
-            </div>
-        `;
-    },
-    
-    renderTimerHeader(part, index) {
-        return `
-            <div class="flex justify-between mb-2 flex-wrap">
-                <div class="flex flex-col">
-                    <span class="font-medium">${sanitizeInput(part.name)}</span>
-                    ${part.enableComments ? this.renderPartStatistics(index) : ''}
-                </div>
-                <span aria-label="Speaker" class="text-gray-600">${sanitizeInput(part.speaker)}</span>
-            </div>
-        `;
-    },
-    
-    renderPartStatistics(index) {
-        const stats = getPartStatistics(index);
-        return stats ? 
-            `<span class="text-sm text-gray-600">
-                (${stats.count} comments, avg ${formatTime(stats.average)})
-            </span>` : 
-            '';
-    },
-    
-    renderProgressBar(part, elapsed, progress, color) {
-        return `
-            <div class="h-8 bg-gray-200 rounded-full overflow-hidden relative progress-bar"
-                 role="progressbar"
-                 aria-valuemin="0"
-                 aria-valuemax="${part.duration}"
-                 aria-valuenow="${elapsed}"
-                 aria-label="Progress for ${sanitizeInput(part.name)}">
-                <div class="h-full ${color} progress-bar-bg" style="width: ${progress}%"></div>
-                <span class="left-label">${formatTime(elapsed)}</span>
-                <span class="countdown" aria-label="Time remaining">
-                    ${formatTime(part.duration - elapsed)}
-                </span>
-            </div>
-        `;
-    },
-    
-    renderCommentControls(index) {
-        const isActiveComment = state.activeComment?.partIndex === index;
-        
-        return `
-            <div class="mt-4 space-y-2">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <button onclick="event.stopPropagation(); toggleComment(${index})" 
-                        class="px-4 py-2 ${isActiveComment ? 'bg-red-500' : 'bg-purple-500'} text-white rounded hover:${isActiveComment ? 'bg-red-600' : 'bg-purple-600'}"
-                        aria-label="${isActiveComment ? 'Stop comment' : 'Start comment'}">
-                        ${isActiveComment ? 'Stop Comment' : 'Start Comment'}
-                    </button>
-                    <span id="currentComment-${index}" 
-                          class="text-sm font-medium ${isActiveComment ? '' : 'invisible'}"
-                          aria-live="polite"
-                          role="timer">
-                        ${isActiveComment ? formatTime((state.elapsedTimes[index] || 0) - state.activeComment.startElapsed) : '0:00'}
-                    </span>
-                    ${isActiveComment ? `
-                        <div class="flex space-x-1">
-                            <button onclick="event.stopPropagation(); incrementCommentTimer()" 
-                                class="time-adjust-button increment-button"
-                                aria-label="Add 5 seconds to comment">
-                                +5s
-                            </button>
-                            <button onclick="event.stopPropagation(); decrementCommentTimer()" 
-                                class="time-adjust-button decrement-button"
-                                aria-label="Subtract 5 seconds from comment">
-                                -5s
-                            </button>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-    },
-    
-    renderTimerControls(index, isActive) {
-        if (!isActive) {
-            return `
-                <div class="mt-4">
-                    <button onclick="event.stopPropagation(); resetPartTimer(${index})" 
-                            class="time-adjust-button reset-button"
-                            aria-label="Reset timer for this part">
-                        Reset Timer
-                    </button>
-                </div>
-            `;
-        }
-        
-        const isLastPart = index >= state.meetingParts.length - 1;
-        
-        return `
-            <div class="mt-4 timer-controls">
-                <button onclick="event.stopPropagation(); toggleTimer()" 
-                        class="px-4 py-2 ${state.isRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} text-white rounded"
-                        aria-label="${state.isRunning ? 'Stop timer' : 'Start timer'}">
-                    ${state.isRunning ? 'Stop' : 'Start'}
-                </button>
-                ${!isLastPart ? `
-                <button onclick="event.stopPropagation(); startNextPart()" 
-                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                        aria-label="Begin next part">
-                    Begin Next Part
-                </button>` : ''}
-                <button onclick="event.stopPropagation(); incrementTimer(${index})" 
-                        class="time-adjust-button increment-button"
-                        aria-label="Add 5 seconds to timer">
-                    +5s
-                </button>
-                <button onclick="event.stopPropagation(); decrementTimer(${index})" 
-                        class="time-adjust-button decrement-button"
-                        aria-label="Subtract 5 seconds from timer">
-                    -5s
-                </button>
-                <button onclick="event.stopPropagation(); resetPartTimer(${index})" 
-                        class="time-adjust-button reset-button"
-                        aria-label="Reset timer for this part">
-                    Reset
-                </button>
-            </div>
-        `;
-    },
-    
-    comments() {
-        const commentHistoryElement = DOM.elements.commentHistory;
-        const globalCommentCountElement = DOM.elements.globalCommentCount;
-        const globalAverageDurationElement = DOM.elements.globalAverageDuration;
-        
-        if (!commentHistoryElement || !globalCommentCountElement || !globalAverageDurationElement) return;
-        
-        const commentCount = state.comments.length;
-        const averageDuration = commentCount > 0
-            ? Math.floor(state.comments.reduce((a, b) => a + b.duration, 0) / commentCount)
-            : 0;
-        
-        globalCommentCountElement.textContent = commentCount;
-        globalAverageDurationElement.textContent = formatTime(averageDuration);
-        
-        commentHistoryElement.innerHTML = this.renderCommentHistory();
-    },
-    
-    renderCommentHistory() {
-        // Group comments by part
-        const groupedComments = state.comments.reduce((acc, comment) => {
-            const partName = comment.partName || 'Unknown Part';
-            if (!acc[partName]) {
-                acc[partName] = [];
-            }
-            acc[partName].push(comment);
-            return acc;
-        }, {});
-        
-        // No comments
-        if (Object.keys(groupedComments).length === 0) {
-            return '<p class="text-gray-500 text-center p-4">No comments recorded yet</p>';
-        }
-        
-        // Sort by part name and render each group
-        return Object.entries(groupedComments).map(([partName, partComments]) => `
-            <div class="mb-4">
-                <h3 class="font-semibold text-gray-700 mb-2">${sanitizeInput(partName)}</h3>
-                ${partComments.map((comment, i) => this.renderComment(comment, i)).join('')}
-            </div>
-        `).join('');
-    },
-    
-    renderComment(comment, index) {
-        return `
-            <div class="bg-white p-2 rounded shadow-sm mb-2 comment-item" data-comment-id="${comment.id || ''}">
-                <div class="flex justify-between text-sm">
-                    <span>Comment ${index + 1}</span>
-                    <div class="flex items-center">
-                        <span class="mr-2">${formatTime(comment.duration)}</span>
-                        <button 
-                            onclick="deleteComment('${comment.id || ''}')" 
-                            class="text-red-500 delete-button text-sm"
-                            aria-label="Delete this comment">
-                            ×
-                        </button>
-                    </div>
-                </div>
-                <div class="text-xs text-gray-500">
-                    ${new Date(comment.timestamp).toLocaleTimeString()}
-                </div>
-            </div>
-        `;
-    }
-};
-
-//----------------------------------------------------------------------------------------------
-// EVENT LISTENERS AND INITIALIZATION
+// INITIALIZATION
 //----------------------------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize DOM cache
     DOM.init();
     
-    // Initialize application state
+    // Initialize state
     state.init();
     
-    // Render the UI
-    render.template();
-    render.timerDisplay();
-    render.comments();
+    // Initialize template manager
+    templateManager.init();
+    
+    // Initialize rendering
+    render.init();
     
     // Add keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        // Space to toggle timer when not in a form field
-        if (e.code === 'Space' && 
-            !['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(document.activeElement.tagName)) {
-            e.preventDefault();
-            toggleTimer();
+        // Only handle shortcuts when not in an input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
         }
         
-        // Escape to close any open modals
-        if (e.key === 'Escape') {
-            if (!DOM.elements.templateModal.classList.contains('hidden')) {
-                DOM.elements.templateModal.classList.add('hidden');
-            }
-            if (!DOM.elements.confirmationModal.classList.contains('hidden')) {
-                DOM.elements.confirmationModal.classList.add('hidden');
+        // Space: Start/stop timer
+        if (e.key === ' ' || e.code === 'Space') {
+            e.preventDefault();
+            state.toggleTimer();
+        }
+        
+        // N: Next part
+        if (e.key === 'n' || e.key === 'N') {
+            state.startNextPart();
+        }
+        
+        // C: Start/stop comment
+        if ((e.key === 'c' || e.key === 'C') && 
+            state.isRunning && 
+            state.meetingParts[state.activePart].enableComments) {
+            state.toggleComment(state.activePart);
+        }
+        
+        // +: Add 5 seconds
+        if (e.key === '+' || e.key === '=') {
+            if (state.activeComment) {
+                state.adjustCommentTimer(5);
+            } else {
+                state.adjustTimer(state.activePart, 5);
             }
         }
-    });
-    
-    // Confirm page refresh if timer is running
-    window.addEventListener('beforeunload', (e) => {
-        if (state.isRunning) {
-            // This will trigger a browser confirmation dialog
-            e.preventDefault();
-            e.returnValue = 'You have a timer running. Are you sure you want to leave?';
-            return e.returnValue;
+        
+        // -: Subtract 5 seconds
+        if (e.key === '-' || e.key === '_') {
+            if (state.activeComment) {
+                state.adjustCommentTimer(-5);
+            } else {
+                state.adjustTimer(state.activePart, -5);
+            }
+        }
+        
+        // R: Reset active timer
+        if (e.key === 'r' || e.key === 'R') {
+            state.resetTimer(state.activePart);
         }
     });
 });
 
-//----------------------------------------------------------------------------------------------
-// ERROR HANDLING
-//----------------------------------------------------------------------------------------------
-window.addEventListener('error', (event) => {
-    console.error('Global error caught:', {
-        message: event.message,
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-        error: event.error
-    });
-    
-    // Display error to user
-    notify.show('An error occurred. Attempting to recover...', 'error');
-    
-    // Attempt recovery
-    try {
-        clearInterval(state.timerInterval);
-        clearInterval(state.commentInterval);
-        state.isRunning = false;
-        
-        // Re-render the interface
-        render.template();
-        render.timerDisplay();
-        render.comments();
-    } catch (recoveryError) {
-        console.error('Recovery failed:', recoveryError);
-        notify.show('Application error. Please refresh the page.', 'error');
+// Simple notification system
+const notify = {
+    show(message, type = 'info') {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+        // In a real app, this would show a toast notification
     }
-});
+};
