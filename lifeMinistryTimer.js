@@ -444,8 +444,8 @@ let state = {
     // Reset a specific timer
     resetTimer(partIndex) {
         if (partIndex >= 0 && partIndex < this.meetingParts.length) {
-            // Stop the timer if it's running
-            if (this.isRunning) {
+            // Only stop the timer if the part being reset is the active part
+            if (this.isRunning && partIndex === this.activePart) {
                 this.stopTimer();
             }
             
