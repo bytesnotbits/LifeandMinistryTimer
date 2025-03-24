@@ -16,6 +16,26 @@ const render = {
         this.templateEditor();
         this.timerDisplay();
         this.comments();
+        
+        // Initialize edit mode UI
+        const editModeControls = document.getElementById('editModeControls');
+        const editModeInstructions = document.getElementById('editModeInstructions');
+        
+        if (state.isEditMode) {
+            if (editModeControls) {
+                editModeControls.classList.remove('hidden');
+            }
+            if (editModeInstructions) {
+                editModeInstructions.classList.remove('hidden');
+            }
+        } else {
+            if (editModeControls) {
+                editModeControls.classList.add('hidden');
+            }
+            if (editModeInstructions) {
+                editModeInstructions.classList.add('hidden');
+            }
+        }
     },
     
     // Render template editor
