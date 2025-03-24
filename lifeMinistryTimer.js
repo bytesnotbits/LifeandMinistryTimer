@@ -389,6 +389,19 @@ let state = {
     // Initialize application state
     init() {
         this.loadState();
+        
+        // Initialize edit mode toggle appearance
+        const editModeToggle = document.getElementById('editModeToggle');
+        if (editModeToggle) {
+            editModeToggle.checked = this.isEditMode;
+            
+            // Update the toggle appearance
+            const toggleBackground = editModeToggle.nextElementSibling;
+            if (toggleBackground && this.isEditMode) {
+                toggleBackground.classList.add('bg-blue-600');
+                toggleBackground.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+            }
+        }
     },
     
     // Load state from localStorage
@@ -409,6 +422,10 @@ let state = {
             const savedComments = localStorage.getItem('meetingComments');
             this.comments = savedComments ? JSON.parse(savedComments) : [];
             
+            // Load edit mode state
+            const editModeState = localStorage.getItem('isEditMode');
+            this.isEditMode = editModeState === 'true';
+            
         } catch (error) {
             console.error('Error loading state:', error);
             // Fallback to defaults if loading fails
@@ -416,6 +433,7 @@ let state = {
             this.elapsedTimes = {};
             this.activePart = 0;
             this.comments = [];
+            this.isEditMode = false;
         }
     },
     
@@ -461,9 +479,38 @@ let state = {
         localStorage.removeItem('elapsedTimes');
         localStorage.removeItem('activePart');
         localStorage.removeItem('meetingComments');
+        localStorage.removeItem('isEditMode');
         
         this.meetingParts = DEFAULT_PARTS;
+        this.isEditMode = false;
         this.resetTimers();
+        
+        // Update UI for edit mode
+        const editModeToggle = document.getElementById('editModeToggle');
+        if (editModeToggle) {
+            editModeToggle.checked = false;
+            
+            // Update the toggle appearance
+            const toggleBackground = editModeToggle.nextElementSibling;
+            if (toggleBackground) {
+                toggleBackground.classList.remove('bg-blue-600');
+                toggleBackground.classList.add('bg-gray-200');
+                // Add dark mode class if in dark mode
+                if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                    toggleBackground.classList.add('dark:bg-gray-700');
+                }
+            }
+        }
+        
+        const editModeControls = document.getElementById('editModeControls');
+        if (editModeControls) {
+            editModeControls.classList.add('hidden');
+        }
+        
+        const editModeInstructions = document.getElementById('editModeInstructions');
+        if (editModeInstructions) {
+            editModeInstructions.classList.add('hidden');
+        }
     },
     
     // Start the timer
@@ -745,10 +792,29 @@ let state = {
         
         this.isEditMode = !this.isEditMode;
         
+        // Save edit mode state to localStorage
+        localStorage.setItem('isEditMode', this.isEditMode.toString());
+        
         // Update UI for edit mode
         const editModeToggle = document.getElementById('editModeToggle');
         if (editModeToggle) {
             editModeToggle.checked = this.isEditMode;
+            
+            // Update the toggle appearance
+            const toggleBackground = editModeToggle.nextElementSibling;
+            if (toggleBackground) {
+                if (this.isEditMode) {
+                    toggleBackground.classList.add('bg-blue-600');
+                    toggleBackground.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+                } else {
+                    toggleBackground.classList.remove('bg-blue-600');
+                    toggleBackground.classList.add('bg-gray-200');
+                    // Add dark mode class if in dark mode
+                    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                        toggleBackground.classList.add('dark:bg-gray-700');
+                    }
+                }
+            }
         }
         
         const editModeControls = document.getElementById('editModeControls');
