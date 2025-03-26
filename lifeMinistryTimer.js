@@ -369,7 +369,7 @@ const DEFAULT_PARTS = [
 ];
 
 const COMMENT_LIMIT = 4*60; // Limit comments to 4 minutes
-const TIMER_UPDATE_INTERVAL = 1000; // 1 second interval for timer updates
+const TIMER_UPDATE_INTERVAL = 100; // 100ms interval for more accurate timer updates
 const COMMENT_DISPLAY_UPDATE_INTERVAL = 200; // 200ms for smoother comment timer display
 
 // Application state
@@ -385,6 +385,9 @@ let state = {
     isEditMode: false,
     editingPartIndex: null,
     draggedPartIndex: null,
+    timerStartTime: null,
+    lastUpdateTime: null,
+    visibilityPaused: false,
     
     // Initialize application state
     init() {
@@ -402,6 +405,10 @@ let state = {
                 toggleBackground.classList.remove('bg-gray-200', 'dark:bg-gray-700');
             }
         }
+        
+        // Set up visibility change handler
+        document.addEventListener('visibilitychange', this._handleVisibilityChange.bind(this));
+        this._visibilityChangeHandlerSet = true;
     },
     
     // Load state from localStorage
@@ -521,25 +528,90 @@ let state = {
             // Clear any existing interval
             clearInterval(this.timerInterval);
             
+            // Store the current timestamp
+            this.timerStartTime = Date.now();
+            this.lastUpdateTime = this.timerStartTime;
+            
+            // Initialize elapsed time if not already set
+            if (!this.elapsedTimes[this.activePart]) {
+                this.elapsedTimes[this.activePart] = 0;
+            }
+            
+            // Initialize update counter
+            this._displayUpdateCounter = 0;
+            
             this.timerInterval = setInterval(() => {
-                this.elapsedTimes[this.activePart] = (this.elapsedTimes[this.activePart] || 0) + 1;
-                
-                // Check if timer has reached the end
-                const currentPart = this.meetingParts[this.activePart];
-                const elapsed = this.elapsedTimes[this.activePart];
-                
-                if (elapsed >= currentPart.duration && soundManager && soundManager.isSoundEnabled) {
-                    soundManager.playTimerEndSound();
+                if (!this.visibilityPaused) {
+                    const now = Date.now();
+                    // Calculate elapsed time in milliseconds, then convert to seconds
+                    const elapsedMs = now - this.lastUpdateTime;
+                    const elapsedSeconds = elapsedMs / 1000;
+                    
+                    // Always update the timer, not just when a full second has passed
+                    if (elapsedMs > 0) {
+                        // Add the precise elapsed time (including fractional seconds)
+                        this.elapsedTimes[this.activePart] += elapsedSeconds;
+                        this.lastUpdateTime = now;
+                        
+                        // Check if timer has reached the end
+                        const currentPart = this.meetingParts[this.activePart];
+                        const totalElapsed = this.elapsedTimes[this.activePart];
+                        
+                        if (totalElapsed >= currentPart.duration && soundManager && soundManager.isSoundEnabled) {
+                            soundManager.playTimerEndSound();
+                        }
+                        
+                        // Update display every 3 ticks (300ms) for smooth updates
+                        // without excessive rendering
+                        this._displayUpdateCounter++;
+                        if (this._displayUpdateCounter >= 3) {
+                            this._displayUpdateCounter = 0;
+                            this.saveState();
+                            render.timerDisplay();
+                        }
+                    }
                 }
-                
-                this.saveState();
-                render.timerDisplay();
             }, TIMER_UPDATE_INTERVAL);
             
             // Add timer-active class to the active part
             const activePartElement = document.querySelector(`.part-card.active`);
             if (activePartElement) {
                 activePartElement.classList.add('timer-active');
+            }
+            
+            // Set up visibility change handler if not already set
+            if (!this._visibilityChangeHandlerSet) {
+                document.addEventListener('visibilitychange', this._handleVisibilityChange.bind(this));
+                this._visibilityChangeHandlerSet = true;
+            }
+        }
+    },
+    
+    // Handle visibility change events
+    _handleVisibilityChange() {
+        if (this.isRunning) {
+            if (document.hidden) {
+                // Page is now hidden
+                this.visibilityPaused = true;
+                this._lastHiddenTime = Date.now();
+            } else {
+                // Page is now visible again
+                if (this.visibilityPaused) {
+                    const now = Date.now();
+                    const hiddenDuration = now - this._lastHiddenTime;
+                    
+                    // Add the precise time that passed while the page was hidden (including fractional seconds)
+                    const elapsedSeconds = hiddenDuration / 1000;
+                    this.elapsedTimes[this.activePart] += elapsedSeconds;
+                    
+                    // Update timestamps
+                    this.lastUpdateTime = now;
+                    this.visibilityPaused = false;
+                    
+                    // Update display
+                    this.saveState();
+                    render.timerDisplay();
+                }
             }
         }
     },
@@ -549,6 +621,9 @@ let state = {
         this.isRunning = false;
         clearInterval(this.timerInterval);
         this.timerInterval = null;
+        this.timerStartTime = null;
+        this.lastUpdateTime = null;
+        this.visibilityPaused = false;
         
         // Also stop any active comment
         if (this.activeComment) {
@@ -620,7 +695,8 @@ let state = {
     startComment(partIndex) {
         this.activeComment = {
             startElapsed: this.elapsedTimes[partIndex] || 0,
-            partIndex: partIndex
+            partIndex: partIndex,
+            startTime: Date.now() // Store the timestamp when comment started
         };
         
         /* //Play comment start sound if enabled
@@ -633,16 +709,23 @@ let state = {
         this.commentInterval = setInterval(() => {
             const currentElement = document.getElementById(`currentComment-${partIndex}`);
             if (currentElement && this.activeComment) {
+                // Calculate comment duration based on elapsed time
                 const currentElapsed = this.elapsedTimes[partIndex] || 0;
                 const commentDuration = currentElapsed - this.activeComment.startElapsed;
-                currentElement.textContent = formatTime(Math.max(0, commentDuration));
+                
+                // Round to 1 decimal place for display to show more precise timing
+                const displayDuration = Math.round(commentDuration * 10) / 10;
+                currentElement.textContent = formatTime(Math.max(0, displayDuration));
                 
                 // Add visual indication when approaching comment limit
                 if (commentDuration >= COMMENT_LIMIT - 30 && commentDuration < COMMENT_LIMIT) {
                     currentElement.classList.add('text-yellow-500');
+                    currentElement.classList.remove('text-red-500');
                 } else if (commentDuration >= COMMENT_LIMIT) {
                     currentElement.classList.remove('text-yellow-500');
                     currentElement.classList.add('text-red-500');
+                } else {
+                    currentElement.classList.remove('text-yellow-500', 'text-red-500');
                 }
             }
         }, COMMENT_DISPLAY_UPDATE_INTERVAL);
@@ -663,13 +746,14 @@ let state = {
         // Only add comment if duration is at least 1 second
         if (duration >= 1) {
             const finalDuration = Math.min(duration, COMMENT_LIMIT);
+            const now = Date.now();
             
             this.comments.push({
                 duration: finalDuration,
-                timestamp: Date.now(),
+                timestamp: now,
                 partName: this.meetingParts[partIndex].name,
                 partIndex: partIndex,
-                id: Date.now().toString() + Math.random().toString(36).substr(2, 9) // Unique ID
+                id: now.toString() + Math.random().toString(36).substr(2, 9) // Unique ID
             });
             
             this.saveState();
