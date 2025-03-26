@@ -360,8 +360,9 @@ const render = {
 
 // Format seconds as MM:SS
 function formatTime(seconds) {
+    // Handle fractional seconds
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
@@ -370,7 +371,7 @@ function formatTimeWithSign(seconds) {
     const isNegative = seconds < 0;
     const absSeconds = Math.abs(seconds);
     const mins = Math.floor(absSeconds / 60);
-    const secs = absSeconds % 60;
+    const secs = Math.floor(absSeconds % 60);
     return `${isNegative ? '-' : ''}${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
