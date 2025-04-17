@@ -529,3 +529,50 @@ main {
         right: 6rem;
     }
 }
+
+/* --- Fix for Dark Mode Input Readability --- */
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="search"],
+[data-theme="dark"] input[type="tel"],
+[data-theme="dark"] input[type="url"],
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+    background-color: var(--bg-color); /* Use dark background */
+    color: var(--text-color);         /* Use light text */
+    border-color: var(--border-color);   /* Use dark border */
+}
+
+/* Style placeholders in dark mode */
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: var(--text-light); /* Use the lighter text color for placeholders */
+    opacity: 1; /* Ensure placeholder is visible */
+}
+
+/* Ensure selects look right in dark mode */
+[data-theme="dark"] select {
+    appearance: none; /* May need more styling depending on browser */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%239ca3af%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E'); /* Example dark arrow */
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem; /* Make space for arrow */
+}
+
+/* Style checkbox/radio borders in dark mode if needed */
+[data-theme="dark"] input[type="checkbox"],
+[data-theme="dark"] input[type="radio"] {
+    border-color: var(--border-color);
+     /* You might need more styling for the checkmark itself */
+}
+
+/* Style toggle switch in dark mode */
+[data-theme="dark"] .peer-checked\:bg-blue-600:checked + div {
+     background-color: var(--primary-color) !important; /* Ensure toggle uses theme color */
+}
+[data-theme="dark"] .dark\:bg-gray-700:not(:checked) + div {
+     background-color: #374151 !important; /* Tailwind dark gray */
+}
