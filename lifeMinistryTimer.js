@@ -104,6 +104,8 @@ const DOM = { // eslint-disable-line no-unused-vars
         this._checkForMissingElements(); // eslint-disable-line no-underscore-dangle
     },
     
+    /*
+    // Old function. It was replaced with a new one that added the delegated event listeners for #partsDisplay and #commentHistory
     _setupEventListeners() {
         // Template management buttons
         if (this.elements.saveTemplateBtn) { // Save template button
@@ -287,7 +289,324 @@ const DOM = { // eslint-disable-line no-unused-vars
                 }
             });
         }
+        
     },
+    */
+    
+    _setupEventListeners() {
+        // --- Existing Listeners for Modals, Templates, etc. (Keep These) ---
+
+        // Template management buttons
+        if (this.elements.saveTemplateBtn) { // Save template button
+            this.elements.saveTemplateBtn.addEventListener('click', () => {
+                this.elements.templateName.value = ''; // Clear the template name input
+                this.elements.templateDescription.value = ''; // Clear the template description input
+                this.elements.templateCategory.value = ''; // Clear the template category select
+                this._showModal(this.elements.templateModal); // Show the template modal
+            });
+        }
+
+        if (this.elements.loadTemplateBtn) { // Load template button
+            this.elements.loadTemplateBtn.addEventListener('click', () => {
+                templateManager.populateTemplatesList(); // Populate the templates list
+                this._showModal(this.elements.templateModal); // Show the template modal
+            });
+        }
+
+        // Template modal buttons
+        if (this.elements.closeTemplateModal) { // Close template modal button
+            this.elements.closeTemplateModal.addEventListener('click', () => {
+                this._hideModal(this.elements.templateModal); // Hide the template modal
+            });
+        }
+
+        if (this.elements.saveNewTemplate) { // Save new template button
+            this.elements.saveNewTemplate.addEventListener('click', () => {
+                const name = this.elements.templateName.value.trim(); // Get the template name
+                if (name) { // If name is not empty
+                    const description = this.elements.templateDescription.value.trim(); // Get the template description
+                    const category = this.elements.templateCategory.value.trim(); // Get the template category
+                    templateManager.saveTemplate(name, description, category); // Save the template
+                    this._hideModal(this.elements.templateModal); // Hide the template modal
+                } else { // If name is empty
+                    notify.show('Please enter a template name', 'error'); // Show an error notification
+                }
+            });
+        }
+
+        if (this.elements.importTemplateBtn) { // Import template button
+            this.elements.importTemplateBtn.addEventListener('click', () => {
+                this._hideModal(this.elements.templateModal); // Hide the template modal
+                this.elements.importFile.value = ''; // Clear the import file input
+                this.elements.importPreview.classList.add('hidden'); // Hide the import preview
+                this.elements.confirmImport.disabled = true; // Disable the confirm import button
+                this._showModal(this.elements.importModal); // Show the import modal
+            });
+        }
+
+        if (this.elements.exportAllTemplatesBtn) { // Export all templates button
+            this.elements.exportAllTemplatesBtn.addEventListener('click', () => {
+                templateManager.exportAllTemplates(); // Export all templates
+            });
+        }
+
+        if (this.elements.addCategoryBtn) { // Add category button
+            this.elements.addCategoryBtn.addEventListener('click', () => {
+                this.elements.newCategoryName.value = ''; // Clear the new category name input
+                this._showModal(this.elements.categoryModal); // Show the category modal
+            });
+        }
+
+        // Template search and filter
+        if (this.elements.templateSearch) { // Template search input
+            this.elements.templateSearch.addEventListener('input', () => {
+                templateManager.populateTemplatesList(); // Populate the templates list
+            });
+        }
+
+        if (this.elements.templateCategoryFilter) { // Template category filter select
+            this.elements.templateCategoryFilter.addEventListener('change', () => {
+                templateManager.populateTemplatesList(); // Populate the templates list
+            });
+        }
+
+        if (this.elements.templateSort) { // Template sort select
+            this.elements.templateSort.addEventListener('change', () => {
+                templateManager.populateTemplatesList(); // Populate the templates list
+            });
+        }
+
+        // Category modal buttons
+        if (this.elements.closeCategoryModal) { // Close category modal button
+            this.elements.closeCategoryModal.addEventListener('click', () => {
+                this._hideModal(this.elements.categoryModal); // Hide the category modal
+            });
+        }
+
+        if (this.elements.saveNewCategory) { // Save new category button
+            this.elements.saveNewCategory.addEventListener('click', () => {
+                const name = this.elements.newCategoryName.value.trim(); // Get the new category name
+                if (name) { // If name is not empty
+                    templateManager.addCategory(name); // Add the category
+                    this._hideModal(this.elements.categoryModal); // Hide the category modal
+                } else { // If name is empty
+                    notify.show('Please enter a category name', 'error'); // Show an error notification
+                }
+            });
+        }
+
+        // Preview modal buttons
+        if (this.elements.closePreviewModal) { // Close preview modal button
+            this.elements.closePreviewModal.addEventListener('click', () => {
+                this._hideModal(this.elements.previewModal); // Hide the preview modal
+            });
+        }
+
+        // Import modal buttons
+        if (this.elements.importFile) { // Import file input
+            this.elements.importFile.addEventListener('change', (e) => {
+                templateManager.handleImportFile(e.target.files[0]); // Handle the import file
+            });
+        }
+
+        if (this.elements.closeImportModal) { // Close import modal button
+            this.elements.closeImportModal.addEventListener('click', () => {
+                this._hideModal(this.elements.importModal); // Hide the import modal
+            });
+        }
+
+        if (this.elements.confirmImport) { // Confirm import button
+            this.elements.confirmImport.addEventListener('click', () => {
+                templateManager.importTemplates(); // Import the templates
+                this._hideModal(this.elements.importModal); // Hide the import modal
+            });
+        }
+
+        // Confirmation modal buttons
+        if (this.elements.cancelConfirmation) { // Cancel confirmation button
+            this.elements.cancelConfirmation.addEventListener('click', () => { // Add event listener
+                this._hideModal(this.elements.confirmationModal); // Hide the confirmation modal
+            });
+        }
+
+        // Shortcuts modal buttons
+        if (this.elements.closeShortcutsModal) { // Close shortcuts modal button
+            this.elements.closeShortcutsModal.addEventListener('click', () => {
+                this._hideModal(this.elements.shortcutsModal); // Hide the shortcuts modal
+            });
+        }
+
+        // --- NEW: Add Delegated Listener for Part Cards ---
+        if (this.elements.partsDisplay) {
+            this.elements.partsDisplay.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-action]');
+                if (!button) return; // Click wasn't on a button with data-action
+
+                const action = button.dataset.action;
+                // Find the parent part card to get the index
+                const partCard = button.closest('.part-card');
+                const partIndex = partCard ? parseInt(partCard.dataset.partIndex) : -1;
+
+                 if (partIndex === -1 && action !== 'add-part-end') { // Added check for add-part-end which might not have an index
+                     console.warn('Could not determine part index for action:', action);
+                     // Potentially handle actions that don't need an index here, like a global "add part" button if it existed
+                     return;
+                 }
+
+
+                // --- Handle actions based on data-action attribute ---
+                switch (action) {
+                    case 'toggle-timer':
+                        if (!state.isEditMode && partIndex === state.activePart) {
+                            state.toggleTimer();
+                        }
+                        break;
+                    case 'next-part':
+                        if (!state.isEditMode && partIndex === state.activePart && partIndex < state.meetingParts.length - 1) {
+                            state.startNextPart();
+                        }
+                        break;
+                    case 'toggle-comment':
+                         if (!state.isEditMode && partIndex === state.activePart && state.meetingParts[partIndex]?.enableComments) {
+                            state.toggleComment(partIndex);
+                        }
+                        break;
+                    case 'adjust-timer':
+                        if (!state.isEditMode && partIndex === state.activePart) {
+                           const adjustment = parseInt(button.dataset.adjust ?? 0);
+                           if (adjustment !== 0) {
+                                state.adjustTimer(partIndex, adjustment);
+                           }
+                        }
+                        break;
+                    case 'reset-timer':
+                         if (!state.isEditMode && partIndex !== -1) {
+                            state.resetTimer(partIndex);
+                         }
+                        break;
+                    case 'edit-part':
+                         if (state.isEditMode && partIndex !== -1) {
+                            state.editPart(partIndex);
+                         }
+                         break;
+                    case 'remove-part':
+                         if (state.isEditMode && partIndex !== -1) {
+                            // Ensure confirmation happens if needed by calling the state method
+                            state.removePart(partIndex);
+                         }
+                         break;
+                    case 'add-part-before':
+                         if (state.isEditMode && partIndex !== -1) {
+                             state.addPartAt(partIndex);
+                         }
+                         break;
+                    case 'add-part-after':
+                         if (state.isEditMode && partIndex !== -1) {
+                             state.addPartAt(partIndex + 1);
+                         }
+                         break;
+                    // case 'add-part-end': // Example if you had a global add button
+                    //      if (state.isEditMode) {
+                    //          state.addPart();
+                    //      }
+                    //      break;
+                    default:
+                        console.warn(`Unknown action: ${action}`);
+                }
+            });
+
+            // Handle part selection via click (only if not running and not edit mode)
+             this.elements.partsDisplay.addEventListener('click', (event) => {
+                 if (state.isRunning || state.isEditMode) return; // Don't select if running or editing
+
+                 // Check if the click was on a part card itself, not a button inside it
+                 const partCard = event.target.closest('.part-card');
+                 const button = event.target.closest('button'); // Check if click target is button or inside button
+
+                 // Only select if the click originated directly on the card or its non-button children,
+                 // *and* the card itself exists
+                 if (partCard && (!button || !partCard.contains(button)) ) {
+                     const partIndex = parseInt(partCard.dataset.partIndex);
+                     if (!isNaN(partIndex)) {
+                         state.selectPart(partIndex);
+                     }
+                 }
+             });
+
+
+            // Handle part selection via keyboard (Enter/Space)
+            this.elements.partsDisplay.addEventListener('keydown', (event) => {
+                if (state.isRunning || state.isEditMode) return; // Don't select if running or editing
+
+                if (event.key === 'Enter' || event.key === ' ' || event.code === 'Space') {
+                     // Check if focus is on a part card
+                     const partCard = event.target.closest('.part-card');
+                     // Check that the event target *is* the part card (or maybe direct children like h3?)
+                     // And that the currently focused element in the document *is* this card.
+                     // This prevents triggering selection if focus is on an inner button.
+                     if (partCard && document.activeElement === partCard) {
+                         event.preventDefault(); // Prevent default space scroll
+                         const partIndex = parseInt(partCard.dataset.partIndex);
+                          if (!isNaN(partIndex)) {
+                             state.selectPart(partIndex);
+                         }
+                     }
+                }
+            });
+        } // End of partsDisplay listeners
+
+        // --- NEW: Add Delegated Listener for Comment History ---
+        if (this.elements.commentHistory) {
+             this.elements.commentHistory.addEventListener('click', (event) => {
+                 const deleteButton = event.target.closest('button.delete-button[data-comment-id]');
+                 if (deleteButton) {
+                     const commentId = deleteButton.dataset.commentId;
+                     if (commentId) {
+                         // Optional: Add confirmation here if desired
+                         // DOM.showConfirmation('Delete Comment', 'Are you sure?', () => state.deleteComment(commentId));
+                         state.deleteComment(commentId); // Call directly for now
+                     }
+                 }
+             });
+        } // End of commentHistory listener
+
+
+        // --- Remaining Original Listeners (Keep These) ---
+
+        // Edit mode toggle
+        if (this.elements.editModeToggle) { // Edit mode toggle
+            this.elements.editModeToggle.addEventListener('change', () => {
+                state.toggleEditMode(); // Toggle edit mode
+            });
+        }
+
+        // Part editor modal buttons
+        if (this.elements.closePartEditorModal) { // Close part editor modal button
+            this.elements.closePartEditorModal.addEventListener('click', () => {
+                state.cancelPartEdits(); // Cancel part edits
+            });
+        }
+
+        if (this.elements.savePartEdits) { // Save part edits button
+            this.elements.savePartEdits.addEventListener('click', () => {
+                state.savePartEdits(); // Save part edits
+            });
+        }
+
+        // Add part button (The global one at the bottom in edit mode)
+        const addPartBtn = document.getElementById('addPartBtn');
+        if (addPartBtn) {
+            addPartBtn.addEventListener('click', () => {
+                if (state.isEditMode) {
+                    // Use the new addPart method when in edit mode
+                    state.addPart(); // This adds to the end
+                }
+                // Removed legacy behavior as it's probably not needed now
+            });
+        }
+
+    }, // End of _setupEventListeners
+
     
     _checkForMissingElements() { // eslint-disable-line no-unused-vars
         const criticalElements = [ // List of critical elements
