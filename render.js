@@ -165,98 +165,99 @@ const render = {
             }
             
             // Build part card HTML
+            // Build part card HTML
             let partHTML = `
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold">${part.name}</h3>
                     <div class="text-sm text-gray-600">${part.speaker}</div>
                     ${state.isEditMode ? `
-                        <button onclick="state.removePart(${index})" 
+                        <button data-action="remove-part" data-part-index="${index}"
                             class="ml-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                             aria-label="Remove part">
-                            &times;
+                            ×
                         </button>
                     ` : ''}
                 </div>
-                
+
                 <div class="progress-bar h-8 mb-2">
                     <div class="progress-bar-bg ${progressColor}" style="width: ${progressPercent}%"></div>
                     <span class="left-label">${formatTime(elapsed)}</span>
                     <span class="countdown">${formatTimeWithSign(part.duration - elapsed)}</span>
                 </div>
-                
+
                 <div class="flex justify-between items-center">
                     <div class="flex space-x-2">
                         ${isActive && !state.isEditMode ? `
-                            <button onclick="state.toggleTimer()" 
+                            <button data-action="toggle-timer" data-part-index="${index}"
                                 class="px-2 py-1 ${state.isRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded"
                                 aria-label="${state.isRunning ? 'Stop timer' : 'Start timer'}">
                                 ${state.isRunning ? 'Stop' : 'Start'}
                             </button>
-                            
+
                             ${index < state.meetingParts.length - 1 ? `
-                                <button onclick="state.startNextPart()" 
+                                <button data-action="next-part" data-part-index="${index}"
                                     class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                                     aria-label="Next part">
                                     Next
                                 </button>
                             ` : ''}
                         ` : ''}
-                        
+
                         ${state.isEditMode ? `
-                            <button onclick="state.editPart(${index})" 
+                            <button data-action="edit-part" data-part-index="${index}"
                                 class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                                 aria-label="Edit part">
                                 Edit
                             </button>
                         ` : ''}
                     </div>
-                    
+
                     ${part.enableComments && isActive && !state.isEditMode ? `
                         <div class="flex items-center">
-                            <button onclick="state.toggleComment(${index})" 
+                            <button data-action="toggle-comment" data-part-index="${index}"
                                 class="px-2 py-1 ${state.activeComment ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-500 hover:bg-purple-600'} text-white rounded mr-2"
                                 aria-label="${state.activeComment ? 'Stop comment' : 'Start comment'}">
                                 ${state.activeComment ? 'Stop Comment' : 'Comment'}
                             </button>
                             <span id="currentComment-${index}" class="font-mono">
-                                ${state.activeComment && state.activeComment.partIndex === index ? 
-                                    formatTime((state.elapsedTimes[index] || 0) - state.activeComment.startElapsed) : 
+                                ${state.activeComment && state.activeComment.partIndex === index ?
+                                    formatTime((state.elapsedTimes[index] || 0) - state.activeComment.startElapsed) :
                                     '0:00'}
                             </span>
                         </div>
                     ` : ''}
                 </div>
-                
+
                 <div class="timer-controls">
-                    ${isActive && !state.isEditMode ? `
-                        <button onclick="state.adjustTimer(${index}, 5)" 
+                     ${isActive && !state.isEditMode ? `
+                        <button data-action="adjust-timer" data-part-index="${index}" data-adjust="5"
                             class="time-adjust-button increment-button"
                             aria-label="Add 5 seconds">
                             +5s
                         </button>
-                        <button onclick="state.adjustTimer(${index}, -5)" 
+                        <button data-action="adjust-timer" data-part-index="${index}" data-adjust="-5"
                             class="time-adjust-button decrement-button"
                             aria-label="Subtract 5 seconds">
                             -5s
                         </button>
                     ` : ''}
                     ${!state.isEditMode ? `
-                        <button onclick="state.resetTimer(${index})" 
+                        <button data-action="reset-timer" data-part-index="${index}"
                             class="time-adjust-button reset-button"
                             aria-label="Reset timer">
                             Reset
                         </button>
                     ` : ''}
                 </div>
-                
+
                 ${state.isEditMode ? `
                     <div class="edit-controls mt-2 flex justify-between">
-                        <button onclick="state.addPartAt(${index})" 
+                        <button data-action="add-part-before" data-part-index="${index}"
                             class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
                             aria-label="Add part before">
                             Add Before
                         </button>
-                        <button onclick="state.addPartAt(${index + 1})" 
+                        <button data-action="add-part-after" data-part-index="${index}"
                             class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
                             aria-label="Add part after">
                             Add After
@@ -343,12 +344,12 @@ const render = {
                     <span class="font-medium">${comment.partName}</span>
                     <span class="text-sm text-gray-600 ml-2">${formatTime(comment.duration)}</span>
                 </div>
-                <button onclick="state.deleteComment('${comment.id}')" 
+                <button data-comment-id="${comment.id}" // <-- Add data-comment-id here
                     class="delete-button px-2 text-red-500 hover:text-red-700"
                     aria-label="Delete comment">
-                    &times;
+                    ×
                 </button>
-            `;
+            `; // Remove onclick="state.deleteComment(...)"
             container.appendChild(commentElement);
         });
     }
