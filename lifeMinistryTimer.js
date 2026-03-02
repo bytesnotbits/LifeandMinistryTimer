@@ -441,6 +441,7 @@ const DOM = { // eslint-disable-line no-unused-vars
             this.elements.partsDisplay.addEventListener('click', (event) => {
                 const button = event.target.closest('button[data-action]');
                 if (!button) return; // Click wasn't on a button with data-action
+                event.stopPropagation();
 
                 const action = button.dataset.action;
                 // Find the parent part card to get the index
@@ -485,13 +486,20 @@ const DOM = { // eslint-disable-line no-unused-vars
                          }
                         break;
                     case 'edit-part':
-                         if (state.isEditMode && partIndex !== -1) {
+                         if (partIndex !== -1) {
                             state.editPart(partIndex);
                          }
                          break;
+                    case 'save-inline-part':
+                         if (partIndex !== -1) {
+                            state.saveInlinePartEdits(partIndex);
+                         }
+                         break;
+                    case 'cancel-inline-part':
+                         state.cancelPartEdits();
+                         break;
                     case 'remove-part':
-                         if (state.isEditMode && partIndex !== -1) {
-                            // Ensure confirmation happens if needed by calling the state method
+                         if (partIndex !== -1) {
                             state.removePart(partIndex);
                          }
                          break;
@@ -517,7 +525,7 @@ const DOM = { // eslint-disable-line no-unused-vars
 
             // Handle part selection via click (only if not running and not edit mode)
              this.elements.partsDisplay.addEventListener('click', (event) => {
-                 if (state.isRunning || state.isEditMode) return; // Don't select if running or editing
+                 if (state.isRunning || state.isEditMode || state.editingPartIndex !== null) return; // Don't select if running or editing
 
                  // Check if the click was on a part card itself, not a button inside it
                  const partCard = event.target.closest('.part-card');
@@ -536,7 +544,7 @@ const DOM = { // eslint-disable-line no-unused-vars
 
             // Handle part selection via keyboard (Enter/Space)
             this.elements.partsDisplay.addEventListener('keydown', (event) => {
-                if (state.isRunning || state.isEditMode) return; // Don't select if running or editing
+                if (state.isRunning || state.isEditMode || state.editingPartIndex !== null) return; // Don't select if running or editing
 
                 if (event.key === 'Enter' || event.key === ' ' || event.code === 'Space') {
                      // Check if focus is on a part card
@@ -748,9 +756,9 @@ let state = {
             const savedComments = localStorage.getItem('meetingComments');
             this.comments = savedComments ? JSON.parse(savedComments) : [];
             
-            // Load edit mode state
-            const editModeState = localStorage.getItem('isEditMode');
-            this.isEditMode = editModeState === 'true';
+            // Legacy edit-mode toggle is no longer user-facing; always default to card-level editing.
+            this.isEditMode = false;
+            localStorage.removeItem('isEditMode');
             
         } catch (error) {
             console.error('Error loading state:', error);
@@ -1187,12 +1195,6 @@ let state = {
     
     // Toggle edit mode
     toggleEditMode() {
-        // Don't allow edit mode when timer is running
-        if (this.isRunning) {
-            notify.show('Please stop the timer before entering edit mode', 'warning');
-            return false;
-        }
-        
         this.isEditMode = !this.isEditMode;
         
         // Save edit mode state to localStorage
@@ -1246,27 +1248,42 @@ let state = {
 
     // Start editing a part
     editPart(index) {
-        if (!this.isEditMode || index < 0 || index >= this.meetingParts.length) return;
-        
+        if (index < 0 || index >= this.meetingParts.length) return;
         this.editingPartIndex = index;
-        const part = this.meetingParts[index];
-        
-        // Populate the edit modal
-        const nameInput = document.getElementById('editPartName');
-        const speakerInput = document.getElementById('editPartSpeaker');
-        const durationInput = document.getElementById('editPartDuration');
-        const commentsCheckbox = document.getElementById('editPartComments');
-        
-        if (nameInput) nameInput.value = part.name;
-        if (speakerInput) speakerInput.value = part.speaker || '';
-        if (durationInput) durationInput.value = Math.floor(part.duration / 60);
-        if (commentsCheckbox) commentsCheckbox.checked = part.enableComments;
-        
-        // Show the modal
-        const modal = document.getElementById('partEditorModal');
-        if (modal) {
-            modal.classList.remove('hidden');
+        render.timerDisplay();
+    },
+
+    // Save inline part edits from the active card
+    saveInlinePartEdits(index) {
+        if (index < 0 || index >= this.meetingParts.length || this.editingPartIndex !== index) return;
+
+        const nameInput = document.getElementById(`editPartName-inline-${index}`);
+        const speakerInput = document.getElementById(`editPartSpeaker-inline-${index}`);
+        const durationInput = document.getElementById(`editPartDuration-inline-${index}`);
+        const commentsCheckbox = document.getElementById(`editPartComments-inline-${index}`);
+
+        if (!nameInput || !durationInput) return;
+
+        const name = nameInput.value.trim();
+        const speaker = speakerInput ? speakerInput.value.trim() : '';
+        const durationMinutes = Math.max(1, parseInt(durationInput.value, 10) || 1);
+        const enableComments = commentsCheckbox ? commentsCheckbox.checked : false;
+
+        if (!name) {
+            notify.show('Please enter a part name', 'error');
+            return;
         }
+
+        this.meetingParts[index] = {
+            name: name,
+            speaker: speaker,
+            duration: durationMinutes * 60,
+            enableComments: enableComments
+        };
+
+        localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+        this.editingPartIndex = null;
+        render.timerDisplay();
     },
 
     // Save part edits
@@ -1314,12 +1331,14 @@ let state = {
     // Cancel part edits
     cancelPartEdits() {
         this.editingPartIndex = null;
-        
-        // Close the modal
+
+        // Close the modal if it is open (legacy path)
         const modal = document.getElementById('partEditorModal');
         if (modal) {
             modal.classList.add('hidden');
         }
+
+        render.timerDisplay();
     },
 
     // Add a new part at a specific position
@@ -1353,22 +1372,60 @@ let state = {
 
     // Remove a part
     removePart(index) {
-        if (!this.isEditMode || index < 0 || index >= this.meetingParts.length) return;
+        if (index < 0 || index >= this.meetingParts.length) return;
+        if (this.isRunning) {
+            notify.show('Stop the timer before removing a part', 'warning');
+            return;
+        }
+        if (this.meetingParts.length <= 1) {
+            notify.show('At least one part is required', 'warning');
+            return;
+        }
         
         // Show confirmation dialog
         DOM.showConfirmation(
             'Remove Part',
             `Are you sure you want to remove "${this.meetingParts[index].name}"?`,
             () => {
+                const oldElapsedTimes = { ...this.elapsedTimes };
                 this.meetingParts.splice(index, 1);
+
+                // Reindex elapsed times to follow shifted part indexes.
+                const reindexedElapsedTimes = {};
+                Object.keys(oldElapsedTimes).forEach((key) => {
+                    const oldIndex = parseInt(key, 10);
+                    if (Number.isNaN(oldIndex) || oldIndex === index) return;
+                    const newIndex = oldIndex > index ? oldIndex - 1 : oldIndex;
+                    reindexedElapsedTimes[newIndex] = oldElapsedTimes[oldIndex];
+                });
+                this.elapsedTimes = reindexedElapsedTimes;
+
+                // Drop comments for removed part and shift later indexes.
+                this.comments = this.comments
+                    .filter(comment => comment.partIndex !== index)
+                    .map((comment) => {
+                        if (comment.partIndex > index) {
+                            return { ...comment, partIndex: comment.partIndex - 1 };
+                        }
+                        return comment;
+                    });
                 
                 // Adjust active part if needed
-                if (this.activePart >= this.meetingParts.length) {
+                if (this.activePart > index) {
+                    this.activePart--;
+                } else if (this.activePart >= this.meetingParts.length) {
                     this.activePart = Math.max(0, this.meetingParts.length - 1);
+                }
+
+                if (this.editingPartIndex === index) {
+                    this.editingPartIndex = null;
+                } else if (this.editingPartIndex !== null && this.editingPartIndex > index) {
+                    this.editingPartIndex--;
                 }
                 
                 // Save to localStorage
                 localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+                this.saveState();
                 
                 // Re-render
                 render.timerDisplay();
@@ -1378,7 +1435,7 @@ let state = {
 
     // Start dragging a part
     startDrag(index) {
-        if (!this.isEditMode || index < 0 || index >= this.meetingParts.length) return;
+        if (this.isRunning || index < 0 || index >= this.meetingParts.length) return;
         
         this.draggedPartIndex = index;
     },
@@ -1390,19 +1447,54 @@ let state = {
 
     // Move a part to a new position
     movePart(fromIndex, toIndex) {
-        if (!this.isEditMode || 
-            fromIndex < 0 || fromIndex >= this.meetingParts.length ||
+        if (fromIndex < 0 || fromIndex >= this.meetingParts.length ||
             toIndex < 0 || toIndex >= this.meetingParts.length ||
             fromIndex === toIndex) return;
+        if (this.isRunning) {
+            notify.show('Stop the timer before reordering parts', 'warning');
+            return;
+        }
         
         // Get the part to move
         const part = this.meetingParts[fromIndex];
+        const oldElapsedTimes = { ...this.elapsedTimes };
         
         // Remove from current position
         this.meetingParts.splice(fromIndex, 1);
         
         // Insert at new position
         this.meetingParts.splice(toIndex, 0, part);
+
+        // Reindex elapsed times to match the new order.
+        const reindexedElapsedTimes = {};
+        Object.keys(oldElapsedTimes).forEach((key) => {
+            const oldIndex = parseInt(key, 10);
+            if (Number.isNaN(oldIndex)) return;
+
+            let newIndex = oldIndex;
+            if (oldIndex === fromIndex) {
+                newIndex = toIndex;
+            } else if (fromIndex < toIndex && oldIndex > fromIndex && oldIndex <= toIndex) {
+                newIndex = oldIndex - 1;
+            } else if (fromIndex > toIndex && oldIndex >= toIndex && oldIndex < fromIndex) {
+                newIndex = oldIndex + 1;
+            }
+            reindexedElapsedTimes[newIndex] = oldElapsedTimes[oldIndex];
+        });
+        this.elapsedTimes = reindexedElapsedTimes;
+
+        // Keep comment part indexes aligned to the moved parts.
+        this.comments = this.comments.map((comment) => {
+            let newPartIndex = comment.partIndex;
+            if (comment.partIndex === fromIndex) {
+                newPartIndex = toIndex;
+            } else if (fromIndex < toIndex && comment.partIndex > fromIndex && comment.partIndex <= toIndex) {
+                newPartIndex = comment.partIndex - 1;
+            } else if (fromIndex > toIndex && comment.partIndex >= toIndex && comment.partIndex < fromIndex) {
+                newPartIndex = comment.partIndex + 1;
+            }
+            return { ...comment, partIndex: newPartIndex };
+        });
         
         // Adjust active part if needed
         if (this.activePart === fromIndex) {
@@ -1412,9 +1504,21 @@ let state = {
         } else if (this.activePart < fromIndex && this.activePart >= toIndex) {
             this.activePart++;
         }
+
+        // Keep inline editor attached to the same logical part after move.
+        if (this.editingPartIndex === fromIndex) {
+            this.editingPartIndex = toIndex;
+        } else if (this.editingPartIndex !== null) {
+            if (fromIndex < toIndex && this.editingPartIndex > fromIndex && this.editingPartIndex <= toIndex) {
+                this.editingPartIndex--;
+            } else if (fromIndex > toIndex && this.editingPartIndex >= toIndex && this.editingPartIndex < fromIndex) {
+                this.editingPartIndex++;
+            }
+        }
         
         // Save to localStorage
         localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+        this.saveState();
         
         // Re-render
         render.timerDisplay();
@@ -2173,10 +2277,6 @@ document.addEventListener('DOMContentLoaded', () => {
             state.resetTimer(state.activePart);
         }
         
-        // E: Toggle edit mode
-        if (e.key === 'e' || e.key === 'E') {
-            state.toggleEditMode();
-        }
     });
 });
 

@@ -89,41 +89,9 @@
         <section id="timerSection" aria-labelledby="timer-heading" class="mt-8">
             <div class="flex justify-between items-center mb-4">
                 <h2 id="timer-heading" class="text-xl font-bold">Life and Ministry Timer</h2>
-                
-                <!-- Add Edit Mode Toggle -->
-                <div class="flex items-center">
-                    <span class="mr-2 text-sm font-medium">Edit Mode</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="editModeToggle" class="sr-only peer" aria-label="Toggle edit mode">
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                    </label>
-                </div>
             </div>
             <div id="partsDisplay" class="space-y-4" role="region" aria-label="Active timers" data-drag-container></div>
-
-            <!-- Add Part Controls (visible only in edit mode) -->
-            <div id="editModeControls" class="mt-4 hidden">
-                <button id="addPartBtn" class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" aria-label="Add new meeting part">
-                    Add Part
-                </button>
-            </div>
         </section>
-
-        <!-- Edit Mode Instructions -->
-        <div id="editModeInstructions" class="mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg hidden" role="alert">
-            <div class="flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                </svg>
-                <h3 class="font-medium">Edit Mode Active</h3>
-            </div>
-            <ul class="mt-2 ml-6 list-disc">
-                <li>Drag and drop parts to reorder them</li>
-                <li>Click on a part to edit its details</li>
-                <li>Use the + buttons to add new parts</li>
-                <li>Toggle edit mode off when finished</li>
-            </ul>
-        </div>
 
         <!-- Part Editor Modal -->
         <div id="partEditorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
@@ -431,10 +399,6 @@
                         <tr>
                             <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">S</kbd></td>
                             <td class="py-1">Toggle sound</td>
-                        </tr>
-                        <tr>
-                            <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">E</kbd></td>
-                            <td class="py-1">Toggle edit mode</td>
                         </tr>
                         <tr>
                             <td class="py-1"><kbd class="px-2 py-1 rounded kbd-key">?</kbd></td>
