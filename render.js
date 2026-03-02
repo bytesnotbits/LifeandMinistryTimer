@@ -100,10 +100,8 @@ const render = {
         container.innerHTML = '';
         const canReorder = !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
         
-        // Add drop zone at the beginning when drag-and-drop reordering is available.
-        if (canReorder) {
-            this._addDropZone(container, 0);
-        }
+        // Keep drop-zone spacing consistent across running/stopped states.
+        this._addDropZone(container, 0);
         
         state.meetingParts.forEach((part, index) => {
             const elapsed = state.elapsedTimes[index] || 0;
@@ -309,10 +307,8 @@ const render = {
             partElement.innerHTML = partHTML;
             container.appendChild(partElement);
             
-            // Add drop zone after each part when drag-and-drop reordering is available.
-            if (canReorder) {
-                this._addDropZone(container, index + 1);
-            }
+            // Keep spacing stable by always rendering drop zones.
+            this._addDropZone(container, index + 1);
         });
     },
     
@@ -324,6 +320,10 @@ const render = {
         
         // Add drop event listeners
         dropZone.addEventListener('dragover', (e) => {
+            const canDrop = !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
+            if (!canDrop) {
+                return;
+            }
             e.preventDefault();
             dropZone.classList.add('drop-zone-active');
             e.dataTransfer.dropEffect = 'move';
@@ -334,10 +334,17 @@ const render = {
         });
         
         dropZone.addEventListener('drop', (e) => {
+            const canDrop = !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
+            if (!canDrop) {
+                return;
+            }
             e.preventDefault();
             dropZone.classList.remove('drop-zone-active');
             const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
             const toIndex = parseInt(dropZone.getAttribute('data-drop-index'));
+            if (Number.isNaN(fromIndex) || Number.isNaN(toIndex)) {
+                return;
+            }
             
             // Adjust toIndex if dropping after the dragged item
             const adjustedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
