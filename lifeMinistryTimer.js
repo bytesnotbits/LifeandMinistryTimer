@@ -9,6 +9,20 @@
 'use strict';
 
 //----------------------------------------------------------------------------------------------
+// UTILITY FUNCTIONS
+//----------------------------------------------------------------------------------------------
+// Format a timestamp as local datetime string for datetime-local input
+function formatLocalDateTime(timestamp) {
+    const d = new Date(timestamp);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${mins}`;
+}
+
+//----------------------------------------------------------------------------------------------
 // DOM CACHE - Centralized access to DOM elements
 //----------------------------------------------------------------------------------------------
 const DOM = { // eslint-disable-line no-unused-vars
@@ -71,6 +85,14 @@ const DOM = { // eslint-disable-line no-unused-vars
         this.elements.closeImportModal = document.getElementById('closeImportModal'); // Close import modal button
         this.elements.confirmImport = document.getElementById('confirmImport'); // Confirm import button
         
+        // Meeting scheduler elements
+        this.elements.meetingStartInput = document.getElementById('meetingStartInput'); // Meeting start time input
+        this.elements.meetingEndInput = document.getElementById('meetingEndInput'); // Meeting end time input
+        this.elements.scheduleMeetingBtn = document.getElementById('scheduleMeetingBtn'); // Schedule button
+        this.elements.meetingRepeatCheckbox = document.getElementById('meetingRepeatCheckbox'); // Repeat weekly checkbox
+        this.elements.endMeetingBtn = document.getElementById('endMeetingBtn'); // End meeting button
+        this.elements.globalTimerContainer = document.getElementById('globalTimerContainer'); // Container for global timer bar
+        
         // Confirmation modal elements
         this.elements.confirmationModal = document.getElementById('confirmationModal'); // Confirmation modal
         this.elements.confirmationTitle = document.getElementById('confirmationTitle'); // Confirmation title
@@ -103,6 +125,22 @@ const DOM = { // eslint-disable-line no-unused-vars
         // Log warning for missing critical elements
         this._checkForMissingElements(); // eslint-disable-line no-underscore-dangle
     },
+
+    // Populate scheduler inputs from state
+    updateMeetingForm() {
+        if (this.elements.meetingStartInput && state.meetingScheduledStart) {
+            this.elements.meetingStartInput.value = formatLocalDateTime(state.meetingScheduledStart);
+        }
+        if (this.elements.meetingEndInput && state.meetingScheduledEnd) {
+            this.elements.meetingEndInput.value = formatLocalDateTime(state.meetingScheduledEnd);
+        }
+        // update repeat checkbox and refresh timer bar on form update
+        if (this.elements.meetingRepeatCheckbox) {
+            this.elements.meetingRepeatCheckbox.checked = !!state.meetingRepeatsWeekly;
+        }
+        render.globalTimerDisplay();
+    },
+
     
     /*
     // Old function. It was replaced with a new one that added the delegated event listeners for #partsDisplay and #commentHistory
@@ -478,6 +516,15 @@ const DOM = { // eslint-disable-line no-unused-vars
                            }
                         }
                         break;
+                    case 'adjust-comment':
+                        if (!state.isEditMode && partIndex === state.activePart &&
+                            state.activeComment && state.activeComment.partIndex === partIndex) {
+                            const adjustment = parseInt(button.dataset.adjust ?? 0);
+                            if (adjustment !== 0) {
+                                state.adjustCommentTimer(adjustment);
+                            }
+                        }
+                        break;
                     case 'reset-timer':
                          if (!state.isEditMode && partIndex !== -1) {
                             state.resetTimer(partIndex);
@@ -592,6 +639,54 @@ const DOM = { // eslint-disable-line no-unused-vars
              });
         } // End of commentHistory listener
 
+        // Scheduler buttons: Schedule and End Meeting
+        if (this.elements.scheduleMeetingBtn) {
+            this.elements.scheduleMeetingBtn.addEventListener('click', () => {
+                const startVal = this.elements.meetingStartInput ? this.elements.meetingStartInput.value : '';
+                const endVal = this.elements.meetingEndInput ? this.elements.meetingEndInput.value : '';
+                if (!startVal || !endVal) {
+                    notify.show('Please provide both start and end date/time', 'error');
+                    return;
+                }
+                const startTs = new Date(startVal).getTime();
+                const endTs = new Date(endVal).getTime();
+                if (isNaN(startTs) || isNaN(endTs) || endTs <= startTs) {
+                    notify.show('Invalid start/end times', 'error');
+                    return;
+                }
+
+                const repeatChecked = this.elements.meetingRepeatCheckbox ? this.elements.meetingRepeatCheckbox.checked : true;
+
+                // If currently repeating and the user changes the time, ask whether to apply to recurring schedule
+                if (state.meetingRepeatsWeekly && state.recurringBaseStart && repeatChecked && state.recurringBaseStart !== startTs) {
+                    const applyToAll = window.confirm('Update the recurring meeting time for future meetings?\n\nOK = Update recurring schedule. Cancel = Apply as a one-time change.');
+                    if (applyToAll) {
+                        state.scheduleMeeting(startTs, endTs, true);
+                    } else {
+                        state.scheduleOneTimeChange(startTs, endTs);
+                    }
+                } else {
+                    if (repeatChecked) {
+                        state.scheduleMeeting(startTs, endTs, true);
+                    } else {
+                        // schedule as non-repeating (single instance)
+                        state.scheduleMeeting(startTs, endTs, false);
+                    }
+                }
+
+                this.updateMeetingForm();
+                notify.show('Meeting scheduled', 'success');
+            });
+        }
+
+        if (this.elements.endMeetingBtn) {
+            this.elements.endMeetingBtn.addEventListener('click', () => {
+                state.endMeeting();
+                this.updateMeetingForm();
+                notify.show('Meeting ended', 'info');
+            });
+        }
+
 
         // --- Remaining Original Listeners (Keep These) ---
 
@@ -624,6 +719,35 @@ const DOM = { // eslint-disable-line no-unused-vars
                     state.addPart(); // This adds to the end
                 }
                 // Removed legacy behavior as it's probably not needed now
+            });
+        }
+
+        // Meeting scheduler listeners
+        if (this.elements.scheduleMeetingBtn) {
+            this.elements.scheduleMeetingBtn.addEventListener('click', () => {
+                const startInput = this.elements.meetingStartInput;
+                const endInput = this.elements.meetingEndInput;
+                if (!startInput || !endInput) return;
+                const startVal = startInput.value;
+                const endVal = endInput.value;
+                if (!startVal || !endVal) {
+                    notify.show('Please enter both start and end times', 'error');
+                    return;
+                }
+                const startTs = new Date(startVal).getTime();
+                const endTs = new Date(endVal).getTime();
+                if (isNaN(startTs) || isNaN(endTs) || endTs <= startTs) {
+                    notify.show('Invalid meeting times – end must be after start', 'error');
+                    return;
+                }
+                state.scheduleMeeting(startTs, endTs);
+                render.globalTimerDisplay();
+            });
+        }
+
+        if (this.elements.endMeetingBtn) {
+            this.elements.endMeetingBtn.addEventListener('click', () => {
+                state.endMeeting();
             });
         }
 
@@ -729,6 +853,17 @@ let state = {
     timerStartTime: null,
     lastUpdateTime: null,
     visibilityPaused: false,
+
+    // Global meeting scheduler state
+    meetingScheduledStart: null,
+    meetingScheduledEnd: null,
+    meetingActualEnd: null,   // timestamp when user clicked end
+    meetingIsRunning: false,
+    meetingInterval: null,
+    meetingRepeatsWeekly: true,
+    recurringBaseStart: null, // base timestamp for recurring pattern
+    recurringDurationMs: null,
+    meetingOverride: null, // { start, end } for one-time overrides
     
     // Initialize application state
     init() {
@@ -750,6 +885,13 @@ let state = {
         // Set up visibility change handler
         document.addEventListener('visibilitychange', this._handleVisibilityChange.bind(this));
         this._visibilityChangeHandlerSet = true;
+        
+        // If a meeting is scheduled, ensure global timer interval is running
+        if (this.meetingScheduledStart) {
+            this._setupMeetingInterval();
+            // render initial meeting bar so UI reflects saved schedule
+            render.globalTimerDisplay();
+        }
     },
     
     // Load state from localStorage
@@ -769,6 +911,23 @@ let state = {
             // Load comments
             const savedComments = localStorage.getItem('meetingComments');
             this.comments = savedComments ? JSON.parse(savedComments) : [];
+            
+            // Load meeting schedule
+            const savedStart = localStorage.getItem('meetingScheduledStart');
+            this.meetingScheduledStart = savedStart ? parseInt(savedStart, 10) : null;
+            const savedEnd = localStorage.getItem('meetingScheduledEnd');
+            this.meetingScheduledEnd = savedEnd ? parseInt(savedEnd, 10) : null;
+            const savedActual = localStorage.getItem('meetingActualEnd');
+            this.meetingActualEnd = savedActual ? parseInt(savedActual, 10) : null;
+            const savedRepeats = localStorage.getItem('meetingRepeatsWeekly');
+            this.meetingRepeatsWeekly = savedRepeats !== null ? (savedRepeats === 'true') : true;
+            const savedRecurring = localStorage.getItem('recurringBaseStart');
+            this.recurringBaseStart = savedRecurring ? parseInt(savedRecurring, 10) : null;
+            const savedRecDur = localStorage.getItem('recurringDurationMs');
+            this.recurringDurationMs = savedRecDur ? parseInt(savedRecDur, 10) : null;
+            const savedOverride = localStorage.getItem('meetingOverride');
+            this.meetingOverride = savedOverride ? JSON.parse(savedOverride) : null;
+            // meetingIsRunning will be determined later in init
             
             // Legacy edit-mode toggle is no longer user-facing; always default to card-level editing.
             this.isEditMode = false;
@@ -791,6 +950,38 @@ let state = {
             localStorage.setItem('elapsedTimes', JSON.stringify(this.elapsedTimes));
             localStorage.setItem('activePart', this.activePart.toString());
             localStorage.setItem('meetingComments', JSON.stringify(this.comments));
+            // persist meeting schedule information
+            if (this.meetingScheduledStart) {
+                localStorage.setItem('meetingScheduledStart', this.meetingScheduledStart.toString());
+            } else {
+                localStorage.removeItem('meetingScheduledStart');
+            }
+            if (this.meetingScheduledEnd) {
+                localStorage.setItem('meetingScheduledEnd', this.meetingScheduledEnd.toString());
+            } else {
+                localStorage.removeItem('meetingScheduledEnd');
+            }
+            if (this.meetingActualEnd) {
+                localStorage.setItem('meetingActualEnd', this.meetingActualEnd.toString());
+            } else {
+                localStorage.removeItem('meetingActualEnd');
+            }
+            localStorage.setItem('meetingRepeatsWeekly', this.meetingRepeatsWeekly ? 'true' : 'false');
+            if (this.recurringBaseStart) {
+                localStorage.setItem('recurringBaseStart', this.recurringBaseStart.toString());
+            } else {
+                localStorage.removeItem('recurringBaseStart');
+            }
+            if (this.recurringDurationMs) {
+                localStorage.setItem('recurringDurationMs', this.recurringDurationMs.toString());
+            } else {
+                localStorage.removeItem('recurringDurationMs');
+            }
+            if (this.meetingOverride) {
+                localStorage.setItem('meetingOverride', JSON.stringify(this.meetingOverride));
+            } else {
+                localStorage.removeItem('meetingOverride');
+            }
         } catch (error) {
             console.error('Error saving state:', error);
             notify.show('Failed to save state to local storage', 'error');
@@ -828,10 +1019,21 @@ let state = {
         localStorage.removeItem('activePart');
         localStorage.removeItem('meetingComments');
         localStorage.removeItem('isEditMode');
+        localStorage.removeItem('meetingScheduledStart');
+        localStorage.removeItem('meetingScheduledEnd');
+        localStorage.removeItem('meetingActualEnd');
         
         this.meetingParts = DEFAULT_PARTS;
         this.isEditMode = false;
         this.resetTimers();
+        this.meetingScheduledStart = null;
+        this.meetingScheduledEnd = null;
+        this.meetingActualEnd = null;
+        this.meetingIsRunning = false;
+        if (this.meetingInterval) {
+            clearInterval(this.meetingInterval);
+            this.meetingInterval = null;
+        }
         
         // Update UI for edit mode
         const editModeToggle = document.getElementById('editModeToggle');
@@ -858,6 +1060,116 @@ let state = {
         const editModeInstructions = document.getElementById('editModeInstructions');
         if (editModeInstructions) {
             editModeInstructions.classList.add('hidden');
+        }
+    },
+
+    // Schedule a meeting with start/end timestamps (milliseconds)
+    scheduleMeeting(startTs, endTs, repeat = true) {
+        this.meetingScheduledStart = startTs;
+        this.meetingScheduledEnd = endTs;
+        this.meetingActualEnd = null;
+        this.meetingIsRunning = false;
+        // Configure repeating behavior
+        this.meetingRepeatsWeekly = !!repeat;
+        if (repeat) {
+            this.recurringBaseStart = startTs;
+            this.recurringDurationMs = endTs ? (endTs - startTs) : null;
+            this.meetingOverride = null;
+        } else {
+            this.recurringBaseStart = this.recurringBaseStart || null;
+            // keep existing recurringDuration if present
+            this.recurringDurationMs = this.recurringDurationMs || (endTs ? (endTs - startTs) : null);
+            this.meetingOverride = null;
+        }
+        this.saveState();
+        this._setupMeetingInterval();
+        render.globalTimerDisplay();
+    },
+
+    // Schedule a one-time change while keeping recurring pattern intact
+    scheduleOneTimeChange(startTs, endTs) {
+        this.meetingOverride = { start: startTs, end: endTs };
+        this.meetingScheduledStart = startTs;
+        this.meetingScheduledEnd = endTs;
+        this.saveState();
+        this._setupMeetingInterval();
+        render.globalTimerDisplay();
+    },
+
+    // Internal: ensure meeting interval is running
+    _setupMeetingInterval() {
+        if (this.meetingInterval) return; // already set
+
+        this.meetingInterval = setInterval(() => {
+            const now = Date.now();
+            // auto-start if scheduled and time has arrived
+            if (this.meetingScheduledStart && !this.meetingIsRunning && !this.meetingActualEnd && now >= this.meetingScheduledStart) {
+                this.startMeeting();
+            }
+            // Failsafe: if meeting is running and 1.5x scheduled duration has elapsed since scheduled start, auto-end
+            if (this.meetingIsRunning && this.meetingScheduledStart && (this.meetingScheduledEnd || this.recurringDurationMs) && !this.meetingActualEnd) {
+                const totalMs = (this.meetingScheduledEnd && this.meetingScheduledStart) ? (this.meetingScheduledEnd - this.meetingScheduledStart) : (this.recurringDurationMs || 0);
+                if (totalMs > 0) {
+                    const cutoff = this.meetingScheduledStart + Math.floor(totalMs * 1.5);
+                    if (now >= cutoff) {
+                        notify.show('Meeting automatically ended (failsafe)', 'info');
+                        this.endMeeting();
+                        // render will be updated inside endMeeting
+                    }
+                }
+            }
+            // update display even if not running (to show countdown to start or progress)
+            render.globalTimerDisplay();
+            // if meeting ended, clear interval
+            if (this.meetingActualEnd && !this.meetingIsRunning) {
+                clearInterval(this.meetingInterval);
+                this.meetingInterval = null;
+            }
+        }, TIMER_UPDATE_INTERVAL);
+    },
+
+    // Called when the meeting officially begins (automatically or manually)
+    startMeeting() {
+        if (!this.meetingScheduledStart) return;
+        this.meetingIsRunning = true;
+        // when meeting starts we don't need separate interval—the _setupMeetingInterval covers updates
+        // play a notification if desired
+        this.saveState();
+    },
+
+    // User ends the meeting
+    endMeeting() {
+        if (!this.meetingIsRunning && !this.meetingScheduledStart) return;
+        this.meetingIsRunning = false;
+        this.meetingActualEnd = Date.now();
+        this.saveState();
+        render.globalTimerDisplay();
+        // clear interval now since meeting is over
+        if (this.meetingInterval) {
+            clearInterval(this.meetingInterval);
+            this.meetingInterval = null;
+        }
+        // If repeating weekly, advance to next occurrence after this meeting
+        if (this.meetingRepeatsWeekly && this.recurringBaseStart) {
+            // Helper: compute next recurring start after now based on recurringBaseStart
+            const getNextRecurringStart = (base, afterTs) => {
+                const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+                let next = base;
+                while (next <= afterTs) {
+                    next += WEEK_MS;
+                }
+                return next;
+            };
+
+            const now = Date.now();
+            const nextStart = getNextRecurringStart(this.recurringBaseStart, now);
+            this.meetingScheduledStart = nextStart;
+            if (this.recurringDurationMs) {
+                this.meetingScheduledEnd = nextStart + this.recurringDurationMs;
+            }
+            // clear one-time override after it has been used
+            this.meetingOverride = null;
+            this.saveState();
         }
     },
     
@@ -2237,6 +2549,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize state
     state.init();
     
+    // Populate scheduler inputs based on previously saved times
+    DOM.updateMeetingForm();
+    
     // Initialize template manager
     templateManager.init();
     
@@ -2289,6 +2604,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // R: Reset active timer
         if (e.key === 'r' || e.key === 'R') {
             state.resetTimer(state.activePart);
+        }
+        // E: End global meeting timer (if running or scheduled)
+        if (e.key === 'e' || e.key === 'E') {
+            state.endMeeting();
         }
         
     });

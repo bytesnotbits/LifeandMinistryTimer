@@ -104,6 +104,37 @@ Track important decisions that explain *why* the code changed.
     - Inline inputs increase card complexity and need mobile-layout verification.
 - Supersedes: DEC-002
 
+## DEC-006: Add sticky global meeting timer bar with scheduled start
+- Date: 2026-03-01
+- Status: Accepted
+- Related files: `index.html`, `styles.css`, `render.js`, `lifeMinistryTimer.js`
+- Context:
+  - Users should be able to schedule a meeting start and end time and have a persistent visual
+    indicator of overall meeting progress without manually starting the timer.
+  - There is no separate "start" control for the bar; it must auto-activate when the scheduled
+    start time arrives and stop only when the user clicks an explicit "End Meeting" button.
+- Decision:
+  - Introduce a scheduler section in the UI with datetime inputs and a schedule button.
+  - Persist scheduled start/end (and actual end) in `localStorage` so reloads retain the state.
+  - Display a sticky global timer bar at the top of the app that becomes visible when a schedule
+    exists and updates continuously from scheduled start to end. The bar's progress and elapsed
+    time are computed automatically; the user only interacts to schedule or end the meeting.
+  - Implement state methods (`scheduleMeeting`, `startMeeting`, `endMeeting`) and an interval that
+    checks for automatic start and updates the bar every 100 ms.
+- Consequences:
+  - Facilitates meetings where timing should begin at a predetermined clock time.
+  - The global bar coexists with per-part timers and does not interfere with existing functionality.
+- Validation:
+  - Manual checks:
+      - Enter start/end times in the past/future and verify the bar appears and begins progressing
+        at the correct moment.
+      - Reload the page before and after the scheduled start and ensure the bar resumes correctly.
+      - Click "End Meeting" and confirm the bar stops, the button hides, and the state persists.
+      - Clear data and verify schedule and bar reset.
+  - Risks:
+      - Timezone/format issues with `datetime-local` inputs; inputs are parsed as local time.
+      - Sticky bar layout may interact with mobile scrolling and needs testing.
+
 ## DEC-005: Replace arrow-based reorder with drag-and-drop
 - Date: 2026-03-01
 - Status: Accepted

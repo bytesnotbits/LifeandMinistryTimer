@@ -90,6 +90,38 @@
             <div class="flex justify-between items-center mb-4">
                 <h2 id="timer-heading" class="text-xl font-bold">Life and Ministry Timer</h2>
             </div>
+            <!-- Meeting scheduler inputs -->
+            <div id="meetingScheduler" class="meeting-scheduler mb-4">
+                <div class="flex flex-wrap gap-2 items-center">
+                    <label class="flex items-center gap-1">
+                        <span>Start:</span>
+                        <input type="datetime-local" id="meetingStartInput" class="border rounded px-2 py-1">
+                    </label>
+                    <label class="flex items-center gap-1">
+                        <span>End:</span>
+                        <input type="datetime-local" id="meetingEndInput" class="border rounded px-2 py-1">
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="meetingRepeatCheckbox" checked>
+                        <span class="text-sm">Repeat weekly</span>
+                    </label>
+                    <button id="scheduleMeetingBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        Schedule
+                    </button>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">Enter the planned meeting start and end times; the progress bar
+                    below will begin automatically at the scheduled start.</p>
+            </div>
+            <!-- Global meeting timer bar (sticky) -->
+            <div id="globalTimerContainer" class="global-timer-container hidden">
+                <div class="global-progress-bar progress-bar h-10 relative">
+                    <div id="globalProgress" class="progress-bar-bg bg-green-500" style="width:0%"></div>
+                    <span id="globalTimerLabel" class="left-label"></span>
+                    <button id="endMeetingBtn" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 absolute right-2 top-1/2 transform -translate-y-1/2 hidden">
+                        End Meeting
+                    </button>
+                </div>
+            </div>
             <div id="partsDisplay" class="space-y-4" role="region" aria-label="Active timers" data-drag-container></div>
         </section>
 

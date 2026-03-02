@@ -217,6 +217,46 @@ main {
     right: 0;
 }
 
+/* Global meeting timer bar */
+.global-timer-container {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    padding: 0.5rem 0;
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.global-progress-bar {
+    /* reuse progress-bar styles; height set via element */
+    position: relative; /* ensure inner elements can use absolute positioning */
+}
+
+.global-progress-bar .progress-bar-bg {
+    transition: background-color 0.3s ease, opacity 0.5s ease;
+}
+
+.global-progress-bar .progress-bar-bg.overtime-pulse {
+    background-color: var(--danger-color) !important;
+    animation: overtime-pulse-animation 1s infinite;
+}
+
+@keyframes overtime-pulse-animation {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.meeting-scheduler {
+    margin-bottom: 1rem;
+}
+
 /* Timer controls */
 .timer-controls {
     display: flex;

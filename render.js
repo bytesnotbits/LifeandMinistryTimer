@@ -15,6 +15,7 @@ const render = {
     init() {
         this.templateEditor();
         this.timerDisplay();
+        this.globalTimerDisplay();
         this.comments();
         
         // Initialize edit mode UI
@@ -34,6 +35,55 @@ const render = {
             }
             if (editModeInstructions) {
                 editModeInstructions.classList.add('hidden');
+            }
+        }
+    },
+
+    // Render sticky global meeting timer bar
+    globalTimerDisplay() {
+        const container = document.getElementById('globalTimerContainer');
+        if (!container) return;
+        // if no schedule, hide
+        if (!state.meetingScheduledStart) {
+            container.classList.add('hidden');
+            return;
+        }
+        container.classList.remove('hidden');
+        const now = Date.now();
+        const start = state.meetingScheduledStart;
+        const end = state.meetingScheduledEnd;
+        const totalSec = end && start ? (end - start) / 1000 : 0;
+        let elapsed = 0;
+        if (state.meetingActualEnd) {
+            elapsed = (state.meetingActualEnd - start) / 1000;
+        } else if (now >= start) {
+            elapsed = (now - start) / 1000;
+        }
+        elapsed = Math.max(0, elapsed);
+        const percent = totalSec > 0 ? Math.min(100, (elapsed / totalSec) * 100) : 0;
+        const bar = document.getElementById('globalProgress');
+        if (bar) {
+            bar.style.width = percent + '%';
+            // Detect overtime: if elapsed > total and meeting is still running
+            const isOvertime = state.meetingIsRunning && !state.meetingActualEnd && elapsed > totalSec && totalSec > 0;
+            if (isOvertime) {
+                bar.classList.add('overtime-pulse');
+            } else {
+                bar.classList.remove('overtime-pulse');
+            }
+        }
+        const label = document.getElementById('globalTimerLabel');
+        if (label) {
+            // Show elapsed / total format
+            const labelText = totalSec > 0 ? `${formatTime(elapsed)} / ${formatTime(totalSec)}` : formatTime(elapsed);
+            label.textContent = labelText;
+        }
+        const endBtn = document.getElementById('endMeetingBtn');
+        if (endBtn) {
+            if (now >= start && !state.meetingActualEnd) {
+                endBtn.classList.remove('hidden');
+            } else {
+                endBtn.classList.add('hidden');
             }
         }
     },
@@ -262,6 +312,20 @@ const render = {
                                     formatTime((state.elapsedTimes[index] || 0) - state.activeComment.startElapsed) :
                                     '0:00'}
                             </span>
+                            ${state.activeComment && state.activeComment.partIndex === index ? `
+                                <div class="flex items-center ml-2 gap-1">
+                                    <button data-action="adjust-comment" data-part-index="${index}" data-adjust="5"
+                                        class="time-adjust-button increment-button"
+                                        aria-label="Add 5 seconds to comment">
+                                        +5s
+                                    </button>
+                                    <button data-action="adjust-comment" data-part-index="${index}" data-adjust="-5"
+                                        class="time-adjust-button decrement-button"
+                                        aria-label="Subtract 5 seconds from comment">
+                                        -5s
+                                    </button>
+                                </div>
+                            ` : ''}
                         </div>
                     ` : ''}
                 </div>
