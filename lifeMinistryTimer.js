@@ -438,22 +438,20 @@ const DOM = { // eslint-disable-line no-unused-vars
 
         // --- NEW: Add Delegated Listener for Part Cards ---
         if (this.elements.partsDisplay) {
-            this.elements.partsDisplay.addEventListener('click', (event) => {
+            const HANDLED_ON_POINTERDOWN = 'handledOnPointerdown';
+            const handlePartAction = (event) => {
                 const button = event.target.closest('button[data-action]');
-                if (!button) return; // Click wasn't on a button with data-action
+                if (!button) return;
                 event.stopPropagation();
 
                 const action = button.dataset.action;
-                // Find the parent part card to get the index
                 const partCard = button.closest('.part-card');
                 const partIndex = partCard ? parseInt(partCard.dataset.partIndex) : -1;
 
                  if (partIndex === -1 && action !== 'add-part-end') { // Added check for add-part-end which might not have an index
                      console.warn('Could not determine part index for action:', action);
-                     // Potentially handle actions that don't need an index here, like a global "add part" button if it existed
                      return;
                  }
-
 
                 // --- Handle actions based on data-action attribute ---
                 switch (action) {
@@ -513,14 +511,30 @@ const DOM = { // eslint-disable-line no-unused-vars
                              state.addPartAt(partIndex + 1);
                          }
                          break;
-                    // case 'add-part-end': // Example if you had a global add button
-                    //      if (state.isEditMode) {
-                    //          state.addPart();
-                    //      }
-                    //      break;
                     default:
                         console.warn(`Unknown action: ${action}`);
                 }
+            };
+
+            // While timer is running, cards re-render frequently and click can be dropped.
+            // Handle primary pointer press immediately so controls remain reliable.
+            this.elements.partsDisplay.addEventListener('pointerdown', (event) => {
+                if (event.button !== 0) return;
+                const button = event.target.closest('button[data-action]');
+                if (!button) return;
+                button.dataset[HANDLED_ON_POINTERDOWN] = 'true';
+                handlePartAction(event);
+            });
+
+            // Keep click for keyboard activation and non-pointer interactions.
+            this.elements.partsDisplay.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-action]');
+                if (!button) return;
+                if (button.dataset[HANDLED_ON_POINTERDOWN] === 'true') {
+                    delete button.dataset[HANDLED_ON_POINTERDOWN];
+                    return;
+                }
+                handlePartAction(event);
             });
 
             // Handle part selection via click (only if not running and not edit mode)
