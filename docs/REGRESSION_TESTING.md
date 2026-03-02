@@ -112,6 +112,22 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-004, DEC-005
 - Related files: `lifeMinistryTimer.js`, `render.js`
 
+## REG-008: Comment timer cannot go negative
+- Priority: Medium
+- Area: Timer
+- Preconditions:
+  - A part has comments enabled and is active.
+  - A comment is currently running.
+- Steps:
+  1. Use the –5s control (or keyboard '-') repeatedly until the displayed comment time reaches 0:00.
+  2. Continue clicking the –5s control.
+  3. Observe the comment display and the underlying `activeComment.startElapsed` value (for debugging).
+- Expected:
+  - The on-screen comment countdown never shows a negative time.
+  - The internal start elapsed value does not exceed the current part time.
+  - Comment timer resumes from zero when the part time advances, never counting up from a negative value.
+- Related decisions: DEC-004
+- Related files: `lifeMinistryTimer.js`, `render.js`
 ## REG-007: Remove reindexes remaining state safely
 - Priority: High
 - Area: Persistence

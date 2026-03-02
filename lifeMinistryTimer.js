@@ -1451,15 +1451,22 @@ let state = {
         const currentPartTime = this.elapsedTimes[partIndex] || 0;
         
         // Calculate the new start elapsed time to adjust comment duration
-        // For example, if we want to add 5 seconds, we subtract 5 from the start time
-        const newStartElapsed = Math.max(0, this.activeComment.startElapsed - seconds);
-        
+        // (positive `seconds` will make the comment longer, negative will shorten it)
+        let newStartElapsed = this.activeComment.startElapsed - seconds;
+
+        // Never allow the start elapsed to go below zero or ahead of the current part time
+        // which would make the duration negative. This clause is the core fix for the bug.
+        newStartElapsed = Math.max(0, Math.min(newStartElapsed, currentPartTime));
+
         // Ensure we don't make the comment longer than COMMENT_LIMIT
         const potentialDuration = currentPartTime - newStartElapsed;
         if (potentialDuration <= COMMENT_LIMIT) {
             this.activeComment.startElapsed = newStartElapsed;
+        } else {
+            // If the change would exceed the limit, clamp to the maximum allowed duration
+            this.activeComment.startElapsed = currentPartTime - COMMENT_LIMIT;
         }
-        
+
         // Update display immediately
         const currentElement = document.getElementById(`currentComment-${partIndex}`);
         if (currentElement) {

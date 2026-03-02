@@ -307,25 +307,33 @@ const render = {
                                 aria-label="${state.activeComment ? 'Stop comment' : 'Start comment'}">
                                 ${state.activeComment ? 'Stop Comment' : 'Comment'}
                             </button>
-                            <span id="currentComment-${index}" class="font-mono">
-                                ${state.activeComment && state.activeComment.partIndex === index ?
-                                    formatTime((state.elapsedTimes[index] || 0) - state.activeComment.startElapsed) :
-                                    '0:00'}
-                            </span>
-                            ${state.activeComment && state.activeComment.partIndex === index ? `
-                                <div class="flex items-center ml-2 gap-1">
-                                    <button data-action="adjust-comment" data-part-index="${index}" data-adjust="5"
-                                        class="time-adjust-button increment-button"
-                                        aria-label="Add 5 seconds to comment">
-                                        +5s
-                                    </button>
-                                    <button data-action="adjust-comment" data-part-index="${index}" data-adjust="-5"
-                                        class="time-adjust-button decrement-button"
-                                        aria-label="Subtract 5 seconds from comment">
-                                        -5s
-                                    </button>
-                                </div>
-                            ` : ''}
+                            ${(() => {
+                                // compute the current comment duration for this part (non-negative)
+                                let duration = 0;
+                                if (state.activeComment && state.activeComment.partIndex === index) {
+                                    duration = (state.elapsedTimes[index] || 0) - state.activeComment.startElapsed;
+                                    duration = Math.max(0, duration);
+                                }
+                                const disabledAttr = duration <= 0 ? ' disabled' : '';
+
+                                let html = `<span id="currentComment-${index}" class="font-mono">${formatTime(duration)}</span>`;
+                                if (state.activeComment && state.activeComment.partIndex === index) {
+                                    html += `
+                                        <div class="flex items-center ml-2 gap-1">
+                                            <button data-action="adjust-comment" data-part-index="${index}" data-adjust="5"
+                                                class="time-adjust-button increment-button"
+                                                aria-label="Add 5 seconds to comment">
+                                                +5s
+                                            </button>
+                                            <button data-action="adjust-comment" data-part-index="${index}" data-adjust="-5"
+                                                class="time-adjust-button decrement-button"${disabledAttr}
+                                                aria-label="Subtract 5 seconds from comment">
+                                                -5s
+                                            </button>
+                                        </div>`;
+                                }
+                                return html;
+                            })()}
                         </div>
                     ` : ''}
                 </div>
