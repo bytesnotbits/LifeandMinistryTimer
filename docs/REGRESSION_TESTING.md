@@ -162,6 +162,42 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-004
 - Related files: `styles.css`, `index.html`
 
+## REG-010: Inline card editing remains stable while timer is running
+- Priority: High
+- Area: Editing
+- Preconditions:
+  - App loaded with multiple parts.
+  - A part timer is actively running.
+- Steps:
+  1. Click the pencil icon on a meeting card to open inline editing while the timer continues.
+  2. Type continuously in part name and speaker fields for at least 5 seconds.
+  3. Change duration value and comments checkbox state.
+  4. Save the inline edits.
+- Expected:
+  - Typed values do not reset during timer updates.
+  - Input focus remains usable while timer display continues updating.
+  - Saved values persist after save and page refresh.
+- Related decisions: DEC-004
+- Related files: `render.js`, `lifeMinistryTimer.js`
+
+## REG-011: Inline edit draft persists through start/stop actions
+- Priority: High
+- Area: Editing
+- Preconditions:
+  - App loaded with multiple parts.
+  - Inline editor is open on one part.
+- Steps:
+  1. Type unsaved changes into inline part name/speaker/duration fields.
+  2. Start or stop the timer from another part control that triggers a re-render.
+  3. Return focus to the inline editor.
+  4. Save the edits.
+- Expected:
+  - Unsaved inline field values remain populated after start/stop actions.
+  - User does not need to re-enter typed content.
+  - Saved values persist after page refresh.
+- Related decisions: DEC-004
+- Related files: `lifeMinistryTimer.js`, `render.js`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.

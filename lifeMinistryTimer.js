@@ -672,6 +672,21 @@ const DOM = { // eslint-disable-line no-unused-vars
                 handlePartAction(event);
             });
 
+            const syncInlineDraftFromEvent = (event) => {
+                const input = event.target.closest('input');
+                if (!input) return;
+                const partCard = input.closest('.part-card');
+                if (!partCard) return;
+                const partIndex = parseInt(partCard.dataset.partIndex, 10);
+                if (Number.isNaN(partIndex)) return;
+                if (state.editingPartIndex !== partIndex) return;
+                state.syncInlineEditDraft(partIndex);
+            };
+
+            // Track inline editor changes so typed values survive full re-renders.
+            this.elements.partsDisplay.addEventListener('input', syncInlineDraftFromEvent);
+            this.elements.partsDisplay.addEventListener('change', syncInlineDraftFromEvent);
+
             // Handle part selection via click (only if not running and not edit mode)
              this.elements.partsDisplay.addEventListener('click', (event) => {
                  if (state.isRunning || state.isEditMode || state.editingPartIndex !== null) return; // Don't select if running or editing
@@ -920,6 +935,7 @@ let state = {
     comments: [],
     isEditMode: false,
     editingPartIndex: null,
+    inlineEditDraft: null,
     draggedPartIndex: null,
     timerStartTime: null,
     lastUpdateTime: null,
@@ -1306,7 +1322,11 @@ let state = {
                         if (this._displayUpdateCounter >= 3) {
                             this._displayUpdateCounter = 0;
                             this.saveState();
-                            render.timerDisplay();
+                            if (this.editingPartIndex !== null) {
+                                render.refreshLiveTimerValues();
+                            } else {
+                                render.timerDisplay();
+                            }
                         }
                     }
                 }
@@ -1349,7 +1369,11 @@ let state = {
                     
                     // Update display
                     this.saveState();
-                    render.timerDisplay();
+                    if (this.editingPartIndex !== null) {
+                        render.refreshLiveTimerValues();
+                    } else {
+                        render.timerDisplay();
+                    }
                 }
             }
         }
@@ -1669,11 +1693,19 @@ let state = {
     editPart(index) {
         if (index < 0 || index >= this.meetingParts.length) return;
         this.editingPartIndex = index;
+        const part = this.meetingParts[index];
+        this.inlineEditDraft = {
+            index: index,
+            name: part.name || '',
+            speaker: part.speaker || '',
+            durationValue: String(Math.max(1, Math.floor(part.duration / 60))),
+            enableComments: !!part.enableComments
+        };
         render.timerDisplay();
     },
 
-    // Save inline part edits from the active card
-    saveInlinePartEdits(index) {
+    // Keep unsaved inline editor values in state so re-renders do not clear user input.
+    syncInlineEditDraft(index) {
         if (index < 0 || index >= this.meetingParts.length || this.editingPartIndex !== index) return;
 
         const nameInput = document.getElementById(`editPartName-inline-${index}`);
@@ -1681,12 +1713,51 @@ let state = {
         const durationInput = document.getElementById(`editPartDuration-inline-${index}`);
         const commentsCheckbox = document.getElementById(`editPartComments-inline-${index}`);
 
-        if (!nameInput || !durationInput) return;
+        if (!this.inlineEditDraft || this.inlineEditDraft.index !== index) {
+            const part = this.meetingParts[index];
+            this.inlineEditDraft = {
+                index: index,
+                name: part.name || '',
+                speaker: part.speaker || '',
+                durationValue: String(Math.max(1, Math.floor(part.duration / 60))),
+                enableComments: !!part.enableComments
+            };
+        }
 
-        const name = nameInput.value.trim();
-        const speaker = speakerInput ? speakerInput.value.trim() : '';
-        const durationMinutes = Math.max(1, parseInt(durationInput.value, 10) || 1);
-        const enableComments = commentsCheckbox ? commentsCheckbox.checked : false;
+        if (nameInput) {
+            this.inlineEditDraft.name = nameInput.value;
+        }
+        if (speakerInput) {
+            this.inlineEditDraft.speaker = speakerInput.value;
+        }
+        if (durationInput) {
+            this.inlineEditDraft.durationValue = durationInput.value;
+        }
+        if (commentsCheckbox) {
+            this.inlineEditDraft.enableComments = commentsCheckbox.checked;
+        }
+    },
+
+    // Save inline part edits from the active card
+    saveInlinePartEdits(index) {
+        if (index < 0 || index >= this.meetingParts.length || this.editingPartIndex !== index) return;
+
+        this.syncInlineEditDraft(index);
+
+        const nameInput = document.getElementById(`editPartName-inline-${index}`);
+        const speakerInput = document.getElementById(`editPartSpeaker-inline-${index}`);
+        const durationInput = document.getElementById(`editPartDuration-inline-${index}`);
+        const commentsCheckbox = document.getElementById(`editPartComments-inline-${index}`);
+
+        const draft = this.inlineEditDraft && this.inlineEditDraft.index === index ? this.inlineEditDraft : null;
+
+        const name = (nameInput ? nameInput.value : (draft ? draft.name : '')).trim();
+        const speaker = (speakerInput ? speakerInput.value : (draft ? draft.speaker : '')).trim();
+        const durationMinutes = Math.max(
+            1,
+            parseInt(durationInput ? durationInput.value : (draft ? draft.durationValue : '1'), 10) || 1
+        );
+        const enableComments = commentsCheckbox ? commentsCheckbox.checked : !!(draft && draft.enableComments);
 
         if (!name) {
             notify.show('Please enter a part name', 'error');
@@ -1702,6 +1773,7 @@ let state = {
 
         localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
         this.editingPartIndex = null;
+        this.inlineEditDraft = null;
         render.timerDisplay();
     },
 
@@ -1750,6 +1822,7 @@ let state = {
     // Cancel part edits
     cancelPartEdits() {
         this.editingPartIndex = null;
+        this.inlineEditDraft = null;
 
         // Close the modal if it is open (legacy path)
         const modal = document.getElementById('partEditorModal');
@@ -1838,8 +1911,12 @@ let state = {
 
                 if (this.editingPartIndex === index) {
                     this.editingPartIndex = null;
+                    this.inlineEditDraft = null;
                 } else if (this.editingPartIndex !== null && this.editingPartIndex > index) {
                     this.editingPartIndex--;
+                    if (this.inlineEditDraft) {
+                        this.inlineEditDraft.index = this.editingPartIndex;
+                    }
                 }
                 
                 // Save to localStorage
@@ -1927,11 +2004,20 @@ let state = {
         // Keep inline editor attached to the same logical part after move.
         if (this.editingPartIndex === fromIndex) {
             this.editingPartIndex = toIndex;
+            if (this.inlineEditDraft) {
+                this.inlineEditDraft.index = toIndex;
+            }
         } else if (this.editingPartIndex !== null) {
             if (fromIndex < toIndex && this.editingPartIndex > fromIndex && this.editingPartIndex <= toIndex) {
                 this.editingPartIndex--;
+                if (this.inlineEditDraft) {
+                    this.inlineEditDraft.index = this.editingPartIndex;
+                }
             } else if (fromIndex > toIndex && this.editingPartIndex >= toIndex && this.editingPartIndex < fromIndex) {
                 this.editingPartIndex++;
+                if (this.inlineEditDraft) {
+                    this.inlineEditDraft.index = this.editingPartIndex;
+                }
             }
         }
         

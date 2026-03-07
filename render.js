@@ -209,6 +209,15 @@ const render = {
             }
             
             const isInlineEditing = state.editingPartIndex === index;
+            const inlineDraft = (isInlineEditing && state.inlineEditDraft && state.inlineEditDraft.index === index)
+                ? state.inlineEditDraft
+                : null;
+            const inlineNameValue = inlineDraft ? inlineDraft.name : part.name;
+            const inlineSpeakerValue = inlineDraft ? inlineDraft.speaker : (part.speaker || '');
+            const inlineDurationValue = inlineDraft
+                ? inlineDraft.durationValue
+                : Math.max(1, Math.floor(part.duration / 60));
+            const inlineCommentsChecked = inlineDraft ? inlineDraft.enableComments : part.enableComments;
             const canRemove = !state.isRunning && state.meetingParts.length > 1;
             const removeDisabledClass = canRemove ? '' : 'opacity-40 cursor-not-allowed';
             const removeDisabledAttr = canRemove ? '' : 'disabled';
@@ -246,19 +255,19 @@ const render = {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
                             <div>
                                 <label for="editPartName-inline-${index}" class="block text-sm font-medium text-gray-700 mb-1">Part Name</label>
-                                <input id="editPartName-inline-${index}" type="text" class="w-full px-2 py-1 border rounded" value="${part.name}">
+                                <input id="editPartName-inline-${index}" type="text" class="w-full px-2 py-1 border rounded" value="${inlineNameValue}">
                             </div>
                             <div>
                                 <label for="editPartSpeaker-inline-${index}" class="block text-sm font-medium text-gray-700 mb-1">Speaker</label>
-                                <input id="editPartSpeaker-inline-${index}" type="text" class="w-full px-2 py-1 border rounded" value="${part.speaker || ''}">
+                                <input id="editPartSpeaker-inline-${index}" type="text" class="w-full px-2 py-1 border rounded" value="${inlineSpeakerValue}">
                             </div>
                             <div>
                                 <label for="editPartDuration-inline-${index}" class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
-                                <input id="editPartDuration-inline-${index}" type="number" min="1" max="180" class="w-full px-2 py-1 border rounded" value="${Math.max(1, Math.floor(part.duration / 60))}">
+                                <input id="editPartDuration-inline-${index}" type="number" min="1" max="180" class="w-full px-2 py-1 border rounded" value="${inlineDurationValue}">
                             </div>
                             <div class="flex items-end">
                                 <label class="inline-flex items-center">
-                                    <input id="editPartComments-inline-${index}" type="checkbox" class="mr-2" ${part.enableComments ? 'checked' : ''}>
+                                    <input id="editPartComments-inline-${index}" type="checkbox" class="mr-2" ${inlineCommentsChecked ? 'checked' : ''}>
                                     <span class="text-sm font-medium text-gray-700">Enable Comments</span>
                                 </label>
                             </div>
@@ -279,9 +288,9 @@ const render = {
                 ` : ''}
 
                 <div class="progress-bar h-8 mb-2">
-                    <div class="progress-bar-bg ${progressColor}" style="width: ${progressPercent}%"></div>
-                    <span class="left-label">${formatTime(elapsed)}</span>
-                    <span class="countdown">${formatTimeWithSign(part.duration - elapsed)}</span>
+                    <div data-role="part-progress" class="progress-bar-bg ${progressColor}" style="width: ${progressPercent}%"></div>
+                    <span data-role="part-elapsed" class="left-label">${formatTime(elapsed)}</span>
+                    <span data-role="part-countdown" class="countdown">${formatTimeWithSign(part.duration - elapsed)}</span>
                 </div>
 
                 <div class="flex justify-between items-center">
@@ -385,6 +394,68 @@ const render = {
             // Keep spacing stable by always rendering drop zones.
             this._addDropZone(container, index + 1);
         });
+    },
+
+    // Update live timer values without rebuilding cards (preserves inline edit focus/typing)
+    refreshLiveTimerValues() {
+        const container = DOM.elements.partsDisplay;
+        if (!container) return;
+
+        state.meetingParts.forEach((part, index) => {
+            const partCard = container.querySelector(`.part-card[data-part-index="${index}"]`);
+            if (!partCard) return;
+
+            const elapsed = state.elapsedTimes[index] || 0;
+            const progressPercent = Math.min(100, (elapsed / part.duration) * 100);
+            let progressColor = 'bg-blue-500';
+            if (progressPercent >= 90) {
+                progressColor = 'bg-red-500';
+            } else if (progressPercent >= 75) {
+                progressColor = 'bg-yellow-500';
+            }
+
+            const progressBar = partCard.querySelector('[data-role="part-progress"]');
+            if (progressBar) {
+                progressBar.style.width = `${progressPercent}%`;
+                progressBar.classList.remove('bg-blue-500', 'bg-yellow-500', 'bg-red-500');
+                progressBar.classList.add(progressColor);
+            }
+
+            const elapsedLabel = partCard.querySelector('[data-role="part-elapsed"]');
+            if (elapsedLabel) {
+                elapsedLabel.textContent = formatTime(elapsed);
+            }
+
+            const countdownLabel = partCard.querySelector('[data-role="part-countdown"]');
+            if (countdownLabel) {
+                countdownLabel.textContent = formatTimeWithSign(part.duration - elapsed);
+            }
+
+            const commentLabel = partCard.querySelector(`#currentComment-${index}`);
+            if (commentLabel) {
+                let commentDuration = 0;
+                if (state.activeComment && state.activeComment.partIndex === index) {
+                    commentDuration = (state.elapsedTimes[index] || 0) - state.activeComment.startElapsed;
+                    commentDuration = Math.max(0, commentDuration);
+                }
+                commentLabel.textContent = formatTime(commentDuration);
+            }
+        });
+
+        if (state.activeComment && state.activeComment.partIndex === state.activePart) {
+            const activeCard = container.querySelector(`.part-card[data-part-index="${state.activePart}"]`);
+            const decrementButton = activeCard
+                ? activeCard.querySelector('button[data-action="adjust-comment"][data-adjust="-5"]')
+                : null;
+            if (decrementButton) {
+                const duration = Math.max(0, (state.elapsedTimes[state.activePart] || 0) - state.activeComment.startElapsed);
+                if (duration <= 0) {
+                    decrementButton.setAttribute('disabled', '');
+                } else {
+                    decrementButton.removeAttribute('disabled');
+                }
+            }
+        }
     },
     
     // Add a drop zone for drag and drop
