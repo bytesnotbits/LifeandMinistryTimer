@@ -88,7 +88,7 @@ Use this file to prevent behavior drift while evolving the app.
 - Preconditions:
   - Timer running.
 - Steps:
-  1. Observe move up/down and remove buttons on cards.
+  1. Observe drag-handle reorder affordance and remove button on cards.
   2. Attempt to click disabled controls.
 - Expected:
   - Controls appear disabled while timer runs.

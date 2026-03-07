@@ -245,6 +245,18 @@ const render = {
 
             // Build part card HTML
             let partHTML = `
+                ${canReorder ? `
+                    <div class="drag-handle-row">
+                        <span class="drag-handle" role="img" aria-label="Drag to reorder" title="Drag to reorder">
+                            <span class="drag-handle-dot" aria-hidden="true"></span>
+                            <span class="drag-handle-dot" aria-hidden="true"></span>
+                            <span class="drag-handle-dot" aria-hidden="true"></span>
+                            <span class="drag-handle-dot" aria-hidden="true"></span>
+                            <span class="drag-handle-dot" aria-hidden="true"></span>
+                            <span class="drag-handle-dot" aria-hidden="true"></span>
+                        </span>
+                    </div>
+                ` : ''}
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold flex items-center gap-2">
                         <span>${part.name}</span>
@@ -258,11 +270,6 @@ const render = {
                     </h3>
                     <div class="text-sm text-gray-600">${part.speaker}</div>
                     <div class="ml-2 flex items-center gap-1">
-                        ${canReorder ? `
-                            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded cursor-grab text-xs" aria-label="Move to reorder">
-                                Move
-                            </span>
-                        ` : ''}
                         <button data-action="remove-part" data-part-index="${index}"
                             class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 ${removeDisabledClass}"
                             aria-label="Remove ${part.name}" ${removeDisabledAttr}>
