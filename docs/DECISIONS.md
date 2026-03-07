@@ -155,3 +155,27 @@ Track important decisions that explain *why* the code changed.
     - Confirm reordering is disabled while timer runs.
   - Risks:
     - Drag-and-drop affordance may need additional mobile testing for touch behavior.
+
+## DEC-007: Surface comment context on each part and group history by part
+- Date: 2026-03-07
+- Status: Accepted
+- Related files: `render.js`, `index.html`
+- Context:
+  - Comment details were only visible in a single mixed list at the bottom of the app.
+  - Users needed to scroll away from part cards to understand comment activity per part.
+- Decision:
+  - Add per-part comment stats directly on cards for parts with comments enabled:
+    - total comment count,
+    - average comment duration.
+  - Change bottom comment history rendering from a flat list to grouped sections by part.
+  - Keep existing global totals/average in the comment section.
+- Consequences:
+  - Users can view comment performance at the card level without leaving the current part context.
+  - Comment history remains available but is easier to scan by part.
+- Validation:
+  - Manual checks:
+    - Add comments to at least two parts and verify separate grouped sections in history.
+    - Verify each comments-enabled part card shows updated count and average after add/delete actions.
+    - Refresh page and verify grouped history and part stats match persisted comments.
+  - Risks:
+    - Group headings rely on part indexes; unknown/deleted part data should still render safely via fallback labels.

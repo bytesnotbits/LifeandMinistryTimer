@@ -7,6 +7,22 @@
 
 'use strict';
 
+function buildCommentStatsByPart() {
+    const stats = {};
+    state.comments.forEach((comment) => {
+        const partIndex = Number.isInteger(comment.partIndex) ? comment.partIndex : -1;
+        if (partIndex < 0) {
+            return;
+        }
+        if (!stats[partIndex]) {
+            stats[partIndex] = { count: 0, totalDuration: 0 };
+        }
+        stats[partIndex].count += 1;
+        stats[partIndex].totalDuration += comment.duration;
+    });
+    return stats;
+}
+
 //----------------------------------------------------------------------------------------------
 // RENDERING - Handles all DOM updates
 //----------------------------------------------------------------------------------------------
@@ -151,6 +167,7 @@ const render = {
         if (!container) return;
         
         container.innerHTML = '';
+        const commentStatsByPart = buildCommentStatsByPart();
         const canReorder = !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
         
         // Keep drop-zone spacing consistent across running/stopped states.
@@ -221,6 +238,10 @@ const render = {
             const canRemove = !state.isRunning && state.meetingParts.length > 1;
             const removeDisabledClass = canRemove ? '' : 'opacity-40 cursor-not-allowed';
             const removeDisabledAttr = canRemove ? '' : 'disabled';
+            const partCommentStats = commentStatsByPart[index] || { count: 0, totalDuration: 0 };
+            const averageCommentDuration = partCommentStats.count > 0
+                ? Math.round(partCommentStats.totalDuration / partCommentStats.count)
+                : 0;
 
             // Build part card HTML
             let partHTML = `
@@ -292,6 +313,16 @@ const render = {
                     <span data-role="part-elapsed" class="left-label">${formatTime(elapsed)}</span>
                     <span data-role="part-countdown" class="countdown">${formatTimeWithSign(part.duration - elapsed)}</span>
                 </div>
+
+                ${part.enableComments ? `
+                    <div class="text-sm text-gray-700 mb-2">
+                        Comments:
+                        <span id="partCommentCount-${index}" class="font-semibold">${partCommentStats.count}</span>
+                        |
+                        Avg:
+                        <span id="partCommentAverage-${index}" class="font-semibold">${formatTime(averageCommentDuration)}</span>
+                    </div>
+                ` : ''}
 
                 <div class="flex justify-between items-center">
                     <div class="flex space-x-2">
@@ -508,6 +539,7 @@ const render = {
         const averageElement = DOM.elements.globalAverageDuration;
         
         if (!container || !countElement || !averageElement) return;
+        const commentStatsByPart = buildCommentStatsByPart();
         
         // Update global comment stats
         const commentCount = state.comments.length;
@@ -521,30 +553,80 @@ const render = {
         } else {
             averageElement.textContent = '0:00';
         }
+
+        // Sync per-card comment stats without requiring full card re-render.
+        state.meetingParts.forEach((part, index) => {
+            if (!part.enableComments) {
+                return;
+            }
+            const stats = commentStatsByPart[index] || { count: 0, totalDuration: 0 };
+            const average = stats.count > 0 ? Math.round(stats.totalDuration / stats.count) : 0;
+            const countLabel = document.getElementById(`partCommentCount-${index}`);
+            const averageLabel = document.getElementById(`partCommentAverage-${index}`);
+            if (countLabel) {
+                countLabel.textContent = stats.count;
+            }
+            if (averageLabel) {
+                averageLabel.textContent = formatTime(average);
+            }
+        });
         
         // Clear container
         container.innerHTML = '';
         
         // Sort comments by timestamp (newest first)
         const sortedComments = [...state.comments].sort((a, b) => b.timestamp - a.timestamp);
-        
-        // Add comments to container
-        sortedComments.forEach(comment => {
-            const commentElement = document.createElement('div');
-            commentElement.className = 'comment-item bg-white p-2 rounded shadow flex justify-between items-center';
-            commentElement.innerHTML = `
-                <div>
-                    <span class="font-medium">${comment.partName}</span>
-                    <span class="text-sm text-gray-600 ml-2">${formatTime(comment.duration)}</span>
-                </div>
-                <button data-comment-id="${comment.id}" // <-- Add data-comment-id here
-                    class="delete-button px-2 text-red-500 hover:text-red-700"
-                    aria-label="Delete comment">
-                    ×
-                </button>
-            `; // Remove onclick="state.deleteComment(...)"
-            container.appendChild(commentElement);
-        });
+
+        if (sortedComments.length === 0) {
+            const emptyState = document.createElement('p');
+            emptyState.className = 'text-sm text-gray-600';
+            emptyState.textContent = 'No comments yet.';
+            container.appendChild(emptyState);
+            return;
+        }
+
+        const groupedComments = sortedComments.reduce((groups, comment) => {
+            const key = Number.isInteger(comment.partIndex) ? comment.partIndex : -1;
+            if (!groups[key]) {
+                groups[key] = [];
+            }
+            groups[key].push(comment);
+            return groups;
+        }, {});
+
+        Object.keys(groupedComments)
+            .sort((a, b) => Number(a) - Number(b))
+            .forEach((groupKey) => {
+                const partIndex = Number(groupKey);
+                const part = state.meetingParts[partIndex];
+                const groupComments = groupedComments[groupKey];
+
+                const groupElement = document.createElement('section');
+                groupElement.className = 'mb-3';
+
+                const heading = document.createElement('h3');
+                heading.className = 'text-sm font-semibold text-gray-700 mb-2';
+                heading.textContent = part ? part.name : (groupComments[0].partName || 'Unknown Part');
+                groupElement.appendChild(heading);
+
+                groupComments.forEach((comment) => {
+                    const commentElement = document.createElement('div');
+                    commentElement.className = 'comment-item bg-white p-2 rounded shadow flex justify-between items-center mb-1';
+                    commentElement.innerHTML = `
+                        <div>
+                            <span class="text-sm text-gray-600">${formatTime(comment.duration)}</span>
+                        </div>
+                        <button data-comment-id="${comment.id}"
+                            class="delete-button px-2 text-red-500 hover:text-red-700"
+                            aria-label="Delete comment">
+                            ×
+                        </button>
+                    `;
+                    groupElement.appendChild(commentElement);
+                });
+
+                container.appendChild(groupElement);
+            });
     }
 };
 

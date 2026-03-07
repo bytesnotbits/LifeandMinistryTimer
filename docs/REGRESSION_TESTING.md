@@ -198,6 +198,25 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-004
 - Related files: `lifeMinistryTimer.js`, `render.js`
 
+## REG-012: Comments are grouped by part and reflected on part cards
+- Priority: High
+- Area: Rendering
+- Preconditions:
+  - App loaded with at least two parts that have comments enabled.
+- Steps:
+  1. Start timers and create at least two comments on part A and one comment on part B.
+  2. Stop comments and open the `Total Meeting Comments` section.
+  3. Verify comments are grouped into separate part sections instead of a single mixed list.
+  4. Verify each comments-enabled part card displays its comment count and average duration.
+  5. Delete one comment from the bottom history and verify affected part card stats update immediately.
+  6. Refresh page and verify grouped history and per-part stats persist correctly.
+- Expected:
+  - Bottom comment history is grouped by part with entries listed under the correct heading.
+  - Part cards with comments enabled show accurate comment totals and average durations.
+  - Card stats remain synchronized after comment deletion and after page reload.
+- Related decisions: DEC-007
+- Related files: `render.js`, `lifeMinistryTimer.js`, `index.html`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.
