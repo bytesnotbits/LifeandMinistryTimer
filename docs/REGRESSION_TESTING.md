@@ -145,6 +145,23 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-004
 - Related files: `lifeMinistryTimer.js`, `render.js`
 
+## REG-009: Meeting scheduler date/time inputs remain readable in dark mode
+- Priority: Medium
+- Area: Rendering
+- Preconditions:
+  - App loaded.
+  - Dark mode enabled.
+- Steps:
+  1. Navigate to the meeting scheduler section.
+  2. Inspect `Date`, `Start`, and `End` input fields.
+  3. Click into each field and verify text/values are legible.
+  4. Toggle back to light mode and confirm inputs still render correctly.
+- Expected:
+  - In dark mode, scheduler `date`/`time` fields use dark background with light text and visible borders.
+  - Existing light-mode appearance remains unchanged.
+- Related decisions: DEC-004
+- Related files: `styles.css`, `index.html`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.

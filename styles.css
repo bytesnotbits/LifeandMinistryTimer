@@ -578,6 +578,11 @@ main {
 [data-theme="dark"] input[type="search"],
 [data-theme="dark"] input[type="tel"],
 [data-theme="dark"] input[type="url"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="time"],
+[data-theme="dark"] input[type="datetime-local"],
+[data-theme="dark"] input[type="month"],
+[data-theme="dark"] input[type="week"],
 [data-theme="dark"] textarea,
 [data-theme="dark"] select {
     background-color: var(--bg-color); /* Use dark background */
