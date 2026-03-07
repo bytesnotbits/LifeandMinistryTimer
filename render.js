@@ -74,9 +74,12 @@ const render = {
         }
         const label = document.getElementById('globalTimerLabel');
         if (label) {
-            // Show elapsed / total format
-            const labelText = totalSec > 0 ? `${formatTime(elapsed)} / ${formatTime(totalSec)}` : formatTime(elapsed);
-            label.textContent = labelText;
+            label.textContent = formatMeetingTime(elapsed);
+        }
+        const remainingLabel = document.getElementById('globalTimerRemaining');
+        if (remainingLabel) {
+            const remaining = totalSec > 0 ? (totalSec - elapsed) : 0;
+            remainingLabel.textContent = totalSec > 0 ? formatMeetingTimeWithSign(remaining) : '';
         }
         const endBtn = document.getElementById('endMeetingBtn');
         if (endBtn) {
@@ -484,6 +487,22 @@ function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// Format seconds as H:MM:SS for meeting-level timer
+function formatMeetingTime(seconds) {
+    const totalSeconds = Math.max(0, Math.floor(seconds));
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+// Format seconds as H:MM:SS with sign for countdown/overtime
+function formatMeetingTimeWithSign(seconds) {
+    const isNegative = seconds < 0;
+    const absSeconds = Math.abs(seconds);
+    return `${isNegative ? '-' : ''}${formatMeetingTime(absSeconds)}`;
 }
 
 // Format seconds as MM:SS with sign for negative values

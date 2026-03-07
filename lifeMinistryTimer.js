@@ -11,15 +11,97 @@
 //----------------------------------------------------------------------------------------------
 // UTILITY FUNCTIONS
 //----------------------------------------------------------------------------------------------
-// Format a timestamp as local datetime string for datetime-local input
-function formatLocalDateTime(timestamp) {
+// Format a timestamp as local date string for date input
+function formatLocalDate(timestamp) {
     const d = new Date(timestamp);
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Format a timestamp as local time string for time input
+function formatLocalTime(timestamp) {
+    const d = new Date(timestamp);
     const hours = String(d.getHours()).padStart(2, '0');
     const mins = String(d.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${mins}`;
+    return `${hours}:${mins}`;
+}
+
+// Build local timestamp from date + time input values
+function buildLocalTimestamp(dateVal, timeVal) {
+    if (!dateVal || !timeVal) return NaN;
+
+    const rawDate = String(dateVal).trim();
+    const rawTime = String(timeVal).trim();
+
+    // Parse date as local calendar date.
+    let year;
+    let month;
+    let day;
+
+    // Preferred: YYYY-MM-DD
+    const isoDateMatch = rawDate.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (isoDateMatch) {
+        year = parseInt(isoDateMatch[1], 10);
+        month = parseInt(isoDateMatch[2], 10);
+        day = parseInt(isoDateMatch[3], 10);
+    } else {
+        // Fallback: M/D/YYYY or M-D-YYYY or M.D.YYYY
+        const usDateMatch = rawDate.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+        if (usDateMatch) {
+            month = parseInt(usDateMatch[1], 10);
+            day = parseInt(usDateMatch[2], 10);
+            year = parseInt(usDateMatch[3], 10);
+            if (year < 100) year += 2000;
+        }
+    }
+
+    if (!year || !month || !day) {
+        // Last resort: let Date parse it.
+        const parsedDate = new Date(rawDate);
+        if (isNaN(parsedDate.getTime())) return NaN;
+        year = parsedDate.getFullYear();
+        month = parsedDate.getMonth() + 1;
+        day = parsedDate.getDate();
+    }
+
+    if (month < 1 || month > 12 || day < 1 || day > 31) return NaN;
+
+    // Parse time in either 24h (HH:mm[:ss]) or 12h (h:mm am/pm) form.
+    const t = rawTime.toLowerCase();
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+
+    const hasAm = /\bam\b/.test(t);
+    const hasPm = /\bpm\b/.test(t);
+    const timeNums = t.match(/\d+/g);
+    if (!timeNums || timeNums.length < 2) return NaN;
+
+    hours = parseInt(timeNums[0], 10);
+    minutes = parseInt(timeNums[1], 10);
+    seconds = timeNums[2] ? parseInt(timeNums[2], 10) : 0;
+
+    if (hasAm || hasPm) {
+        if (hours < 1 || hours > 12) return NaN;
+        if (hasPm && hours !== 12) hours += 12;
+        if (hasAm && hours === 12) hours = 0;
+    } else {
+        if (hours > 23) return NaN;
+    }
+
+    if (minutes > 59 || seconds > 59) return NaN;
+
+    const dateObj = new Date(year, month - 1, day, hours, minutes, seconds, 0);
+    if (isNaN(dateObj.getTime())) return NaN;
+
+    // Prevent JS date overflow (e.g. month 13, day 32) from silently normalizing.
+    if (dateObj.getFullYear() !== year || (dateObj.getMonth() + 1) !== month || dateObj.getDate() !== day) {
+        return NaN;
+    }
+
+    return dateObj.getTime();
 }
 
 //----------------------------------------------------------------------------------------------
@@ -86,8 +168,9 @@ const DOM = { // eslint-disable-line no-unused-vars
         this.elements.confirmImport = document.getElementById('confirmImport'); // Confirm import button
         
         // Meeting scheduler elements
-        this.elements.meetingStartInput = document.getElementById('meetingStartInput'); // Meeting start time input
-        this.elements.meetingEndInput = document.getElementById('meetingEndInput'); // Meeting end time input
+        this.elements.meetingDateInput = document.getElementById('meetingDateInput'); // Meeting date input
+        this.elements.meetingStartTimeInput = document.getElementById('meetingStartTimeInput'); // Meeting start time input
+        this.elements.meetingEndTimeInput = document.getElementById('meetingEndTimeInput'); // Meeting end time input
         this.elements.scheduleMeetingBtn = document.getElementById('scheduleMeetingBtn'); // Schedule button
         this.elements.meetingRepeatCheckbox = document.getElementById('meetingRepeatCheckbox'); // Repeat weekly checkbox
         this.elements.endMeetingBtn = document.getElementById('endMeetingBtn'); // End meeting button
@@ -128,11 +211,16 @@ const DOM = { // eslint-disable-line no-unused-vars
 
     // Populate scheduler inputs from state
     updateMeetingForm() {
-        if (this.elements.meetingStartInput && state.meetingScheduledStart) {
-            this.elements.meetingStartInput.value = formatLocalDateTime(state.meetingScheduledStart);
+        if (state.meetingScheduledStart) {
+            if (this.elements.meetingDateInput) {
+                this.elements.meetingDateInput.value = formatLocalDate(state.meetingScheduledStart);
+            }
+            if (this.elements.meetingStartTimeInput) {
+                this.elements.meetingStartTimeInput.value = formatLocalTime(state.meetingScheduledStart);
+            }
         }
-        if (this.elements.meetingEndInput && state.meetingScheduledEnd) {
-            this.elements.meetingEndInput.value = formatLocalDateTime(state.meetingScheduledEnd);
+        if (this.elements.meetingEndTimeInput && state.meetingScheduledEnd) {
+            this.elements.meetingEndTimeInput.value = formatLocalTime(state.meetingScheduledEnd);
         }
         // update repeat checkbox and refresh timer bar on form update
         if (this.elements.meetingRepeatCheckbox) {
@@ -642,23 +730,35 @@ const DOM = { // eslint-disable-line no-unused-vars
         // Scheduler buttons: Schedule and End Meeting
         if (this.elements.scheduleMeetingBtn) {
             this.elements.scheduleMeetingBtn.addEventListener('click', () => {
-                const startVal = this.elements.meetingStartInput ? this.elements.meetingStartInput.value : '';
-                const endVal = this.elements.meetingEndInput ? this.elements.meetingEndInput.value : '';
-                if (!startVal || !endVal) {
-                    notify.show('Please provide both start and end date/time', 'error');
+                const dateVal = this.elements.meetingDateInput ? this.elements.meetingDateInput.value : '';
+                const startTimeVal = this.elements.meetingStartTimeInput ? this.elements.meetingStartTimeInput.value : '';
+                const endTimeVal = this.elements.meetingEndTimeInput ? this.elements.meetingEndTimeInput.value : '';
+                if (!dateVal || !startTimeVal || !endTimeVal) {
+                    notify.show('Please provide meeting date, start time, and end time', 'error');
                     return;
                 }
-                const startTs = new Date(startVal).getTime();
-                const endTs = new Date(endVal).getTime();
-                if (isNaN(startTs) || isNaN(endTs) || endTs <= startTs) {
-                    notify.show('Invalid start/end times', 'error');
+                const startTs = buildLocalTimestamp(dateVal, startTimeVal);
+                let endTs = buildLocalTimestamp(dateVal, endTimeVal);
+                if (isNaN(startTs) || isNaN(endTs)) {
+                    notify.show('Invalid meeting date/time format', 'error');
                     return;
+                }
+                if (endTs <= startTs) {
+                    // If end clock time is before start clock time, treat it as crossing midnight.
+                    endTs += 24 * 60 * 60 * 1000;
                 }
 
                 const repeatChecked = this.elements.meetingRepeatCheckbox ? this.elements.meetingRepeatCheckbox.checked : true;
+                const recurringStartTime = state.recurringBaseStart ? formatLocalTime(state.recurringBaseStart) : '';
+                const recurringTimeChanged = state.recurringDurationMs
+                    ? (
+                        recurringStartTime !== startTimeVal
+                        || formatLocalTime(state.recurringBaseStart + state.recurringDurationMs) !== endTimeVal
+                    )
+                    : recurringStartTime !== startTimeVal;
 
                 // If currently repeating and the user changes the time, ask whether to apply to recurring schedule
-                if (state.meetingRepeatsWeekly && state.recurringBaseStart && repeatChecked && state.recurringBaseStart !== startTs) {
+                if (state.meetingRepeatsWeekly && state.recurringBaseStart && repeatChecked && recurringTimeChanged) {
                     const applyToAll = window.confirm('Update the recurring meeting time for future meetings?\n\nOK = Update recurring schedule. Cancel = Apply as a one-time change.');
                     if (applyToAll) {
                         state.scheduleMeeting(startTs, endTs, true);
@@ -719,35 +819,6 @@ const DOM = { // eslint-disable-line no-unused-vars
                     state.addPart(); // This adds to the end
                 }
                 // Removed legacy behavior as it's probably not needed now
-            });
-        }
-
-        // Meeting scheduler listeners
-        if (this.elements.scheduleMeetingBtn) {
-            this.elements.scheduleMeetingBtn.addEventListener('click', () => {
-                const startInput = this.elements.meetingStartInput;
-                const endInput = this.elements.meetingEndInput;
-                if (!startInput || !endInput) return;
-                const startVal = startInput.value;
-                const endVal = endInput.value;
-                if (!startVal || !endVal) {
-                    notify.show('Please enter both start and end times', 'error');
-                    return;
-                }
-                const startTs = new Date(startVal).getTime();
-                const endTs = new Date(endVal).getTime();
-                if (isNaN(startTs) || isNaN(endTs) || endTs <= startTs) {
-                    notify.show('Invalid meeting times – end must be after start', 'error');
-                    return;
-                }
-                state.scheduleMeeting(startTs, endTs);
-                render.globalTimerDisplay();
-            });
-        }
-
-        if (this.elements.endMeetingBtn) {
-            this.elements.endMeetingBtn.addEventListener('click', () => {
-                state.endMeeting();
             });
         }
 
@@ -1081,7 +1152,14 @@ let state = {
             this.recurringDurationMs = this.recurringDurationMs || (endTs ? (endTs - startTs) : null);
             this.meetingOverride = null;
         }
-        this.saveState();
+
+        // If the start time is already in the past, mark meeting as started immediately.
+        // Elapsed progress still uses meetingScheduledStart as the baseline.
+        if (Date.now() >= this.meetingScheduledStart) {
+            this.startMeeting();
+        } else {
+            this.saveState();
+        }
         this._setupMeetingInterval();
         render.globalTimerDisplay();
     },
@@ -1091,7 +1169,15 @@ let state = {
         this.meetingOverride = { start: startTs, end: endTs };
         this.meetingScheduledStart = startTs;
         this.meetingScheduledEnd = endTs;
-        this.saveState();
+        this.meetingActualEnd = null;
+        this.meetingIsRunning = false;
+
+        // Match scheduleMeeting behavior for past start times.
+        if (Date.now() >= this.meetingScheduledStart) {
+            this.startMeeting();
+        } else {
+            this.saveState();
+        }
         this._setupMeetingInterval();
         render.globalTimerDisplay();
     },
