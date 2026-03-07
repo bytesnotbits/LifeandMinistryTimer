@@ -353,28 +353,32 @@ const render = {
                             ${(() => {
                                 // compute the current comment duration for this part (non-negative)
                                 let duration = 0;
-                                if (state.activeComment && state.activeComment.partIndex === index) {
+                                const isActiveCommentForPart = !!(state.activeComment && state.activeComment.partIndex === index);
+                                if (isActiveCommentForPart) {
                                     duration = (state.elapsedTimes[index] || 0) - state.activeComment.startElapsed;
                                     duration = Math.max(0, duration);
                                 }
-                                const disabledAttr = duration <= 0 ? ' disabled' : '';
+                                const disableIncrementAttr = isActiveCommentForPart ? '' : ' disabled';
+                                const disableDecrementAttr = duration <= 0 || !isActiveCommentForPart ? ' disabled' : '';
+                                const adjustControlsClass = isActiveCommentForPart
+                                    ? 'comment-adjust-controls'
+                                    : 'comment-adjust-controls comment-adjust-controls--inactive';
+                                const adjustControlsHiddenAttr = isActiveCommentForPart ? '' : ' aria-hidden="true"';
 
                                 let html = `<span id="currentComment-${index}" class="font-mono">${formatTime(duration)}</span>`;
-                                if (state.activeComment && state.activeComment.partIndex === index) {
-                                    html += `
-                                        <div class="flex items-center ml-2 gap-1">
-                                            <button data-action="adjust-comment" data-part-index="${index}" data-adjust="5"
-                                                class="time-adjust-button increment-button"
-                                                aria-label="Add 5 seconds to comment">
-                                                +5s
-                                            </button>
-                                            <button data-action="adjust-comment" data-part-index="${index}" data-adjust="-5"
-                                                class="time-adjust-button decrement-button"${disabledAttr}
-                                                aria-label="Subtract 5 seconds from comment">
-                                                -5s
-                                            </button>
-                                        </div>`;
-                                }
+                                html += `
+                                    <div class="${adjustControlsClass}"${adjustControlsHiddenAttr}>
+                                        <button data-action="adjust-comment" data-part-index="${index}" data-adjust="5"
+                                            class="time-adjust-button increment-button"${disableIncrementAttr}
+                                            aria-label="Add 5 seconds to comment">
+                                            +5s
+                                        </button>
+                                        <button data-action="adjust-comment" data-part-index="${index}" data-adjust="-5"
+                                            class="time-adjust-button decrement-button"${disableDecrementAttr}
+                                            aria-label="Subtract 5 seconds from comment">
+                                            -5s
+                                        </button>
+                                    </div>`;
                                 return html;
                             })()}
                         </div>

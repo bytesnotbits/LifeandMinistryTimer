@@ -287,6 +287,18 @@ main {
     color: white;
 }
 
+.comment-adjust-controls {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.5rem;
+    gap: 0.25rem;
+}
+
+.comment-adjust-controls--inactive {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 /* Comment items */
 .comment-item {
     background-color: var(--bg-card);

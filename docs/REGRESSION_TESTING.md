@@ -217,6 +217,23 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-007
 - Related files: `render.js`, `lifeMinistryTimer.js`, `index.html`
 
+## REG-013: Comment button position stays stable when comment adjust controls toggle
+- Priority: Medium
+- Area: Rendering
+- Preconditions:
+  - App loaded with an active part that has comments enabled.
+  - Part timer started so comment controls are visible.
+- Steps:
+  1. Observe horizontal position of the `Comment` button.
+  2. Start a comment and confirm `+5s` and `-5s` controls appear.
+  3. Stop the comment and confirm `+5s` and `-5s` controls hide again.
+  4. Repeat start/stop multiple times.
+- Expected:
+  - `Comment`/`Stop Comment` button stays in the same horizontal position during toggles.
+  - No visible horizontal snap/shift occurs when controls appear/disappear.
+- Related decisions: DEC-007
+- Related files: `render.js`, `styles.css`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.
