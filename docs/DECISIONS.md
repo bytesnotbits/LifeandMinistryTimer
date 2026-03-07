@@ -179,3 +179,28 @@ Track important decisions that explain *why* the code changed.
     - Refresh page and verify grouped history and part stats match persisted comments.
   - Risks:
     - Group headings rely on part indexes; unknown/deleted part data should still render safely via fallback labels.
+
+## DEC-008: Auto-hide top-right fixed controls based on scroll direction
+- Date: 2026-03-07
+- Status: Accepted
+- Related files: `styles.css`, `newFeatures.js`, `index.html`
+- Context:
+  - The fixed top-right controls (theme, sound, shortcuts) remained visible at all times.
+  - When the page is scrolled, these controls can overlap the sticky global meeting timer area.
+- Decision:
+  - Add scroll-direction behavior for the three fixed top-right controls:
+    - hide controls when user scrolls downward,
+    - reveal controls when user scrolls upward.
+  - Keep controls visible at the top of the page (`scrollY <= 0`).
+  - Use a small movement threshold to avoid flicker from tiny scroll jitter.
+  - Apply a short hide delay so brief downward flicks do not immediately dismiss controls.
+- Consequences:
+  - Reduces overlap with sticky timer content during upward scrolling.
+  - Controls remain discoverable by scrolling down.
+- Validation:
+  - Manual checks:
+    - Scroll down and verify controls slide out of view.
+    - Scroll up and verify controls reappear.
+    - Return to page top and verify controls are visible again.
+  - Risks:
+    - On very short pages with little scroll movement, hide/reveal may be less noticeable.

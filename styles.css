@@ -121,6 +121,18 @@ main {
     color: var(--text-color);
 }
 
+.theme-toggle,
+.sound-control,
+.shortcuts-btn {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.top-control-hidden {
+    transform: translateY(-4rem);
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* Timer cards */
 .part-card {
     background-color: var(--bg-card);

@@ -234,6 +234,24 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-007
 - Related files: `render.js`, `styles.css`
 
+## REG-014: Top-right controls auto-hide/show by scroll direction
+- Priority: Medium
+- Area: Rendering
+- Preconditions:
+  - App loaded.
+  - Page has enough content to scroll.
+- Steps:
+  1. Confirm the top-right controls (shortcuts, sound, theme) are visible at page load.
+  2. Scroll downward and verify controls hide from view.
+  3. Scroll upward and verify controls reappear.
+  4. Scroll back to the very top of the page.
+- Expected:
+  - Controls hide while scrolling downward.
+  - Controls reveal while scrolling upward.
+  - Controls are visible at the top of the page.
+- Related decisions: DEC-008
+- Related files: `newFeatures.js`, `styles.css`, `index.html`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.
