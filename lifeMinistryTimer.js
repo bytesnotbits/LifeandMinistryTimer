@@ -375,7 +375,7 @@ const DOM = { // eslint-disable-line no-unused-vars
         
         // Edit mode toggle
         if (this.elements.editModeToggle) { // Edit mode toggle
-            this.elements.editModeToggle.addEventListener('change', () => {
+            this.elements.editModeToggle.addEventListener('click', () => {
                 state.toggleEditMode(); // Toggle edit mode
             });
         }
@@ -807,7 +807,7 @@ const DOM = { // eslint-disable-line no-unused-vars
 
         // Edit mode toggle
         if (this.elements.editModeToggle) { // Edit mode toggle
-            this.elements.editModeToggle.addEventListener('change', () => {
+            this.elements.editModeToggle.addEventListener('click', () => {
                 state.toggleEditMode(); // Toggle edit mode
             });
         }
@@ -959,14 +959,9 @@ let state = {
         // Initialize edit mode toggle appearance
         const editModeToggle = document.getElementById('editModeToggle');
         if (editModeToggle) {
-            editModeToggle.checked = this.isEditMode;
-            
-            // Update the toggle appearance
-            const toggleBackground = editModeToggle.nextElementSibling;
-            if (toggleBackground && this.isEditMode) {
-                toggleBackground.classList.add('bg-blue-600');
-                toggleBackground.classList.remove('bg-gray-200', 'dark:bg-gray-700');
-            }
+            editModeToggle.setAttribute('aria-pressed', this.isEditMode ? 'true' : 'false');
+            editModeToggle.setAttribute('aria-label', this.isEditMode ? 'Disable edit mode' : 'Enable edit mode');
+            editModeToggle.title = this.isEditMode ? 'Disable edit mode' : 'Enable edit mode';
         }
         
         // Set up visibility change handler
@@ -1125,18 +1120,9 @@ let state = {
         // Update UI for edit mode
         const editModeToggle = document.getElementById('editModeToggle');
         if (editModeToggle) {
-            editModeToggle.checked = false;
-            
-            // Update the toggle appearance
-            const toggleBackground = editModeToggle.nextElementSibling;
-            if (toggleBackground) {
-                toggleBackground.classList.remove('bg-blue-600');
-                toggleBackground.classList.add('bg-gray-200');
-                // Add dark mode class if in dark mode
-                if (document.documentElement.getAttribute('data-theme') === 'dark') {
-                    toggleBackground.classList.add('dark:bg-gray-700');
-                }
-            }
+            editModeToggle.setAttribute('aria-pressed', 'false');
+            editModeToggle.setAttribute('aria-label', 'Enable edit mode');
+            editModeToggle.title = 'Enable edit mode';
         }
         
         const editModeControls = document.getElementById('editModeControls');
@@ -1646,23 +1632,9 @@ let state = {
         // Update UI for edit mode
         const editModeToggle = document.getElementById('editModeToggle');
         if (editModeToggle) {
-            editModeToggle.checked = this.isEditMode;
-            
-            // Update the toggle appearance
-            const toggleBackground = editModeToggle.nextElementSibling;
-            if (toggleBackground) {
-                if (this.isEditMode) {
-                    toggleBackground.classList.add('bg-blue-600');
-                    toggleBackground.classList.remove('bg-gray-200', 'dark:bg-gray-700');
-                } else {
-                    toggleBackground.classList.remove('bg-blue-600');
-                    toggleBackground.classList.add('bg-gray-200');
-                    // Add dark mode class if in dark mode
-                    if (document.documentElement.getAttribute('data-theme') === 'dark') {
-                        toggleBackground.classList.add('dark:bg-gray-700');
-                    }
-                }
-            }
+            editModeToggle.setAttribute('aria-pressed', this.isEditMode ? 'true' : 'false');
+            editModeToggle.setAttribute('aria-label', this.isEditMode ? 'Disable edit mode' : 'Enable edit mode');
+            editModeToggle.title = this.isEditMode ? 'Disable edit mode' : 'Enable edit mode';
         }
         
         const editModeControls = document.getElementById('editModeControls');
@@ -1931,7 +1903,7 @@ let state = {
 
     // Start dragging a part
     startDrag(index) {
-        if (this.isRunning || index < 0 || index >= this.meetingParts.length) return;
+        if (!this.isEditMode || this.isRunning || index < 0 || index >= this.meetingParts.length) return;
         
         this.draggedPartIndex = index;
     },

@@ -87,8 +87,23 @@
     <main class="max-w-4xl mx-auto rounded-lg shadow p-6">
         <!-- Timer Display Section -->
         <section id="timerSection" aria-labelledby="timer-heading" class="mt-8">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center mb-2">
                 <h2 id="timer-heading" class="text-xl font-bold">Life and Ministry Timer</h2>
+                <button id="editModeToggle" class="edit-mode-toggle" aria-label="Enable edit mode" aria-pressed="false" title="Edit mode">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.414 2.586a2 2 0 0 1 2.828 2.828l-10.5 10.5a2 2 0 0 1-.894.513l-3.11.778.778-3.11a2 2 0 0 1 .513-.894l10.5-10.5z"/>
+                        <path d="M14 4l3.5 3.5"/>
+                        <path d="m17 7 2 2"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="editModeControls" class="edit-mode-controls hidden mb-4">
+                <p class="text-sm">Edit mode is active. Use the card insertion handles to add a part between cards.</p>
+            </div>
+            <div id="editModeInstructions" class="edit-mode-instructions hidden mb-4">
+                <p class="text-sm">
+                    Tip: Use the left-side <strong>+</strong> handle on a card to insert a part after that card.
+                </p>
             </div>
             <!-- Meeting scheduler inputs -->
             <div id="meetingScheduler" class="meeting-scheduler mb-4">

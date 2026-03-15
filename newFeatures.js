@@ -160,7 +160,7 @@ const topControlsVisibilityManager = {
     isHidden: false,
 
     init() {
-        this.controls = ['themeToggle', 'soundToggle', 'shortcutsBtn']
+        this.controls = ['themeToggle', 'soundToggle', 'shortcutsBtn', 'editModeToggle']
             .map(id => document.getElementById(id))
             .filter(Boolean);
 

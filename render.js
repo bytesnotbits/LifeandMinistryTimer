@@ -168,7 +168,7 @@ const render = {
         
         container.innerHTML = '';
         const commentStatsByPart = buildCommentStatsByPart();
-        const canReorder = !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
+        const canReorder = state.isEditMode && !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
         
         // Keep drop-zone spacing consistent across running/stopped states.
         this._addDropZone(container, 0);
@@ -180,7 +180,7 @@ const render = {
             const progressPercent = Math.min(100, (elapsed / part.duration) * 100);
             
             const partElement = document.createElement('div');
-            partElement.className = `part-card p-4 rounded shadow ${isActive ? 'active' : ''} ${!isActive && !state.isRunning && state.editingPartIndex === null ? 'clickable' : ''}`;
+            partElement.className = `part-card p-4 rounded shadow ${isActive ? 'active' : ''} ${canReorder ? 'edit-mode' : ''} ${!isActive && !state.isRunning && state.editingPartIndex === null && !state.isEditMode ? 'clickable' : ''}`;
             partElement.setAttribute('data-part-index', index);
             
             // Enable drag-and-drop reordering while timer is stopped and no inline editor is open.
@@ -260,6 +260,7 @@ const render = {
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold flex items-center gap-2">
                         <span>${part.name}</span>
+                        ${state.isEditMode ? `
                         <button data-action="edit-part" data-part-index="${index}"
                             class="p-1 text-blue-600 hover:text-blue-800 rounded"
                             aria-label="Edit ${part.name}">
@@ -267,6 +268,7 @@ const render = {
                                 <path d="M17.414 2.586a2 2 0 010 2.828l-8.5 8.5a1 1 0 01-.447.264l-4 1a1 1 0 01-1.213-1.213l1-4a1 1 0 01.264-.447l8.5-8.5a2 2 0 012.828 0zM5.978 10.607l-.5 2 2-.5 7.95-7.95-1.5-1.5-7.95 7.95z"/>
                             </svg>
                         </button>
+                        ` : ''}
                     </h3>
                     <div class="text-sm text-gray-600">${part.speaker}</div>
                     <div class="ml-2 flex items-center gap-1">
@@ -508,7 +510,7 @@ const render = {
         
         // Add drop event listeners
         dropZone.addEventListener('dragover', (e) => {
-            const canDrop = !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
+            const canDrop = state.isEditMode && !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
             if (!canDrop) {
                 return;
             }
@@ -522,14 +524,17 @@ const render = {
         });
         
         dropZone.addEventListener('drop', (e) => {
-            const canDrop = !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
+            const canDrop = state.isEditMode && !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
             if (!canDrop) {
                 return;
             }
             e.preventDefault();
             dropZone.classList.remove('drop-zone-active');
-            const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+            let fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
             const toIndex = parseInt(dropZone.getAttribute('data-drop-index'));
+            if (Number.isNaN(fromIndex) && state.draggedPartIndex !== null) {
+                fromIndex = state.draggedPartIndex;
+            }
             if (Number.isNaN(fromIndex) || Number.isNaN(toIndex)) {
                 return;
             }
