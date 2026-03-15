@@ -654,7 +654,7 @@ const DOM = { // eslint-disable-line no-unused-vars
             // While timer is running, cards re-render frequently and click can be dropped.
             // Handle primary pointer press immediately so controls remain reliable.
             this.elements.partsDisplay.addEventListener('pointerdown', (event) => {
-                if (event.button !== 0) return;
+                if (typeof event.button === 'number' && event.button !== 0) return;
                 const button = event.target.closest('button[data-action]');
                 if (!button) return;
                 button.dataset[HANDLED_ON_POINTERDOWN] = 'true';
