@@ -655,6 +655,7 @@ const DOM = { // eslint-disable-line no-unused-vars
             // Handle primary pointer press immediately so controls remain reliable.
             this.elements.partsDisplay.addEventListener('pointerdown', (event) => {
                 if (typeof event.button === 'number' && event.button !== 0) return;
+                if (event.pointerType && event.pointerType !== 'mouse' && event.pointerType !== 'pen') return;
                 const button = event.target.closest('button[data-action]');
                 if (!button) return;
                 button.dataset[HANDLED_ON_POINTERDOWN] = 'true';
