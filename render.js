@@ -272,11 +272,13 @@ const render = {
                     </h3>
                     <div class="text-sm text-gray-600">${part.speaker}</div>
                     <div class="ml-2 flex items-center gap-1">
-                        <button data-action="remove-part" data-part-index="${index}"
-                            class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 ${removeDisabledClass}"
-                            aria-label="Remove ${part.name}" ${removeDisabledAttr}>
-                            ×
-                        </button>
+                        ${state.isEditMode ? `
+                            <button data-action="remove-part" data-part-index="${index}"
+                                class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 ${removeDisabledClass}"
+                                aria-label="Remove ${part.name}" ${removeDisabledAttr}>
+                                ×
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
 
