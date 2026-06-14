@@ -187,12 +187,6 @@ main {
     color: currentColor;
 }
 
-.top-control-hidden {
-    transform: translateY(-4rem);
-    opacity: 0;
-    pointer-events: none;
-}
-
 /* Timer cards */
 .part-card {
     background-color: var(--bg-card);

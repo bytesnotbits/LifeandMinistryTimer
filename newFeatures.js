@@ -149,95 +149,6 @@ const soundManager = {
 };
 
 //----------------------------------------------------------------------------------------------
-// TOP CONTROLS VISIBILITY MANAGEMENT
-//----------------------------------------------------------------------------------------------
-const topControlsVisibilityManager = {
-    controls: [],
-    lastScrollY: 0,
-    minDelta: 8,
-    hideDelayMs: 180,
-    hideTimerId: null,
-    isHidden: false,
-
-    init() {
-        this.controls = ['themeToggle', 'soundToggle', 'shortcutsBtn', 'editModeToggle']
-            .map(id => document.getElementById(id))
-            .filter(Boolean);
-
-        if (this.controls.length === 0 || document.querySelector('.app-toolbar')) {
-            return;
-        }
-
-        this.lastScrollY = window.scrollY || window.pageYOffset || 0;
-
-        window.addEventListener('scroll', () => this.handleScroll(), { passive: true });
-    },
-
-    handleScroll() {
-        const currentScrollY = Math.max(window.scrollY || window.pageYOffset || 0, 0);
-        const delta = currentScrollY - this.lastScrollY;
-
-        if (currentScrollY <= 0) {
-            this.clearHideTimer();
-            this.showControls();
-            this.lastScrollY = 0;
-            return;
-        }
-
-        if (Math.abs(delta) < this.minDelta) {
-            return;
-        }
-
-        if (delta > 0) {
-            this.scheduleHideControls();
-        } else {
-            this.clearHideTimer();
-            this.showControls();
-        }
-
-        this.lastScrollY = currentScrollY;
-    },
-
-    scheduleHideControls() {
-        if (this.isHidden || this.hideTimerId !== null) {
-            return;
-        }
-
-        this.hideTimerId = window.setTimeout(() => {
-            this.hideTimerId = null;
-            this.hideControls();
-        }, this.hideDelayMs);
-    },
-
-    clearHideTimer() {
-        if (this.hideTimerId === null) {
-            return;
-        }
-
-        window.clearTimeout(this.hideTimerId);
-        this.hideTimerId = null;
-    },
-
-    hideControls() {
-        if (this.isHidden) {
-            return;
-        }
-
-        this.controls.forEach(control => control.classList.add('top-control-hidden'));
-        this.isHidden = true;
-    },
-
-    showControls() {
-        if (!this.isHidden) {
-            return;
-        }
-
-        this.controls.forEach(control => control.classList.remove('top-control-hidden'));
-        this.isHidden = false;
-    }
-};
-
-//----------------------------------------------------------------------------------------------
 // REPORT MANAGEMENT
 //----------------------------------------------------------------------------------------------
 const reportManager = {
@@ -376,11 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize sound manager
     soundManager.init();
-
-    // Initialize auto-hide/reveal behavior for fixed top-right controls
-    topControlsVisibilityManager.init();
-    
-    // Add sound toggle button event listener
+// Add sound toggle button event listener
     const soundToggle = document.getElementById('soundToggle');
     if (soundToggle) {
         soundToggle.addEventListener('click', () => {
@@ -396,7 +303,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Add beforeunload event listener to confirm page refresh when timer is running
+        // Template action buttons
+    const generateReportBtn = document.getElementById('generateReportBtn');
+    if (generateReportBtn) {
+        generateReportBtn.addEventListener('click', () => {
+            reportManager.showReport();
+        });
+    }
+
+    const resetTimersBtn = document.getElementById('resetTimersBtn');
+    if (resetTimersBtn) {
+        resetTimersBtn.addEventListener('click', () => {
+            resetData();
+        });
+    }
+
+    const clearTemplateBtn = document.getElementById('clearTemplateBtn');
+    if (clearTemplateBtn) {
+        clearTemplateBtn.addEventListener('click', () => {
+            clearLocalStorage();
+        });
+    }
+// Add beforeunload event listener to confirm page refresh when timer is running
     window.addEventListener('beforeunload', (event) => {
         if (state.isRunning) {
             // Standard way to show a confirmation dialog
