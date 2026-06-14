@@ -185,20 +185,55 @@ const render = {
             
             // Enable drag-and-drop reordering while timer is stopped and no inline editor is open.
             if (canReorder) {
-                partElement.setAttribute('draggable', 'true');
                 partElement.classList.add('reorder-enabled');
-                
-                // Add drag event listeners
+
                 partElement.addEventListener('dragstart', (e) => {
+                    const dragHandle = e.target.closest('.drag-handle, .drag-handle-row');
+                    if (!dragHandle || !partElement.contains(dragHandle)) {
+                        e.preventDefault();
+                        return;
+                    }
+
                     state.startDrag(index);
                     partElement.classList.add('dragging');
-                    e.dataTransfer.setData('text/plain', index);
-                    e.dataTransfer.effectAllowed = 'move';
+                    if (e.dataTransfer) {
+                        e.dataTransfer.setData('text/plain', index);
+                        e.dataTransfer.effectAllowed = 'move';
+                    }
                 });
-                
+
                 partElement.addEventListener('dragend', () => {
                     partElement.classList.remove('dragging');
                     state.endDrag();
+                });
+
+                partElement.addEventListener('dragover', (e) => {
+                    if (!state.isEditMode || state.isRunning || state.editingPartIndex !== null || state.meetingParts.length <= 1) {
+                        return;
+                    }
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+
+                partElement.addEventListener('drop', (e) => {
+                    if (!state.isEditMode || state.isRunning || state.editingPartIndex !== null || state.meetingParts.length <= 1) {
+                        return;
+                    }
+                    e.preventDefault();
+                    let fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                    if (Number.isNaN(fromIndex) && state.draggedPartIndex !== null) {
+                        fromIndex = state.draggedPartIndex;
+                    }
+
+                    const rect = partElement.getBoundingClientRect();
+                    const dropAfterCard = e.clientY >= rect.top + rect.height / 2;
+                    const toIndex = dropAfterCard ? index + 1 : index;
+                    if (Number.isNaN(fromIndex) || Number.isNaN(toIndex)) {
+                        return;
+                    }
+
+                    const adjustedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+                    state.movePart(fromIndex, adjustedToIndex);
                 });
             }
             // Make the entire card clickable if timer is not running and no inline editor is open.
@@ -247,7 +282,7 @@ const render = {
             let partHTML = `
                 ${canReorder ? `
                     <div class="drag-handle-row">
-                        <span class="drag-handle" role="img" aria-label="Drag to reorder" title="Drag to reorder">
+                        <span class="drag-handle" role="img" aria-label="Drag to reorder" title="Drag to reorder" draggable="true">
                             <span class="drag-handle-dot" aria-hidden="true"></span>
                             <span class="drag-handle-dot" aria-hidden="true"></span>
                             <span class="drag-handle-dot" aria-hidden="true"></span>
@@ -436,7 +471,7 @@ const render = {
             
             partElement.innerHTML = partHTML;
             container.appendChild(partElement);
-            
+
             // Keep spacing stable by always rendering drop zones.
             this._addDropZone(container, index + 1);
         });
