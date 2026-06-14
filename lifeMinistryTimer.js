@@ -214,6 +214,7 @@ const DOM = { // eslint-disable-line no-unused-vars
     _setupEventListeners() {
         this._setupTemplateListeners();
         this._setupModalListeners();
+        this._setupSchedulerListeners();
 
         // --- NEW: Add Delegated Listener for Part Cards ---
         if (this.elements.partsDisplay) {
@@ -394,70 +395,7 @@ const DOM = { // eslint-disable-line no-unused-vars
                      }
                  }
              });
-        } // End of commentHistory listener
-
-        // Scheduler buttons: Schedule and End Meeting
-        if (this.elements.scheduleMeetingBtn) {
-            this.elements.scheduleMeetingBtn.addEventListener('click', () => {
-                const dateVal = this.elements.meetingDateInput ? this.elements.meetingDateInput.value : '';
-                const startTimeVal = this.elements.meetingStartTimeInput ? this.elements.meetingStartTimeInput.value : '';
-                const endTimeVal = this.elements.meetingEndTimeInput ? this.elements.meetingEndTimeInput.value : '';
-                if (!dateVal || !startTimeVal || !endTimeVal) {
-                    notify.show('Please provide meeting date, start time, and end time', 'error');
-                    return;
-                }
-                const startTs = buildLocalTimestamp(dateVal, startTimeVal);
-                let endTs = buildLocalTimestamp(dateVal, endTimeVal);
-                if (isNaN(startTs) || isNaN(endTs)) {
-                    notify.show('Invalid meeting date/time format', 'error');
-                    return;
-                }
-                if (endTs <= startTs) {
-                    // If end clock time is before start clock time, treat it as crossing midnight.
-                    endTs += 24 * 60 * 60 * 1000;
-                }
-
-                const repeatChecked = this.elements.meetingRepeatCheckbox ? this.elements.meetingRepeatCheckbox.checked : true;
-                const recurringStartTime = state.recurringBaseStart ? formatLocalTime(state.recurringBaseStart) : '';
-                const recurringTimeChanged = state.recurringDurationMs
-                    ? (
-                        recurringStartTime !== startTimeVal
-                        || formatLocalTime(state.recurringBaseStart + state.recurringDurationMs) !== endTimeVal
-                    )
-                    : recurringStartTime !== startTimeVal;
-
-                // If currently repeating and the user changes the time, ask whether to apply to recurring schedule
-                if (state.meetingRepeatsWeekly && state.recurringBaseStart && repeatChecked && recurringTimeChanged) {
-                    const applyToAll = window.confirm('Update the recurring meeting time for future meetings?\n\nOK = Update recurring schedule. Cancel = Apply as a one-time change.');
-                    if (applyToAll) {
-                        state.scheduleMeeting(startTs, endTs, true);
-                    } else {
-                        state.scheduleOneTimeChange(startTs, endTs);
-                    }
-                } else {
-                    if (repeatChecked) {
-                        state.scheduleMeeting(startTs, endTs, true);
-                    } else {
-                        // schedule as non-repeating (single instance)
-                        state.scheduleMeeting(startTs, endTs, false);
-                    }
-                }
-
-                this.updateMeetingForm();
-                notify.show('Meeting scheduled', 'success');
-            });
-        }
-
-        if (this.elements.endMeetingBtn) {
-            this.elements.endMeetingBtn.addEventListener('click', () => {
-                state.endMeeting();
-                this.updateMeetingForm();
-                notify.show('Meeting ended', 'info');
-            });
-        }
-
-
-        // --- Remaining Original Listeners (Keep These) ---
+        } // End of commentHistory listener// --- Remaining Original Listeners (Keep These) ---
 
         // Edit mode toggle
         if (this.elements.editModeToggle) { // Edit mode toggle
@@ -599,7 +537,68 @@ const DOM = { // eslint-disable-line no-unused-vars
             this._hideModal(this.elements.shortcutsModal);
         });
     },
-    _checkForMissingElements() { // eslint-disable-line no-unused-vars
+      _setupSchedulerListeners() {
+        if (this.elements.scheduleMeetingBtn) {
+            this.elements.scheduleMeetingBtn.addEventListener('click', () => {
+                const dateVal = this.elements.meetingDateInput ? this.elements.meetingDateInput.value : '';
+                const startTimeVal = this.elements.meetingStartTimeInput ? this.elements.meetingStartTimeInput.value : '';
+                const endTimeVal = this.elements.meetingEndTimeInput ? this.elements.meetingEndTimeInput.value : '';
+                if (!dateVal || !startTimeVal || !endTimeVal) {
+                    notify.show('Please provide meeting date, start time, and end time', 'error');
+                    return;
+                }
+                const startTs = buildLocalTimestamp(dateVal, startTimeVal);
+                let endTs = buildLocalTimestamp(dateVal, endTimeVal);
+                if (isNaN(startTs) || isNaN(endTs)) {
+                    notify.show('Invalid meeting date/time format', 'error');
+                    return;
+                }
+                if (endTs <= startTs) {
+                    // If end clock time is before start clock time, treat it as crossing midnight.
+                    endTs += 24 * 60 * 60 * 1000;
+                }
+
+                const repeatChecked = this.elements.meetingRepeatCheckbox ? this.elements.meetingRepeatCheckbox.checked : true;
+                const recurringStartTime = state.recurringBaseStart ? formatLocalTime(state.recurringBaseStart) : '';
+                const recurringTimeChanged = state.recurringDurationMs
+                    ? (
+                        recurringStartTime !== startTimeVal
+                        || formatLocalTime(state.recurringBaseStart + state.recurringDurationMs) !== endTimeVal
+                    )
+                    : recurringStartTime !== startTimeVal;
+
+                // If currently repeating and the user changes the time, ask whether to apply to recurring schedule
+                if (state.meetingRepeatsWeekly && state.recurringBaseStart && repeatChecked && recurringTimeChanged) {
+                    const applyToAll = window.confirm('Update the recurring meeting time for future meetings?\n\nOK = Update recurring schedule. Cancel = Apply as a one-time change.');
+                    if (applyToAll) {
+                        state.scheduleMeeting(startTs, endTs, true);
+                    } else {
+                        state.scheduleOneTimeChange(startTs, endTs);
+                    }
+                } else {
+                    if (repeatChecked) {
+                        state.scheduleMeeting(startTs, endTs, true);
+                    } else {
+                        // schedule as non-repeating (single instance)
+                        state.scheduleMeeting(startTs, endTs, false);
+                    }
+                }
+
+                this.updateMeetingForm();
+                notify.show('Meeting scheduled', 'success');
+            });
+        }
+
+        if (this.elements.endMeetingBtn) {
+            this.elements.endMeetingBtn.addEventListener('click', () => {
+                state.endMeeting();
+                this.updateMeetingForm();
+                notify.show('Meeting ended', 'info');
+            });
+        }
+    },
+
+  _checkForMissingElements() { // eslint-disable-line no-unused-vars
         const criticalElements = [ // List of critical elements
             'partsTemplate', 'partsDisplay', 'commentHistory',
             'globalCommentCount', 'globalAverageDuration'
