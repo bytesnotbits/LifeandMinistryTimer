@@ -215,9 +215,42 @@ const DOM = { // eslint-disable-line no-unused-vars
         this._setupTemplateListeners();
         this._setupModalListeners();
         this._setupSchedulerListeners();
+        this._setupPartDisplayListeners();
+        this._setupCommentHistoryListeners();
 
-        // --- NEW: Add Delegated Listener for Part Cards ---
-        if (this.elements.partsDisplay) {
+        // Edit mode toggle
+        if (this.elements.editModeToggle) { // Edit mode toggle
+            this.elements.editModeToggle.addEventListener('click', () => {
+                state.toggleEditMode(); // Toggle edit mode
+            });
+        }
+
+        // Part editor modal buttons
+        if (this.elements.closePartEditorModal) { // Close part editor modal button
+            this.elements.closePartEditorModal.addEventListener('click', () => {
+                state.cancelPartEdits(); // Cancel part edits
+            });
+        }
+
+        if (this.elements.savePartEdits) { // Save part edits button
+            this.elements.savePartEdits.addEventListener('click', () => {
+                state.savePartEdits(); // Save part edits
+            });
+        }
+
+        // Add part button (The global one at the bottom in edit mode)
+        this._on(this.elements.addPartBtn, 'click', () => {
+            if (state.isEditMode) {
+                // Use the new addPart method when in edit mode
+                state.addPart(); // This adds to the end
+            }
+            // Removed legacy behavior as it's probably not needed now
+        });
+    }, // End of _setupEventListeners
+
+    
+    _setupPartDisplayListeners() {
+if (this.elements.partsDisplay) {
             const HANDLED_ON_POINTERDOWN = 'handledOnPointerdown';
             const handlePartAction = (event) => {
                 const button = event.target.closest('button[data-action]');
@@ -381,9 +414,10 @@ const DOM = { // eslint-disable-line no-unused-vars
                 }
             });
         } // End of partsDisplay listeners
+    },
 
-        // --- NEW: Add Delegated Listener for Comment History ---
-        if (this.elements.commentHistory) {
+    _setupCommentHistoryListeners() {
+if (this.elements.commentHistory) {
              this.elements.commentHistory.addEventListener('click', (event) => {
                  const deleteButton = event.target.closest('button.delete-button[data-comment-id]');
                  if (deleteButton) {
@@ -395,39 +429,8 @@ const DOM = { // eslint-disable-line no-unused-vars
                      }
                  }
              });
-        } // End of commentHistory listener// --- Remaining Original Listeners (Keep These) ---
-
-        // Edit mode toggle
-        if (this.elements.editModeToggle) { // Edit mode toggle
-            this.elements.editModeToggle.addEventListener('click', () => {
-                state.toggleEditMode(); // Toggle edit mode
-            });
-        }
-
-        // Part editor modal buttons
-        if (this.elements.closePartEditorModal) { // Close part editor modal button
-            this.elements.closePartEditorModal.addEventListener('click', () => {
-                state.cancelPartEdits(); // Cancel part edits
-            });
-        }
-
-        if (this.elements.savePartEdits) { // Save part edits button
-            this.elements.savePartEdits.addEventListener('click', () => {
-                state.savePartEdits(); // Save part edits
-            });
-        }
-
-        // Add part button (The global one at the bottom in edit mode)
-        this._on(this.elements.addPartBtn, 'click', () => {
-            if (state.isEditMode) {
-                // Use the new addPart method when in edit mode
-                state.addPart(); // This adds to the end
-            }
-            // Removed legacy behavior as it's probably not needed now
-        });
-    }, // End of _setupEventListeners
-
-    
+        } // End of commentHistory listener
+    },
     _on(element, eventName, handler) {
         if (element) {
             element.addEventListener(eventName, handler);
