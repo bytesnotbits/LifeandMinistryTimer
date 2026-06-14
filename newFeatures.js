@@ -164,7 +164,7 @@ const topControlsVisibilityManager = {
             .map(id => document.getElementById(id))
             .filter(Boolean);
 
-        if (this.controls.length === 0) {
+        if (this.controls.length === 0 || document.querySelector('.app-toolbar')) {
             return;
         }
 

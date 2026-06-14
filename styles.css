@@ -115,83 +115,76 @@ main {
     min-height: 2.5rem;
 }
 
-/* Theme toggle button */
-.theme-toggle {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 5px var(--shadow-color);
+/* App header and toolbar */
+.app-header {
     display: flex;
+    flex-wrap: wrap;
+    grid-column: 1 / -1;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 100;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
-.theme-toggle svg {
-    width: 1.5rem;
-    height: 1.5rem;
-    color: var(--text-color);
+.app-title-group {
+    min-width: 0;
 }
 
-/* Sound control button */
-.sound-control {
-    position: fixed;
-    top: 1rem;
-    right: 4rem;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 5px var(--shadow-color);
+.app-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.app-subtitle {
+    margin: 0.25rem 0 0;
+    color: var(--text-light);
+    font-size: 0.875rem;
+}
+
+.app-toolbar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 100;
-}
-
-.sound-control svg {
-    width: 1.5rem;
-    height: 1.5rem;
-    color: var(--text-color);
-}
-
-/* Shortcuts button */
-.shortcuts-btn {
-    position: fixed;
-    top: 1rem;
-    right: 7rem;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 5px var(--shadow-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 100;
-}
-
-.shortcuts-btn svg {
-    width: 1.5rem;
-    height: 1.5rem;
-    color: var(--text-color);
+    justify-content: flex-end;
+    gap: 0.5rem;
 }
 
 .theme-toggle,
 .sound-control,
 .shortcuts-btn,
 .edit-mode-toggle {
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    position: relative;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 5px var(--shadow-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.theme-toggle:hover,
+.sound-control:hover,
+.shortcuts-btn:hover,
+.edit-mode-toggle:hover {
+    border-color: var(--primary-color);
+}
+
+.theme-toggle svg,
+.sound-control svg,
+.shortcuts-btn svg,
+.edit-mode-toggle svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: currentColor;
 }
 
 .top-control-hidden {
@@ -445,29 +438,6 @@ main {
 }
 
 /* Edit mode styles */
-.edit-mode-toggle {
-    position: fixed;
-    top: 1rem;
-    right: 10rem;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 5px var(--shadow-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 100;
-}
-
-.edit-mode-toggle svg {
-    width: 1.5rem;
-    height: 1.5rem;
-    color: var(--text-color);
-}
-
 .edit-mode-toggle[aria-pressed="true"] {
     background-color: var(--primary-color);
 }
@@ -794,26 +764,29 @@ main {
     }
 }
 @media (max-width: 640px) {
-    .theme-toggle, .sound-control, .shortcuts-btn, .edit-mode-toggle {
-        width: 2rem;
-        height: 2rem;
-    }
-    
-    .theme-toggle svg, .sound-control svg, .shortcuts-btn svg, .edit-mode-toggle svg {
-        width: 1.25rem;
-        height: 1.25rem;
-    }
-    
-    .sound-control {
-        right: 3.5rem;
-    }
-    
-    .shortcuts-btn {
-        right: 6rem;
+    .app-header {
+        align-items: flex-start;
     }
 
+    .app-toolbar {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .theme-toggle,
+    .sound-control,
+    .shortcuts-btn,
     .edit-mode-toggle {
-        right: 8.5rem;
+        width: 2.25rem;
+        height: 2.25rem;
+    }
+
+    .theme-toggle svg,
+    .sound-control svg,
+    .shortcuts-btn svg,
+    .edit-mode-toggle svg {
+        width: 1.25rem;
+        height: 1.25rem;
     }
 }
 

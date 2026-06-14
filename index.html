@@ -19,57 +19,6 @@
     <script src="newFeatures.js" defer></script>
 </head>
 <body class="app-body">
-    <!-- Theme Toggle Button -->
-    <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun-icon">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-        </svg>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="moon-icon hidden">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-        </svg>
-    </button>
-    
-    <!-- Sound Control Button -->
-    <button id="soundToggle" class="sound-control" aria-label="Toggle sound">
-        <span id="soundTooltip" class="sound-tooltip">Sound disabled</span>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sound-on-icon">
-            <polygon points="13 5 8 9 4 9 4 15 8 15 13 19 13 5"></polygon>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-        </svg>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sound-off-icon hidden">
-            <polygon points="13 5 8 9 4 9 4 15 8 15 13 19 13 5"></polygon>
-            <circle cx="12" cy="12" r="11" stroke="#ef4444"></circle>
-            <line x1="20" y1="4" x2="4" y2="20" stroke="#ef4444"></line>
-        </svg>
-    </button>
-    
-    <!-- Keyboard Shortcuts Button -->
-    <button id="shortcutsBtn" class="shortcuts-btn" aria-label="Show keyboard shortcuts" onclick="DOM.showShortcutsModal()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
-            <path d="M6 8h.01"></path>
-            <path d="M10 8h.01"></path>
-            <path d="M14 8h.01"></path>
-            <path d="M18 8h.01"></path>
-            <path d="M6 12h.01"></path>
-            <path d="M10 12h.01"></path>
-            <path d="M14 12h.01"></path>
-            <path d="M18 12h.01"></path>
-            <path d="M6 16h.01"></path>
-            <path d="M10 16h.01"></path>
-            <path d="M14 16h.01"></path>
-            <path d="M18 16h.01"></path>
-        </svg>
-    </button>
     
     <!-- Audio elements for notifications -->
     <audio id="timerEndSound" preload="auto">
@@ -85,10 +34,12 @@
     
     <!-- Main Content Container -->
     <main class="app-shell rounded-lg shadow">
-        <!-- Timer Display Section -->
-        <section id="timerSection" aria-labelledby="timer-heading" class="timer-section">
-            <div class="flex justify-between items-center mb-2">
-                <h2 id="timer-heading" class="text-xl font-bold">Life and Ministry Timer</h2>
+        <header class="app-header">
+            <div class="app-title-group">
+                <h1 class="app-title">Life and Ministry Timer</h1>
+                <p class="app-subtitle">Track meeting parts, comments, and schedule progress.</p>
+            </div>
+            <div class="app-toolbar" aria-label="Application controls">
                 <button id="editModeToggle" class="edit-mode-toggle" aria-label="Enable edit mode" aria-pressed="false" title="Edit mode">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M17.414 2.586a2 2 0 0 1 2.828 2.828l-10.5 10.5a2 2 0 0 1-.894.513l-3.11.778.778-3.11a2 2 0 0 1 .513-.894l10.5-10.5z"/>
@@ -96,6 +47,58 @@
                         <path d="m17 7 2 2"/>
                     </svg>
                 </button>
+                <button id="shortcutsBtn" class="shortcuts-btn" aria-label="Show keyboard shortcuts">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                        <path d="M6 8h.01"></path>
+                        <path d="M10 8h.01"></path>
+                        <path d="M14 8h.01"></path>
+                        <path d="M18 8h.01"></path>
+                        <path d="M6 12h.01"></path>
+                        <path d="M10 12h.01"></path>
+                        <path d="M14 12h.01"></path>
+                        <path d="M18 12h.01"></path>
+                        <path d="M6 16h.01"></path>
+                        <path d="M10 16h.01"></path>
+                        <path d="M14 16h.01"></path>
+                        <path d="M18 16h.01"></path>
+                    </svg>
+                </button>
+                <button id="soundToggle" class="sound-control" aria-label="Toggle sound">
+                    <span id="soundTooltip" class="sound-tooltip">Sound disabled</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sound-on-icon">
+                        <polygon points="13 5 8 9 4 9 4 15 8 15 13 19 13 5"></polygon>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sound-off-icon hidden">
+                        <polygon points="13 5 8 9 4 9 4 15 8 15 13 19 13 5"></polygon>
+                        <circle cx="12" cy="12" r="11" stroke="#ef4444"></circle>
+                        <line x1="20" y1="4" x2="4" y2="20" stroke="#ef4444"></line>
+                    </svg>
+                </button>
+                <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun-icon">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="moon-icon hidden">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+        <!-- Timer Display Section -->
+        <section id="timerSection" aria-labelledby="timer-heading" class="timer-section">
+            <div class="section-heading">
+                <h2 id="timer-heading" class="text-xl font-bold">Meeting Parts</h2>
             </div>
             <div id="editModeControls" class="edit-mode-controls hidden mb-4">
                 <p class="text-sm">Edit mode is active. Use the card insertion handles to add a part between cards.</p>

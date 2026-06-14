@@ -184,6 +184,7 @@ const DOM = { // eslint-disable-line no-unused-vars
         this.elements.confirmAction = document.getElementById('confirmAction'); // Confirm action button
         
         // Shortcuts modal elements
+        this.elements.shortcutsBtn = document.getElementById('shortcutsBtn'); // Shortcuts button
         this.elements.shortcutsModal = document.getElementById('shortcutsModal'); // Shortcuts modal
         this.elements.closeShortcutsModal = document.getElementById('closeShortcutsModal'); // Close shortcuts modal button
         
@@ -228,197 +229,6 @@ const DOM = { // eslint-disable-line no-unused-vars
         }
         render.globalTimerDisplay();
     },
-
-    
-    /*
-    // Old function. It was replaced with a new one that added the delegated event listeners for #partsDisplay and #commentHistory
-    _setupEventListeners() {
-        // Template management buttons
-        if (this.elements.saveTemplateBtn) { // Save template button
-            this.elements.saveTemplateBtn.addEventListener('click', () => {
-                this.elements.templateName.value = ''; // Clear the template name input
-                this.elements.templateDescription.value = ''; // Clear the template description input
-                this.elements.templateCategory.value = ''; // Clear the template category select
-                this._showModal(this.elements.templateModal); // Show the template modal
-            });
-        }
-        
-        if (this.elements.loadTemplateBtn) { // Load template button
-            this.elements.loadTemplateBtn.addEventListener('click', () => {
-                templateManager.populateTemplatesList(); // Populate the templates list
-                this._showModal(this.elements.templateModal); // Show the template modal
-            });
-        }
-        
-        // Template modal buttons
-        if (this.elements.closeTemplateModal) { // Close template modal button
-            this.elements.closeTemplateModal.addEventListener('click', () => {
-                this._hideModal(this.elements.templateModal); // Hide the template modal
-            });
-        }
-        
-        if (this.elements.saveNewTemplate) { // Save new template button
-            this.elements.saveNewTemplate.addEventListener('click', () => {
-                const name = this.elements.templateName.value.trim(); // Get the template name
-                if (name) { // If name is not empty
-                    const description = this.elements.templateDescription.value.trim(); // Get the template description
-                    const category = this.elements.templateCategory.value.trim(); // Get the template category
-                    templateManager.saveTemplate(name, description, category); // Save the template
-                    this._hideModal(this.elements.templateModal); // Hide the template modal
-                } else { // If name is empty
-                    notify.show('Please enter a template name', 'error'); // Show an error notification
-                }
-            });
-        }
-        
-        if (this.elements.importTemplateBtn) { // Import template button
-            this.elements.importTemplateBtn.addEventListener('click', () => {
-                this._hideModal(this.elements.templateModal); // Hide the template modal
-                this.elements.importFile.value = ''; // Clear the import file input
-                this.elements.importPreview.classList.add('hidden'); // Hide the import preview
-                this.elements.confirmImport.disabled = true; // Disable the confirm import button
-                this._showModal(this.elements.importModal); // Show the import modal
-            });
-        }
-        
-        if (this.elements.exportAllTemplatesBtn) { // Export all templates button
-            this.elements.exportAllTemplatesBtn.addEventListener('click', () => {
-                templateManager.exportAllTemplates(); // Export all templates
-            });
-        }
-        
-        if (this.elements.addCategoryBtn) { // Add category button
-            this.elements.addCategoryBtn.addEventListener('click', () => {
-                this.elements.newCategoryName.value = ''; // Clear the new category name input
-                this._showModal(this.elements.categoryModal); // Show the category modal
-            });
-        }
-        
-        // Template search and filter
-        if (this.elements.templateSearch) { // Template search input
-            this.elements.templateSearch.addEventListener('input', () => {
-                templateManager.populateTemplatesList(); // Populate the templates list
-            });
-        }
-        
-        if (this.elements.templateCategoryFilter) { // Template category filter select
-            this.elements.templateCategoryFilter.addEventListener('change', () => {
-                templateManager.populateTemplatesList(); // Populate the templates list
-            });
-        }
-        
-        if (this.elements.templateSort) { // Template sort select
-            this.elements.templateSort.addEventListener('change', () => {
-                templateManager.populateTemplatesList(); // Populate the templates list
-            });
-        }
-        
-        // Category modal buttons
-        if (this.elements.closeCategoryModal) { // Close category modal button
-            this.elements.closeCategoryModal.addEventListener('click', () => {
-                this._hideModal(this.elements.categoryModal); // Hide the category modal
-            });
-        }
-        
-        if (this.elements.saveNewCategory) { // Save new category button
-            this.elements.saveNewCategory.addEventListener('click', () => {
-                const name = this.elements.newCategoryName.value.trim(); // Get the new category name
-                if (name) { // If name is not empty
-                    templateManager.addCategory(name); // Add the category
-                    this._hideModal(this.elements.categoryModal); // Hide the category modal
-                } else { // If name is empty
-                    notify.show('Please enter a category name', 'error'); // Show an error notification
-                }
-            });
-        }
-        
-        // Preview modal buttons
-        if (this.elements.closePreviewModal) { // Close preview modal button
-            this.elements.closePreviewModal.addEventListener('click', () => {
-                this._hideModal(this.elements.previewModal); // Hide the preview modal
-            });
-        }
-        
-        // Import modal buttons
-        if (this.elements.importFile) { // Import file input
-            this.elements.importFile.addEventListener('change', (e) => {
-                templateManager.handleImportFile(e.target.files[0]); // Handle the import file
-            });
-        }
-        
-        if (this.elements.closeImportModal) { // Close import modal button
-            this.elements.closeImportModal.addEventListener('click', () => {
-                this._hideModal(this.elements.importModal); // Hide the import modal
-            });
-        }
-        
-        if (this.elements.confirmImport) { // Confirm import button
-            this.elements.confirmImport.addEventListener('click', () => {
-                templateManager.importTemplates(); // Import the templates
-                this._hideModal(this.elements.importModal); // Hide the import modal
-            });
-        }
-        
-        // Confirmation modal buttons
-        if (this.elements.cancelConfirmation) { // Cancel confirmation button
-            this.elements.cancelConfirmation.addEventListener('click', () => { // Add event listener
-                this._hideModal(this.elements.confirmationModal); // Hide the confirmation modal
-            });
-        }
-        
-        // Shortcuts modal buttons
-        if (this.elements.closeShortcutsModal) { // Close shortcuts modal button
-            this.elements.closeShortcutsModal.addEventListener('click', () => {
-                this._hideModal(this.elements.shortcutsModal); // Hide the shortcuts modal
-            });
-        }
-        
-        // Edit mode toggle
-        if (this.elements.editModeToggle) { // Edit mode toggle
-            this.elements.editModeToggle.addEventListener('click', () => {
-                state.toggleEditMode(); // Toggle edit mode
-            });
-        }
-        
-        // Part editor modal buttons
-        if (this.elements.closePartEditorModal) { // Close part editor modal button
-            this.elements.closePartEditorModal.addEventListener('click', () => {
-                state.cancelPartEdits(); // Cancel part edits
-            });
-        }
-        
-        if (this.elements.savePartEdits) { // Save part edits button
-            this.elements.savePartEdits.addEventListener('click', () => {
-                state.savePartEdits(); // Save part edits
-            });
-        }
-        
-        // Add part button
-        const addPartBtn = document.getElementById('addPartBtn');
-        if (addPartBtn) {
-            addPartBtn.addEventListener('click', () => {
-                if (state.isEditMode) {
-                    // Use the new addPart method when in edit mode
-                    state.addPart();
-                } else {
-                    // Legacy behavior for backward compatibility
-                    state.meetingParts.push({
-                        name: 'New Part',
-                        duration: 5*60,
-                        speaker: '',
-                        enableComments: false
-                    });
-                    
-                    // Render the template editor
-                    render.templateEditor();
-                    render.timerDisplay();
-                }
-            });
-        }
-        
-    },
-    */
-    
     _setupEventListeners() {
         // --- Existing Listeners for Modals, Templates, etc. (Keep These) ---
 
@@ -556,6 +366,12 @@ const DOM = { // eslint-disable-line no-unused-vars
         }
 
         // Shortcuts modal buttons
+        if (this.elements.shortcutsBtn) {
+            this.elements.shortcutsBtn.addEventListener('click', () => {
+                this.showShortcutsModal();
+            });
+        }
+
         if (this.elements.closeShortcutsModal) { // Close shortcuts modal button
             this.elements.closeShortcutsModal.addEventListener('click', () => {
                 this._hideModal(this.elements.shortcutsModal); // Hide the shortcuts modal
