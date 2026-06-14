@@ -733,15 +733,9 @@ let state = {
     init() {
         this.loadState();
         
-        // Initialize edit mode toggle appearance
-        const editModeToggle = document.getElementById('editModeToggle');
-        if (editModeToggle) {
-            editModeToggle.setAttribute('aria-pressed', this.isEditMode ? 'true' : 'false');
-            editModeToggle.setAttribute('aria-label', this.isEditMode ? 'Disable edit mode' : 'Enable edit mode');
-            editModeToggle.title = this.isEditMode ? 'Disable edit mode' : 'Enable edit mode';
-        }
+        this.updateEditModeUi();
         
-        // Set up visibility change handler
+// Set up visibility change handler
         document.addEventListener('visibilitychange', this._handleVisibilityChange.bind(this));
         this._visibilityChangeHandlerSet = true;
         
@@ -894,23 +888,7 @@ let state = {
             this.meetingInterval = null;
         }
         
-        // Update UI for edit mode
-        const editModeToggle = document.getElementById('editModeToggle');
-        if (editModeToggle) {
-            editModeToggle.setAttribute('aria-pressed', 'false');
-            editModeToggle.setAttribute('aria-label', 'Enable edit mode');
-            editModeToggle.title = 'Enable edit mode';
-        }
-        
-        const editModeControls = document.getElementById('editModeControls');
-        if (editModeControls) {
-            editModeControls.classList.add('hidden');
-        }
-        
-        const editModeInstructions = document.getElementById('editModeInstructions');
-        if (editModeInstructions) {
-            editModeInstructions.classList.add('hidden');
-        }
+        this.updateEditModeUi();
     },
 
     // Schedule a meeting with start/end timestamps (milliseconds)
@@ -1399,6 +1377,24 @@ let state = {
         return report;
     },
     
+    updateEditModeUi() {
+        const editModeToggle = DOM.elements.editModeToggle;
+        if (editModeToggle) {
+            editModeToggle.setAttribute('aria-pressed', this.isEditMode ? 'true' : 'false');
+            editModeToggle.setAttribute('aria-label', this.isEditMode ? 'Disable edit mode' : 'Enable edit mode');
+            editModeToggle.title = this.isEditMode ? 'Disable edit mode' : 'Enable edit mode';
+        }
+
+        const editModeControls = DOM.elements.editModeControls;
+        if (editModeControls) {
+            editModeControls.classList.toggle('hidden', !this.isEditMode);
+        }
+
+        const editModeInstructions = DOM.elements.editModeInstructions;
+        if (editModeInstructions) {
+            editModeInstructions.classList.toggle('hidden', !this.isEditMode);
+        }
+    },
     // Toggle edit mode
     toggleEditMode() {
         this.isEditMode = !this.isEditMode;
@@ -1406,33 +1402,9 @@ let state = {
         // Save edit mode state to localStorage
         localStorage.setItem('isEditMode', this.isEditMode.toString());
         
-        // Update UI for edit mode
-        const editModeToggle = document.getElementById('editModeToggle');
-        if (editModeToggle) {
-            editModeToggle.setAttribute('aria-pressed', this.isEditMode ? 'true' : 'false');
-            editModeToggle.setAttribute('aria-label', this.isEditMode ? 'Disable edit mode' : 'Enable edit mode');
-            editModeToggle.title = this.isEditMode ? 'Disable edit mode' : 'Enable edit mode';
-        }
+        this.updateEditModeUi();
         
-        const editModeControls = document.getElementById('editModeControls');
-        if (editModeControls) {
-            if (this.isEditMode) {
-                editModeControls.classList.remove('hidden');
-            } else {
-                editModeControls.classList.add('hidden');
-            }
-        }
-        
-        const editModeInstructions = document.getElementById('editModeInstructions');
-        if (editModeInstructions) {
-            if (this.isEditMode) {
-                editModeInstructions.classList.remove('hidden');
-            } else {
-                editModeInstructions.classList.add('hidden');
-            }
-        }
-        
-        // Re-render the timer display with edit controls
+// Re-render the timer display with edit controls
         render.timerDisplay();
         
         return true;
@@ -1557,12 +1529,9 @@ let state = {
             render.timerDisplay();
             
             // Close the modal
-            const modal = document.getElementById('partEditorModal');
-            if (modal) {
-                modal.classList.add('hidden');
-            }
+            DOM._hideModal(DOM.elements.partEditorModal);
             
-            this.editingPartIndex = null;
+this.editingPartIndex = null;
         } else {
             notify.show('Please enter a part name', 'error');
         }
@@ -1574,12 +1543,9 @@ let state = {
         this.inlineEditDraft = null;
 
         // Close the modal if it is open (legacy path)
-        const modal = document.getElementById('partEditorModal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
+        DOM._hideModal(DOM.elements.partEditorModal);
 
-        render.timerDisplay();
+render.timerDisplay();
     },
 
     // Add a new part at a specific position
