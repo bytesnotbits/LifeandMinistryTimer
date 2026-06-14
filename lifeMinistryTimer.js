@@ -111,103 +111,85 @@ const DOM = { // eslint-disable-line no-unused-vars
     elements: {},
     
     init() {
-        // Timer section elements
-        this.elements.partsTemplate = document.getElementById('partsTemplate'); // Meeting parts template
-        this.elements.partsDisplay = document.getElementById('partsDisplay'); // Meeting parts display
-        
-        // Comment section elements
-        this.elements.commentHistory = document.getElementById('commentHistory'); // Comment history display
-        this.elements.globalCommentCount = document.getElementById('globalCommentCount'); // Global comment count
-        this.elements.globalAverageDuration = document.getElementById('globalAverageDuration'); // Global average comment duration
-        
-        // Template management elements
-        this.elements.saveTemplateBtn = document.getElementById('saveTemplateBtn'); // Save template button
-        this.elements.loadTemplateBtn = document.getElementById('loadTemplateBtn'); // Load template button
-        
-        // Template modal elements
-        this.elements.templateModal = document.getElementById('templateModal'); // Template management modal
-        this.elements.templatesList = document.getElementById('templatesList'); // List of saved templates
-        this.elements.templateName = document.getElementById('templateName'); // Input for template name
-        this.elements.templateDescription = document.getElementById('templateDescription'); // Input for template description
-        this.elements.templateCategory = document.getElementById('templateCategory'); // Select for template category
-        this.elements.templateSearch = document.getElementById('templateSearch'); // Input for template search
-        this.elements.templateCategoryFilter = document.getElementById('templateCategoryFilter'); // Select for category filter
-        this.elements.templateSort = document.getElementById('templateSort'); // Select for template sort
-        this.elements.closeTemplateModal = document.getElementById('closeTemplateModal'); // Close template modal button
-        this.elements.saveNewTemplate = document.getElementById('saveNewTemplate'); // Save new template button
-        this.elements.importTemplateBtn = document.getElementById('importTemplateBtn'); // Import template button
-        this.elements.exportAllTemplatesBtn = document.getElementById('exportAllTemplatesBtn'); // Export all templates button
-        this.elements.addCategoryBtn = document.getElementById('addCategoryBtn'); // Add category button
-        
-        // Category modal elements
-        this.elements.categoryModal = document.getElementById('categoryModal'); // Category modal
-        this.elements.newCategoryName = document.getElementById('newCategoryName'); // Input for new category name
-        this.elements.closeCategoryModal = document.getElementById('closeCategoryModal'); // Close category modal button
-        this.elements.saveNewCategory = document.getElementById('saveNewCategory'); // Save new category button
-        
-        // Preview modal elements
-        this.elements.previewModal = document.getElementById('previewModal'); // Preview modal
-        this.elements.previewTitle = document.getElementById('previewTitle'); // Preview title
-        this.elements.previewDescription = document.getElementById('previewDescription'); // Preview description
-        this.elements.previewCategory = document.getElementById('previewCategory'); // Preview category
-        this.elements.previewCreated = document.getElementById('previewCreated'); // Preview created date
-        this.elements.previewModified = document.getElementById('previewModified'); // Preview modified date
-        this.elements.previewParts = document.getElementById('previewParts'); // Preview parts
-        this.elements.previewTotalParts = document.getElementById('previewTotalParts'); // Preview total parts
-        this.elements.previewTotalDuration = document.getElementById('previewTotalDuration'); // Preview total duration
-        this.elements.closePreviewModal = document.getElementById('closePreviewModal'); // Close preview modal button
-        this.elements.loadPreviewedTemplate = document.getElementById('loadPreviewedTemplate'); // Load previewed template button
-        this.elements.exportPreviewedTemplate = document.getElementById('exportPreviewedTemplate'); // Export previewed template button
-        
-        // Import modal elements
-        this.elements.importModal = document.getElementById('importModal'); // Import modal
-        this.elements.importFile = document.getElementById('importFile'); // Import file input
-        this.elements.importPreview = document.getElementById('importPreview'); // Import preview
-        this.elements.importList = document.getElementById('importList'); // Import list
-        this.elements.closeImportModal = document.getElementById('closeImportModal'); // Close import modal button
-        this.elements.confirmImport = document.getElementById('confirmImport'); // Confirm import button
-        
-        // Meeting scheduler elements
-        this.elements.meetingDateInput = document.getElementById('meetingDateInput'); // Meeting date input
-        this.elements.meetingStartTimeInput = document.getElementById('meetingStartTimeInput'); // Meeting start time input
-        this.elements.meetingEndTimeInput = document.getElementById('meetingEndTimeInput'); // Meeting end time input
-        this.elements.scheduleMeetingBtn = document.getElementById('scheduleMeetingBtn'); // Schedule button
-        this.elements.meetingRepeatCheckbox = document.getElementById('meetingRepeatCheckbox'); // Repeat weekly checkbox
-        this.elements.endMeetingBtn = document.getElementById('endMeetingBtn'); // End meeting button
-        this.elements.globalTimerContainer = document.getElementById('globalTimerContainer'); // Container for global timer bar
-        
-        // Confirmation modal elements
-        this.elements.confirmationModal = document.getElementById('confirmationModal'); // Confirmation modal
-        this.elements.confirmationTitle = document.getElementById('confirmationTitle'); // Confirmation title
-        this.elements.confirmationMessage = document.getElementById('confirmationMessage'); // Confirmation message
-        this.elements.cancelConfirmation = document.getElementById('cancelConfirmation'); // Cancel confirmation button
-        this.elements.confirmAction = document.getElementById('confirmAction'); // Confirm action button
-        
-        // Shortcuts modal elements
-        this.elements.shortcutsBtn = document.getElementById('shortcutsBtn'); // Shortcuts button
-        this.elements.shortcutsModal = document.getElementById('shortcutsModal'); // Shortcuts modal
-        this.elements.closeShortcutsModal = document.getElementById('closeShortcutsModal'); // Close shortcuts modal button
-        
-        // Edit mode elements
-        this.elements.editModeToggle = document.getElementById('editModeToggle'); // Edit mode toggle
-        this.elements.editModeControls = document.getElementById('editModeControls'); // Edit mode controls
-        this.elements.editModeInstructions = document.getElementById('editModeInstructions'); // Edit mode instructions
-        this.elements.addPartBtn = document.getElementById('addPartBtn'); // Add part button
-        
-        // Part editor modal elements
-        this.elements.partEditorModal = document.getElementById('partEditorModal'); // Part editor modal
-        this.elements.editPartName = document.getElementById('editPartName'); // Edit part name input
-        this.elements.editPartSpeaker = document.getElementById('editPartSpeaker'); // Edit part speaker input
-        this.elements.editPartDuration = document.getElementById('editPartDuration'); // Edit part duration input
-        this.elements.editPartComments = document.getElementById('editPartComments'); // Edit part comments checkbox
-        this.elements.closePartEditorModal = document.getElementById('closePartEditorModal'); // Close part editor modal button
-        this.elements.savePartEdits = document.getElementById('savePartEdits'); // Save part edits button
-        
-        // Add event listeners to buttons
+        this._cacheElements({
+            partsTemplate: 'partsTemplate',
+            partsDisplay: 'partsDisplay',
+            commentHistory: 'commentHistory',
+            globalCommentCount: 'globalCommentCount',
+            globalAverageDuration: 'globalAverageDuration',
+            saveTemplateBtn: 'saveTemplateBtn',
+            loadTemplateBtn: 'loadTemplateBtn',
+            templateModal: 'templateModal',
+            templatesList: 'templatesList',
+            templateName: 'templateName',
+            templateDescription: 'templateDescription',
+            templateCategory: 'templateCategory',
+            templateSearch: 'templateSearch',
+            templateCategoryFilter: 'templateCategoryFilter',
+            templateSort: 'templateSort',
+            closeTemplateModal: 'closeTemplateModal',
+            saveNewTemplate: 'saveNewTemplate',
+            importTemplateBtn: 'importTemplateBtn',
+            exportAllTemplatesBtn: 'exportAllTemplatesBtn',
+            addCategoryBtn: 'addCategoryBtn',
+            categoryModal: 'categoryModal',
+            newCategoryName: 'newCategoryName',
+            closeCategoryModal: 'closeCategoryModal',
+            saveNewCategory: 'saveNewCategory',
+            previewModal: 'previewModal',
+            previewTitle: 'previewTitle',
+            previewDescription: 'previewDescription',
+            previewCategory: 'previewCategory',
+            previewCreated: 'previewCreated',
+            previewModified: 'previewModified',
+            previewParts: 'previewParts',
+            previewTotalParts: 'previewTotalParts',
+            previewTotalDuration: 'previewTotalDuration',
+            closePreviewModal: 'closePreviewModal',
+            loadPreviewedTemplate: 'loadPreviewedTemplate',
+            exportPreviewedTemplate: 'exportPreviewedTemplate',
+            importModal: 'importModal',
+            importFile: 'importFile',
+            importPreview: 'importPreview',
+            importList: 'importList',
+            closeImportModal: 'closeImportModal',
+            confirmImport: 'confirmImport',
+            meetingDateInput: 'meetingDateInput',
+            meetingStartTimeInput: 'meetingStartTimeInput',
+            meetingEndTimeInput: 'meetingEndTimeInput',
+            scheduleMeetingBtn: 'scheduleMeetingBtn',
+            meetingRepeatCheckbox: 'meetingRepeatCheckbox',
+            endMeetingBtn: 'endMeetingBtn',
+            globalTimerContainer: 'globalTimerContainer',
+            confirmationModal: 'confirmationModal',
+            confirmationTitle: 'confirmationTitle',
+            confirmationMessage: 'confirmationMessage',
+            cancelConfirmation: 'cancelConfirmation',
+            confirmAction: 'confirmAction',
+            shortcutsBtn: 'shortcutsBtn',
+            shortcutsModal: 'shortcutsModal',
+            closeShortcutsModal: 'closeShortcutsModal',
+            editModeToggle: 'editModeToggle',
+            editModeControls: 'editModeControls',
+            editModeInstructions: 'editModeInstructions',
+            addPartBtn: 'addPartBtn',
+            partEditorModal: 'partEditorModal',
+            editPartName: 'editPartName',
+            editPartSpeaker: 'editPartSpeaker',
+            editPartDuration: 'editPartDuration',
+            editPartComments: 'editPartComments',
+            closePartEditorModal: 'closePartEditorModal',
+            savePartEdits: 'savePartEdits'
+        });
+
         this._setupEventListeners(); // eslint-disable-line no-underscore-dangle
-        
-        // Log warning for missing critical elements
         this._checkForMissingElements(); // eslint-disable-line no-underscore-dangle
+    },
+
+    _cacheElements(elementIds) {
+        Object.entries(elementIds).forEach(([name, id]) => {
+            this.elements[name] = document.getElementById(id);
+        });
     },
 
     // Populate scheduler inputs from state
