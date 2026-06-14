@@ -18,7 +18,7 @@
     <script src="render.js" defer></script>
     <script src="newFeatures.js" defer></script>
 </head>
-<body class="p-4">
+<body class="app-body">
     <!-- Theme Toggle Button -->
     <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun-icon">
@@ -84,9 +84,9 @@
 -->
     
     <!-- Main Content Container -->
-    <main class="max-w-4xl mx-auto rounded-lg shadow p-6">
+    <main class="app-shell rounded-lg shadow">
         <!-- Timer Display Section -->
-        <section id="timerSection" aria-labelledby="timer-heading" class="mt-8">
+        <section id="timerSection" aria-labelledby="timer-heading" class="timer-section">
             <div class="flex justify-between items-center mb-2">
                 <h2 id="timer-heading" class="text-xl font-bold">Life and Ministry Timer</h2>
                 <button id="editModeToggle" class="edit-mode-toggle" aria-label="Enable edit mode" aria-pressed="false" title="Edit mode">
@@ -177,7 +177,7 @@
         </div>
 
         <!-- Comment History Section -->
-        <section id="commentSection" aria-labelledby="comment-heading" class="mt-8 p-4 rounded-lg">
+        <section id="commentSection" aria-labelledby="comment-heading" class="meeting-panel comment-panel">
             <h2 id="comment-heading" class="text-lg font-bold mb-4">Total Meeting Comments</h2>
             <div id="globalCommentStats" class="mb-4 flex flex-wrap gap-4">
                 <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p>
@@ -187,8 +187,8 @@
         </section>
 
         <!-- Meeting Template Section -->
-        <section id="templateManagementSection" aria-labelledby="template-management-heading" class="mt-8">
-            <header class="flex justify-between items-center flex-wrap gap-2">
+        <section id="templateManagementSection" aria-labelledby="template-management-heading" class="meeting-panel template-panel">
+            <header class="meeting-panel-header">
                 <h2 id="template-management-heading" class="text-xl font-bold">Template Management</h2>
                 <div class="flex flex-wrap gap-2">
                     <button id="saveTemplateBtn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600" aria-label="Save current template">
