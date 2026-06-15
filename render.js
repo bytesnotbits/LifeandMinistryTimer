@@ -117,36 +117,37 @@ const render = {
         state.meetingParts.forEach((part, index) => {
             const partElement = document.createElement('div');
             partElement.className = 'bg-white p-4 rounded shadow mb-2';
+            partElement.dataset.templateIndex = index;
             partElement.innerHTML = `
                 <div class="flex flex-wrap justify-between items-center gap-2">
                     <div class="flex-1">
                         <input type="text" value="${part.name}" 
                             class="w-full px-2 py-1 border rounded" 
                             placeholder="Part name"
-                            onchange="updatePartName(${index}, this.value)">
+                            data-template-field="name">
                     </div>
                     <div class="flex-1">
                         <input type="text" value="${part.speaker}" 
                             class="w-full px-2 py-1 border rounded" 
                             placeholder="Speaker (optional)"
-                            onchange="updatePartSpeaker(${index}, this.value)">
+                            data-template-field="speaker">
                     </div>
                     <div class="w-24">
                         <input type="number" value="${Math.floor(part.duration / 60)}" 
                             class="w-full px-2 py-1 border rounded" 
                             min="1" max="60"
-                            onchange="updatePartDuration(${index}, this.value)">
+                            data-template-field="duration">
                     </div>
                     <div class="flex items-center">
                         <label class="flex items-center cursor-pointer">
                             <input type="checkbox" class="mr-1" 
                                 ${part.enableComments ? 'checked' : ''}
-                                onchange="updatePartComments(${index}, this.checked)">
+                                data-template-field="enableComments">
                             <span class="text-sm">Comments</span>
                         </label>
                     </div>
                     <div>
-                        <button onclick="removePart(${index})" 
+                        <button data-template-action="remove-part" 
                             class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                             aria-label="Remove part">
                             &times;
@@ -718,54 +719,4 @@ function formatTimeWithSign(seconds) {
     const mins = Math.floor(absSeconds / 60);
     const secs = Math.floor(absSeconds % 60);
     return `${isNegative ? '-' : ''}${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-// Update part name
-function updatePartName(index, name) {
-    if (index >= 0 && index < state.meetingParts.length) {
-        state.meetingParts[index].name = name;
-        render.templateEditor();
-    }
-}
-
-// Update part speaker
-function updatePartSpeaker(index, speaker) {
-    if (index >= 0 && index < state.meetingParts.length) {
-        state.meetingParts[index].speaker = speaker;
-        render.templateEditor();
-    }
-}
-
-// Update part duration
-function updatePartDuration(index, minutes) {
-    if (index >= 0 && index < state.meetingParts.length) {
-        const mins = parseInt(minutes) || 1;
-        state.meetingParts[index].duration = mins * 60;
-        render.templateEditor();
-        render.timerDisplay();
-    }
-}
-
-// Update part comments
-function updatePartComments(index, enableComments) {
-    if (index >= 0 && index < state.meetingParts.length) {
-        state.meetingParts[index].enableComments = enableComments;
-        render.templateEditor();
-        render.timerDisplay();
-    }
-}
-
-// Remove a part
-function removePart(index) {
-    if (index >= 0 && index < state.meetingParts.length) {
-        state.meetingParts.splice(index, 1);
-        
-        // Adjust active part if needed
-        if (state.activePart >= state.meetingParts.length) {
-            state.activePart = Math.max(0, state.meetingParts.length - 1);
-        }
-        
-        render.templateEditor();
-        render.timerDisplay();
-    }
 }

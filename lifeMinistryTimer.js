@@ -213,6 +213,7 @@ const DOM = { // eslint-disable-line no-unused-vars
     },
     _setupEventListeners() {
         this._setupTemplateListeners();
+        this._setupTemplateEditorListeners();
         this._setupModalListeners();
         this._setupSchedulerListeners();
         this._setupPartDisplayListeners();
@@ -439,6 +440,50 @@ if (this.elements.commentHistory) {
         }
     },
 
+    _setupTemplateEditorListeners() {
+        this._on(this.elements.partsTemplate, 'change', (event) => {
+            const templateCard = event.target.closest('[data-template-index]');
+            if (!templateCard) return;
+
+            const index = parseInt(templateCard.dataset.templateIndex, 10);
+            if (Number.isNaN(index) || index < 0 || index >= state.meetingParts.length) return;
+
+            const field = event.target.dataset.templateField;
+            if (!field) return;
+
+            if (field === 'duration') {
+                const minutes = parseInt(event.target.value, 10) || 1;
+                state.meetingParts[index].duration = minutes * 60;
+                render.timerDisplay();
+            } else if (field === 'enableComments') {
+                state.meetingParts[index].enableComments = event.target.checked;
+                render.timerDisplay();
+            } else if (field === 'name' || field === 'speaker') {
+                state.meetingParts[index][field] = event.target.value;
+            }
+
+            render.templateEditor();
+        });
+
+        this._on(this.elements.partsTemplate, 'click', (event) => {
+            const removeButton = event.target.closest('[data-template-action="remove-part"]');
+            if (!removeButton) return;
+
+            const templateCard = removeButton.closest('[data-template-index]');
+            if (!templateCard) return;
+
+            const index = parseInt(templateCard.dataset.templateIndex, 10);
+            if (Number.isNaN(index) || index < 0 || index >= state.meetingParts.length) return;
+
+            state.meetingParts.splice(index, 1);
+            if (state.activePart >= state.meetingParts.length) {
+                state.activePart = Math.max(0, state.meetingParts.length - 1);
+            }
+
+            render.templateEditor();
+            render.timerDisplay();
+        });
+    },
     _setupTemplateListeners() {
         this._on(this.elements.saveTemplateBtn, 'click', () => {
             this.elements.templateName.value = '';
