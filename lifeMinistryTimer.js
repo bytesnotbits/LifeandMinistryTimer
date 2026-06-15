@@ -976,10 +976,10 @@ let state = {
         document.addEventListener('visibilitychange', this._handleVisibilityChange.bind(this));
         this._visibilityChangeHandlerSet = true;
         
-        // If a meeting is scheduled, ensure global timer interval is running
+        // If a meeting is scheduled, start it if due and keep the global timer current.
         if (this.meetingScheduledStart) {
+            this.startMeetingIfDue();
             this._setupMeetingInterval();
-            // render initial meeting bar so UI reflects saved schedule
             render.globalTimerDisplay();
         }
     },
@@ -1126,11 +1126,7 @@ let state = {
             this.meetingOverride = null;
         }
 
-        // If the start time is already in the past, mark meeting as started immediately.
-        // Elapsed progress still uses meetingScheduledStart as the baseline.
-        if (meetingScheduleModel.shouldStartMeeting(this, Date.now())) {
-            this.startMeeting();
-        } else {
+        if (!this.startMeetingIfDue()) {
             this.saveState();
         }
         this._setupMeetingInterval();
@@ -1159,10 +1155,7 @@ let state = {
         this.meetingActualEnd = null;
         this.meetingIsRunning = false;
 
-        // Match scheduleMeeting behavior for past start times.
-        if (meetingScheduleModel.shouldStartMeeting(this, Date.now())) {
-            this.startMeeting();
-        } else {
+        if (!this.startMeetingIfDue()) {
             this.saveState();
         }
         this._setupMeetingInterval();
@@ -1175,10 +1168,7 @@ let state = {
 
         this.meetingInterval = setInterval(() => {
             const now = Date.now();
-            // auto-start if scheduled and time has arrived
-            if (meetingScheduleModel.shouldStartMeeting(this, now)) {
-                this.startMeeting();
-            }
+            this.startMeetingIfDue(now);
             // Failsafe: if meeting is running and 1.5x scheduled duration has elapsed since scheduled start, auto-end
             if (meetingScheduleModel.shouldAutoEndMeeting(this, now)) {
                 notify.show('Meeting automatically ended (failsafe)', 'info');
@@ -1202,6 +1192,14 @@ let state = {
         // when meeting starts we don't need separate interval—the _setupMeetingInterval covers updates
         // play a notification if desired
         this.saveState();
+    },
+
+    startMeetingIfDue(now = Date.now()) {
+        if (!meetingScheduleModel.shouldStartMeeting(this, now)) {
+            return false;
+        }
+        this.startMeeting();
+        return true;
     },
 
     // User ends the meeting
@@ -1306,6 +1304,12 @@ let state = {
     
     // Handle visibility change events
     _handleVisibilityChange() {
+        if (!document.hidden && this.meetingScheduledStart) {
+            this.startMeetingIfDue();
+            this._setupMeetingInterval();
+            render.globalTimerDisplay();
+        }
+
         if (this.isRunning) {
             if (document.hidden) {
                 // Page is now hidden
