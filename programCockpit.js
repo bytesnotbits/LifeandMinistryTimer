@@ -484,7 +484,9 @@ const programCockpit = {
     },
 
     renderHeader() {
-        const totalDuration = state.meetingParts.reduce((sum, part) => sum + (part.duration || 0), 0);
+        const totalDuration = typeof getActiveMeetingPlannedSeconds === 'function'
+            ? getActiveMeetingPlannedSeconds()
+            : state.meetingParts.reduce((sum, part) => sum + (part.duration || 0), 0);
         this.setText('programWeekLabel', this.meta.week || 'Not imported');
         this.setText('programReadingLabel', this.meta.reading || '-');
         this.setText('programDurationLabel', formatMeetingTime(totalDuration));
@@ -522,7 +524,9 @@ const programCockpit = {
         if (!container) return;
 
         const current = state.meetingParts[state.activePart];
-        const totalPlanned = state.meetingParts.reduce((sum, part) => sum + part.duration, 0);
+        const totalPlanned = typeof getActiveMeetingPlannedSeconds === 'function'
+            ? getActiveMeetingPlannedSeconds()
+            : state.meetingParts.reduce((sum, part) => sum + part.duration, 0);
         const totalElapsed = Object.values(state.elapsedTimes).reduce((sum, seconds) => sum + Number(seconds || 0), 0);
         const variance = totalElapsed - totalPlanned;
         const next = state.meetingParts[state.activePart + 1];

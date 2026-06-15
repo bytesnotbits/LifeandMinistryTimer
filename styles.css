@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer - Styles
- * Version 2.1.0
+ * Version 2.2.0
  * 
  * Styles for the Life and Ministry Timer application
  */
@@ -675,13 +675,72 @@ main {
     border-bottom: 1px solid var(--border-color);
 }
 
+.active-timer-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.55rem;
+}
+
+.active-timer-panel {
+    min-width: 0;
+}
+
+.active-timer-label-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-light);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.active-timer-label-row strong {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-color);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .global-progress-bar {
     /* reuse progress-bar styles; height set via element */
     position: relative; /* ensure inner elements can use absolute positioning */
 }
 
+.global-segments {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.global-segment {
+    position: absolute;
+    top: 0.2rem;
+    bottom: 0.2rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.85);
+    border-right: 1px solid rgba(0, 0, 0, 0.18);
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.global-progress-bar .left-label,
+.global-progress-bar .countdown,
+.part-progress-bar .left-label,
+.part-progress-bar .countdown {
+    z-index: 3;
+}
+
 .global-progress-bar .progress-bar-bg {
+    position: relative;
+    z-index: 1;
     transition: background-color 0.3s ease, opacity 0.5s ease;
+}
+
+.part-progress-bar .progress-bar-bg {
+    position: relative;
+    z-index: 1;
 }
 
 .global-progress-bar .progress-bar-bg.overtime-pulse {
@@ -703,6 +762,13 @@ main {
 
 .meeting-scheduler {
     margin-bottom: 1rem;
+}
+
+@media (min-width: 880px) {
+    .active-timer-grid:has(.active-timer-panel:not(.hidden) + .active-timer-panel:not(.hidden)) {
+        grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+        align-items: end;
+    }
 }
 
 /* Toast notifications */

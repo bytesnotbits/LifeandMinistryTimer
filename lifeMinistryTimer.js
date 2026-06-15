@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer
- * Version 2.0.0
+ * Version 2.2.0
  * 
  * A comprehensive timer application for managing meeting parts,
  * tracking comments, and maintaining meeting templates.
@@ -1131,6 +1131,9 @@ let state = {
         }
         this._setupMeetingInterval();
         render.globalTimerDisplay();
+        if (typeof programCockpit !== 'undefined') {
+            programCockpit.renderAll();
+        }
     },
 
     scheduleNextWeeklyMeeting(afterTs = Date.now()) {
@@ -1160,6 +1163,9 @@ let state = {
         }
         this._setupMeetingInterval();
         render.globalTimerDisplay();
+        if (typeof programCockpit !== 'undefined') {
+            programCockpit.renderAll();
+        }
     },
 
     // Internal: ensure meeting interval is running
@@ -1209,6 +1215,9 @@ let state = {
         this.meetingActualEnd = Date.now();
         this.saveState();
         render.globalTimerDisplay();
+        if (typeof programCockpit !== 'undefined') {
+            programCockpit.renderAll();
+        }
         // clear interval now since meeting is over
         if (this.meetingInterval) {
             clearInterval(this.meetingInterval);

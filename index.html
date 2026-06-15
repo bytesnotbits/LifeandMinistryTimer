@@ -245,10 +245,30 @@
             </div>
             <!-- Global meeting timer bar (sticky) -->
             <div id="globalTimerContainer" class="global-timer-container hidden">
-                <div class="global-progress-bar progress-bar h-10 relative">
-                    <div id="globalProgress" class="progress-bar-bg bg-green-500" style="width:0%"></div>
-                    <span id="globalTimerLabel" class="left-label"></span>
-                    <span id="globalTimerRemaining" class="countdown"></span>
+                <div class="active-timer-grid">
+                    <div id="globalTimerPanel" class="active-timer-panel">
+                        <div class="active-timer-label-row">
+                            <span>Meeting</span>
+                            <strong id="globalTimerStatus"></strong>
+                        </div>
+                        <div class="global-progress-bar progress-bar h-10 relative">
+                            <div id="globalSegments" class="global-segments" aria-hidden="true"></div>
+                            <div id="globalProgress" class="progress-bar-bg bg-green-500" style="width:0%"></div>
+                            <span id="globalTimerLabel" class="left-label"></span>
+                            <span id="globalTimerRemaining" class="countdown"></span>
+                        </div>
+                    </div>
+                    <div id="activePartTimerPanel" class="active-timer-panel">
+                        <div class="active-timer-label-row">
+                            <span>Current Part</span>
+                            <strong id="activePartTimerName"></strong>
+                        </div>
+                        <div class="part-progress-bar progress-bar h-10 relative">
+                            <div id="activePartProgress" class="progress-bar-bg bg-blue-500" style="width:0%"></div>
+                            <span id="activePartTimerLabel" class="left-label"></span>
+                            <span id="activePartTimerRemaining" class="countdown"></span>
+                        </div>
+                    </div>
                 </div>
                 <div class="mt-2">
                     <button id="endMeetingBtn" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 hidden">

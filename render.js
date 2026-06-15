@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer - Rendering Module
- * Version 2.1.0
+ * Version 2.2.0
  * 
  * Handles all DOM updates and rendering for the Life and Ministry Timer application
  */
@@ -22,6 +22,9 @@ function buildCommentStatsByPart() {
     });
     return stats;
 }
+
+const GLOBAL_MEETING_EDGE_BUFFER_SECONDS = 5 * 60;
+const GLOBAL_MEETING_MID_SONG_GAP_SECONDS = 3 * 60;
 
 //----------------------------------------------------------------------------------------------
 // RENDERING - Handles all DOM updates
@@ -59,18 +62,32 @@ const render = {
     globalTimerDisplay() {
         const container = document.getElementById('globalTimerContainer');
         if (!container) return;
-        // if no schedule, hide
-        if (!state.meetingScheduledStart) {
+
+        const currentPart = state.meetingParts[state.activePart];
+        const currentPartElapsed = state.elapsedTimes[state.activePart] || 0;
+        const hasGlobalTimer = !!state.meetingScheduledStart;
+        const hasActivePartTimer = !!currentPart && (state.isRunning || currentPartElapsed > 0);
+
+        if (!hasGlobalTimer && !hasActivePartTimer) {
             container.classList.add('hidden');
             return;
         }
+
         container.classList.remove('hidden');
+
+        const globalPanel = document.getElementById('globalTimerPanel');
+        if (globalPanel) {
+            globalPanel.classList.toggle('hidden', !hasGlobalTimer);
+        }
+
+        const activePartPanel = document.getElementById('activePartTimerPanel');
+        if (activePartPanel) {
+            activePartPanel.classList.toggle('hidden', !hasActivePartTimer);
+        }
+
         const now = Date.now();
         const displayState = meetingScheduleModel.getDisplayState(state, now);
-        if (!displayState) {
-            container.classList.add('hidden');
-            return;
-        }
+        if (hasGlobalTimer && displayState) {
         const bar = document.getElementById('globalProgress');
         if (bar) {
             bar.style.width = displayState.percent + '%';
@@ -81,6 +98,16 @@ const render = {
                 bar.classList.remove('overtime-pulse');
             }
         }
+        const segments = document.getElementById('globalSegments');
+        if (segments) {
+            segments.innerHTML = buildGlobalMeetingSegments(displayState.totalSec)
+                .map((segment) => `
+                    <span class="global-segment"
+                        style="left:${segment.left}%;width:${segment.width}%"
+                        title="${escapeHtmlAttribute(segment.title)}"></span>
+                `)
+                .join('');
+        }
         const label = document.getElementById('globalTimerLabel');
         if (label) {
             label.textContent = formatMeetingTime(displayState.elapsed);
@@ -89,12 +116,51 @@ const render = {
         if (remainingLabel) {
             remainingLabel.textContent = displayState.totalSec > 0 ? formatMeetingTimeWithSign(displayState.remaining) : '';
         }
+        const statusLabel = document.getElementById('globalTimerStatus');
+        if (statusLabel) {
+            statusLabel.textContent = displayState.isOvertime ? 'Overtime' : formatMeetingTime(displayState.totalSec);
+        }
         const endBtn = document.getElementById('endMeetingBtn');
         if (endBtn) {
             if (displayState.canEnd) {
                 endBtn.classList.remove('hidden');
             } else {
                 endBtn.classList.add('hidden');
+            }
+        }
+        } else {
+            const endBtn = document.getElementById('endMeetingBtn');
+            if (endBtn) {
+                endBtn.classList.add('hidden');
+            }
+        }
+
+        if (hasActivePartTimer && currentPart) {
+            const partDuration = currentPart.duration || 0;
+            const partPercent = partDuration > 0 ? Math.min(100, (currentPartElapsed / partDuration) * 100) : 0;
+            const partProgress = document.getElementById('activePartProgress');
+            if (partProgress) {
+                partProgress.style.width = `${partPercent}%`;
+                partProgress.classList.remove('bg-blue-500', 'bg-yellow-500', 'bg-red-500');
+                if (partPercent >= 90) {
+                    partProgress.classList.add('bg-red-500');
+                } else if (partPercent >= 75) {
+                    partProgress.classList.add('bg-yellow-500');
+                } else {
+                    partProgress.classList.add('bg-blue-500');
+                }
+            }
+            const partName = document.getElementById('activePartTimerName');
+            if (partName) {
+                partName.textContent = currentPart.name || 'Selected part';
+            }
+            const partElapsed = document.getElementById('activePartTimerLabel');
+            if (partElapsed) {
+                partElapsed.textContent = formatTime(currentPartElapsed);
+            }
+            const partRemaining = document.getElementById('activePartTimerRemaining');
+            if (partRemaining) {
+                partRemaining.textContent = formatTimeWithSign(partDuration - currentPartElapsed);
             }
         }
     },
@@ -468,6 +534,8 @@ const render = {
             // Keep spacing stable by always rendering drop zones.
             this._addDropZone(container, index + 1);
         });
+
+        this.globalTimerDisplay();
     },
 
     // Update live timer values without rebuilding cards (preserves inline edit focus/typing)
@@ -530,6 +598,8 @@ const render = {
                 }
             }
         }
+
+        this.globalTimerDisplay();
     },
     
     // Add a drop zone for drag and drop
@@ -679,6 +749,72 @@ const render = {
 //----------------------------------------------------------------------------------------------
 // UTILITY FUNCTIONS
 //----------------------------------------------------------------------------------------------
+
+function getActiveMeetingPlannedSeconds() {
+    if (state.meetingScheduledStart && state.meetingScheduledEnd) {
+        const durationMs = meetingScheduleModel.getDurationMs(state.meetingScheduledStart, state.meetingScheduledEnd);
+        if (durationMs && durationMs > 0) {
+            return Math.round(durationMs / 1000);
+        }
+    }
+
+    return state.meetingParts.reduce((sum, part) => sum + (part.duration || 0), 0);
+}
+
+function hasMidMeetingSongGap(previousPart, nextPart) {
+    if (!previousPart || !nextPart) {
+        return false;
+    }
+
+    const previousSection = previousPart.section || '';
+    const nextSection = nextPart.section || '';
+    return previousSection !== nextSection && /living as christians/i.test(nextSection);
+}
+
+function buildGlobalMeetingSegments(totalSec) {
+    if (!totalSec || totalSec <= 0 || !state.meetingParts.length) {
+        return [];
+    }
+
+    const bufferSec = Math.min(GLOBAL_MEETING_EDGE_BUFFER_SECONDS, totalSec / 4);
+    const interiorSec = Math.max(0, totalSec - (bufferSec * 2));
+    if (interiorSec <= 0) {
+        return [];
+    }
+
+    const gapSecondsByIndex = state.meetingParts.map((part, index) => {
+        const previousPart = index > 0 ? state.meetingParts[index - 1] : null;
+        return hasMidMeetingSongGap(previousPart, part) ? GLOBAL_MEETING_MID_SONG_GAP_SECONDS : 0;
+    });
+    const totalGapSec = gapSecondsByIndex.reduce((sum, seconds) => sum + seconds, 0);
+    const segmentPoolSec = Math.max(0, interiorSec - Math.min(totalGapSec, interiorSec / 3));
+    const sourceDurationSec = state.meetingParts.reduce((sum, part) => sum + Math.max(0, part.duration || 0), 0);
+    const fallbackDurationSec = state.meetingParts.length;
+
+    let cursorSec = bufferSec;
+    return state.meetingParts.map((part, index) => {
+        cursorSec += gapSecondsByIndex[index] || 0;
+        const sourcePartSec = sourceDurationSec > 0 ? Math.max(0, part.duration || 0) : 1;
+        const denominator = sourceDurationSec > 0 ? sourceDurationSec : fallbackDurationSec;
+        const widthSec = denominator > 0 ? (sourcePartSec / denominator) * segmentPoolSec : 0;
+        const segment = {
+            left: Math.max(0, Math.min(100, (cursorSec / totalSec) * 100)),
+            width: Math.max(0.3, Math.min(100, (widthSec / totalSec) * 100)),
+            title: `${part.name || 'Meeting part'}: ${formatTime(part.duration || 0)}`
+        };
+        cursorSec += widthSec;
+        return segment;
+    });
+}
+
+function escapeHtmlAttribute(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 // Format seconds as MM:SS
 function formatTime(seconds) {

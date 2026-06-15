@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer - New Features
- * Version 2.1.0
+ * Version 2.2.0
  * 
  * Additional features for the Life and Ministry Timer application
  */
