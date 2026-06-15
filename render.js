@@ -769,22 +769,3 @@ function removePart(index) {
         render.timerDisplay();
     }
 }
-
-// Reset all timers
-function resetData() {
-    if (confirm('Are you sure you want to reset all timers? This will keep your template but clear all timing data.')) {
-        state.resetTimers();
-        render.timerDisplay();
-        render.comments();
-    }
-}
-
-// Clear all data and reset to defaults
-function clearLocalStorage() {
-    if (confirm('Are you sure you want to clear all data? This will reset the template to default and clear all timing data.')) {
-        state.clearAllData();
-        render.templateEditor();
-        render.timerDisplay();
-        render.comments();
-    }
-}

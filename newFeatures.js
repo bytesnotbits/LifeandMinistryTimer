@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-        // Template action buttons
+    // Template action buttons
     const generateReportBtn = document.getElementById('generateReportBtn');
     if (generateReportBtn) {
         generateReportBtn.addEventListener('click', () => {
@@ -314,17 +314,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetTimersBtn = document.getElementById('resetTimersBtn');
     if (resetTimersBtn) {
         resetTimersBtn.addEventListener('click', () => {
-            resetData();
+            if (confirm('Are you sure you want to reset all timers? This will keep your template but clear all timing data.')) {
+                state.resetTimers();
+                render.timerDisplay();
+                render.comments();
+            }
         });
     }
 
     const clearTemplateBtn = document.getElementById('clearTemplateBtn');
     if (clearTemplateBtn) {
         clearTemplateBtn.addEventListener('click', () => {
-            clearLocalStorage();
+            if (confirm('Are you sure you want to clear all data? This will reset the template to default and clear all timing data.')) {
+                state.clearAllData();
+                render.templateEditor();
+                render.timerDisplay();
+                render.comments();
+            }
         });
     }
-// Add beforeunload event listener to confirm page refresh when timer is running
+    
+    // Add beforeunload event listener to confirm page refresh when timer is running
     window.addEventListener('beforeunload', (event) => {
         if (state.isRunning) {
             // Standard way to show a confirmation dialog
