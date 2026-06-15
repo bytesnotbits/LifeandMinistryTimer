@@ -705,6 +705,49 @@ main {
     margin-bottom: 1rem;
 }
 
+/* Toast notifications */
+.toast-notifications {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1100;
+    display: grid;
+    gap: 0.5rem;
+    width: min(24rem, calc(100vw - 2rem));
+    pointer-events: none;
+}
+
+.toast {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-left: 0.35rem solid var(--primary-color);
+    border-radius: 0.5rem;
+    color: var(--text-color);
+    background: var(--bg-card);
+    box-shadow: 0 10px 25px var(--shadow-color);
+    font-weight: 650;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast-success {
+    border-left-color: var(--success-color);
+}
+
+.toast-error {
+    border-left-color: var(--danger-color);
+}
+
+.toast-warning {
+    border-left-color: var(--warning-color);
+}
+
+.toast-hiding {
+    opacity: 0;
+    transform: translateY(-0.35rem);
+}
+
 /* Timer controls */
 .timer-controls {
     display: flex;

@@ -2731,6 +2731,26 @@ document.addEventListener('DOMContentLoaded', () => {
 const notify = {
     show(message, type = 'info') {
         console.log(`[${type.toUpperCase()}] ${message}`);
-        // In a real app, this would show a toast notification
+
+        let container = document.getElementById('toastNotifications');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toastNotifications';
+            container.className = 'toast-notifications';
+            container.setAttribute('aria-live', 'polite');
+            container.setAttribute('aria-atomic', 'true');
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+        toast.textContent = message;
+        container.appendChild(toast);
+
+        window.setTimeout(() => {
+            toast.classList.add('toast-hiding');
+            toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+        }, 3500);
     }
 };
