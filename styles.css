@@ -65,9 +65,35 @@ main {
     align-items: start;
 }
 
+.meeting-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.meeting-workspace,
+.admin-sidebar,
 .timer-section,
 .meeting-panel {
     min-width: 0;
+}
+
+.meeting-workspace {
+    display: grid;
+    gap: 1rem;
+}
+
+.meeting-live-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.admin-sidebar {
+    display: grid;
+    gap: 1rem;
 }
 
 .timer-section {
@@ -83,6 +109,10 @@ main {
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     background: linear-gradient(180deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0));
+}
+
+.admin-panel {
+    align-self: start;
 }
 
 [data-theme="dark"] .program-cockpit {
@@ -253,20 +283,6 @@ main {
     color: var(--danger-color);
 }
 
-.cockpit-workspace {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1rem;
-    align-items: start;
-}
-
-.cockpit-main {
-    min-width: 0;
-}
-
-.cockpit-timer-rail {
-    min-width: 0;
-}
 
 .section-summary {
     display: grid;
@@ -683,12 +699,13 @@ main {
 /* Global meeting timer bar */
 .global-timer-container {
     position: sticky;
-    top: 1rem;
+    top: 0.75rem;
     z-index: 90;
     padding: 0.75rem;
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
 }
 
 .active-timer-grid {
@@ -781,8 +798,13 @@ main {
 }
 
 @media (min-width: 880px) {
-    .cockpit-workspace {
-        grid-template-columns: minmax(0, 1fr) minmax(18rem, 26rem);
+    .meeting-live-header {
+        grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+    }
+
+    .meeting-workspace .active-timer-grid:has(.active-timer-panel:not(.hidden) + .active-timer-panel:not(.hidden)) {
+        grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.9fr);
+        align-items: end;
     }
 }
 
@@ -1243,17 +1265,20 @@ main {
     }
 
     .app-shell {
-        grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
         gap: 1.5rem;
     }
 
-    .timer-section {
-        grid-row: 1 / span 3;
+    .meeting-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
+        gap: 1.5rem;
     }
 
-    .comment-panel,
-    .template-panel {
-        align-self: start;
+    .admin-sidebar {
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2rem);
+        overflow: auto;
+        padding-right: 0.15rem;
     }
 
     #commentHistory {
@@ -1337,4 +1362,49 @@ main {
 }
 [data-theme="dark"] .dark\:bg-gray-700:not(:checked) + div {
      background-color: #374151 !important; /* Tailwind dark gray */
+}
+
+.meeting-run-panel {
+    min-width: 0;
+}
+
+.admin-sidebar .cockpit-title {
+    font-size: 1.25rem;
+}
+
+.admin-sidebar .cockpit-hero {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-sidebar .cockpit-subtitle,
+.admin-sidebar .import-panel p,
+.admin-sidebar .meeting-scheduler p {
+    font-size: 0.86rem;
+}
+
+.admin-sidebar .meeting-schedule-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-sidebar .meeting-schedule-row strong,
+.admin-sidebar .meeting-schedule-row button {
+    grid-column: 1 / -1;
+}
+
+.admin-sidebar .one-time-schedule > div {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-sidebar .meeting-panel-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-sidebar .meeting-panel-header .flex {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-sidebar .meeting-panel-header button {
+    min-height: 2.35rem;
 }
