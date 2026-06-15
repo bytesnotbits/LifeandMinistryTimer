@@ -217,35 +217,7 @@ const DOM = { // eslint-disable-line no-unused-vars
         this._setupSchedulerListeners();
         this._setupPartDisplayListeners();
         this._setupCommentHistoryListeners();
-
-        // Edit mode toggle
-        if (this.elements.editModeToggle) { // Edit mode toggle
-            this.elements.editModeToggle.addEventListener('click', () => {
-                state.toggleEditMode(); // Toggle edit mode
-            });
-        }
-
-        // Part editor modal buttons
-        if (this.elements.closePartEditorModal) { // Close part editor modal button
-            this.elements.closePartEditorModal.addEventListener('click', () => {
-                state.cancelPartEdits(); // Cancel part edits
-            });
-        }
-
-        if (this.elements.savePartEdits) { // Save part edits button
-            this.elements.savePartEdits.addEventListener('click', () => {
-                state.savePartEdits(); // Save part edits
-            });
-        }
-
-        // Add part button (The global one at the bottom in edit mode)
-        this._on(this.elements.addPartBtn, 'click', () => {
-            if (state.isEditMode) {
-                // Use the new addPart method when in edit mode
-                state.addPart(); // This adds to the end
-            }
-            // Removed legacy behavior as it's probably not needed now
-        });
+        this._setupEditListeners();
     }, // End of _setupEventListeners
 
     
@@ -430,6 +402,36 @@ if (this.elements.commentHistory) {
                  }
              });
         } // End of commentHistory listener
+    },
+    _setupEditListeners() {
+// Edit mode toggle
+        if (this.elements.editModeToggle) { // Edit mode toggle
+            this.elements.editModeToggle.addEventListener('click', () => {
+                state.toggleEditMode(); // Toggle edit mode
+            });
+        }
+
+        // Part editor modal buttons
+        if (this.elements.closePartEditorModal) { // Close part editor modal button
+            this.elements.closePartEditorModal.addEventListener('click', () => {
+                state.cancelPartEdits(); // Cancel part edits
+            });
+        }
+
+        if (this.elements.savePartEdits) { // Save part edits button
+            this.elements.savePartEdits.addEventListener('click', () => {
+                state.savePartEdits(); // Save part edits
+            });
+        }
+
+        // Add part button (The global one at the bottom in edit mode)
+        this._on(this.elements.addPartBtn, 'click', () => {
+            if (state.isEditMode) {
+                // Use the new addPart method when in edit mode
+                state.addPart(); // This adds to the end
+            }
+            // Removed legacy behavior as it's probably not needed now
+        });
     },
     _on(element, eventName, handler) {
         if (element) {
