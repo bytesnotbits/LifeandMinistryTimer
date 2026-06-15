@@ -237,18 +237,22 @@ const programCockpit = {
             const isClosing = /concluding comments/i.test(line);
             const isSongOnly = /^song\s+\d+$/i.test(line);
 
+            if (isSongOnly) {
+                continue;
+            }
+
             if (!isPartHeading && !isOpening && !isClosing && !isSongOnly) {
                 continue;
             }
 
-            const duration = sameLineDuration || nextLineDuration || (isSongOnly ? 0 : null);
+            const duration = sameLineDuration || nextLineDuration || this.inferDefaultDuration(line, currentSection);
             if (duration === null) {
                 continue;
             }
 
-            const name = this.cleanPartName(line);
+            const name = isOpening ? 'Opening Comments' : isClosing ? 'Concluding Comments' : this.cleanPartName(line);
             const detailLines = this.collectDetails(lines, index + 1);
-            const section = isOpening ? 'Opening' : isClosing ? 'Closing' : isSongOnly ? currentSection : currentSection;
+            const section = isOpening ? 'Opening' : isClosing ? 'Closing' : currentSection;
             const type = this.inferPartType(name, section, detailLines.join(' '));
 
             parts.push({
@@ -335,9 +339,22 @@ const programCockpit = {
         return match ? parseInt(match[1], 10) : null;
     },
 
+    inferDefaultDuration(line, section = '') {
+        const text = String(line || '').toLowerCase();
+        if (/opening comments/.test(text)) return 1;
+        if (/concluding comments/.test(text)) return 3;
+        if (/^1\.\s+/.test(text) && section === "Treasures From God's Word") return 10;
+        if (/spiritual gems/.test(text)) return 10;
+        if (/bible reading/.test(text)) return 4;
+        if (/starting a conversation/.test(text)) return 3;
+        if (/following up/.test(text)) return 4;
+        if (/making disciples/.test(text)) return 5;
+        if (/congregation bible study/.test(text)) return 30;
+        return null;
+    },
+
     cleanPartName(line) {
         return line
-            .replace(/^\d+\.\s*/, '')
             .replace(/\(\d+\s*min\.\)/ig, '')
             .replace(/\s*\|\s*/g, ' | ')
             .replace(/\s+/g, ' ')
