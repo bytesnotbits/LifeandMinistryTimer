@@ -76,6 +76,315 @@ main {
     gap: 1rem;
 }
 
+.program-cockpit {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0));
+}
+
+[data-theme="dark"] .program-cockpit {
+    background: linear-gradient(180deg, rgba(96, 165, 250, 0.12), rgba(31, 41, 55, 0));
+}
+
+.cockpit-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 0.8fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.cockpit-kicker {
+    margin: 0 0 0.35rem;
+    color: var(--primary-color);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.cockpit-title {
+    margin: 0;
+    font-size: clamp(1.4rem, 2vw, 2rem);
+    line-height: 1.15;
+}
+
+.cockpit-subtitle {
+    margin: 0.5rem 0 0;
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+.cockpit-summary {
+    display: grid;
+    gap: 0.6rem;
+    padding: 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-card);
+}
+
+.cockpit-summary > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: baseline;
+}
+
+.summary-label {
+    color: var(--text-light);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+}
+
+.cockpit-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.cockpit-tab {
+    min-height: 2.25rem;
+    padding: 0 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    color: var(--text-color);
+    background: var(--bg-card);
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.cockpit-tab.active {
+    color: #fff;
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+}
+
+.program-view {
+    display: none;
+}
+
+.program-view.active {
+    display: block;
+}
+
+.import-panel {
+    display: grid;
+    gap: 0.85rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-card);
+}
+
+.import-panel h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+}
+
+.import-panel p {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.import-controls,
+.import-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.import-controls input,
+.import-panel textarea {
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 0.45rem;
+    background: var(--bg-card);
+    color: var(--text-color);
+}
+
+.import-controls input {
+    flex: 1 1 24rem;
+    min-height: 2.5rem;
+    padding: 0 0.75rem;
+}
+
+.import-panel textarea {
+    padding: 0.75rem;
+    resize: vertical;
+}
+
+.import-controls button,
+.import-actions button {
+    min-height: 2.5rem;
+    padding: 0 0.9rem;
+    border: 1px solid var(--primary-color);
+    border-radius: 0.45rem;
+    color: #fff;
+    background: var(--primary-color);
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.import-actions button:nth-child(2) {
+    color: var(--text-color);
+    border-color: var(--border-color);
+    background: var(--bg-card);
+}
+
+#programImportStatus {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+#programImportStatus[data-status="success"] {
+    color: var(--success-color);
+}
+
+#programImportStatus[data-status="warning"] {
+    color: var(--warning-color);
+}
+
+#programImportStatus[data-status="error"] {
+    color: var(--danger-color);
+}
+
+.section-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.section-pill {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-card);
+}
+
+.section-pill span {
+    display: block;
+    color: var(--text-light);
+    font-size: 0.82rem;
+}
+
+.run-dashboard,
+.review-dashboard {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.run-now,
+.run-next {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-card);
+}
+
+.run-label {
+    color: var(--text-light);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.run-now h3 {
+    margin: 0.2rem 0;
+    font-size: 1.35rem;
+}
+
+.run-now p,
+.run-next p {
+    margin: 0.2rem 0 0;
+    color: var(--text-light);
+}
+
+.run-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 0.7rem;
+    margin-top: 1rem;
+}
+
+.run-metrics div {
+    padding: 0.75rem;
+    border-radius: 0.45rem;
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.run-metrics span {
+    display: block;
+    color: var(--text-light);
+    font-size: 0.78rem;
+}
+
+.run-metrics strong {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 1.1rem;
+}
+
+.review-table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-card);
+}
+
+.review-table th,
+.review-table td {
+    padding: 0.7rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.review-table th {
+    color: var(--text-light);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+}
+
+.review-table .behind {
+    color: var(--danger-color);
+    font-weight: 700;
+}
+
+.review-table .ahead {
+    color: var(--success-color);
+    font-weight: 700;
+}
+
+.empty-copy {
+    margin: 0;
+    color: var(--text-light);
+}
+
+.part-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: -0.15rem 0 0.65rem;
+}
+
+.part-meta-row span {
+    padding: 0.16rem 0.45rem;
+    border-radius: 999px;
+    color: var(--text-light);
+    background: rgba(107, 114, 128, 0.12);
+    font-size: 0.72rem;
+}
+
 .meeting-panel {
     padding: 1rem;
     border: 1px solid var(--border-color);

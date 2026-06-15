@@ -17,6 +17,7 @@
     <script src="lifeMinistryTimer.js" defer></script>
     <script src="render.js" defer></script>
     <script src="newFeatures.js" defer></script>
+    <script src="programCockpit.js" defer></script>
 </head>
 <body class="app-body">
     
@@ -95,6 +96,65 @@
                 </button>
             </div>
         </header>
+        <!-- Program Cockpit Section -->
+        <section id="programCockpit" class="program-cockpit" aria-labelledby="program-cockpit-heading">
+            <div class="cockpit-hero">
+                <div>
+                    <p class="cockpit-kicker">Life and Ministry Meeting</p>
+                    <h2 id="program-cockpit-heading" class="cockpit-title">Prepare, run, and review this week's program</h2>
+                    <p id="programSubtitle" class="cockpit-subtitle">Import a weekly meeting page, assign names, then run the program as a live meeting flow.</p>
+                </div>
+                <div class="cockpit-summary" aria-label="Program summary">
+                    <div>
+                        <span class="summary-label">Week</span>
+                        <strong id="programWeekLabel">Not imported</strong>
+                    </div>
+                    <div>
+                        <span class="summary-label">Bible Reading</span>
+                        <strong id="programReadingLabel">-</strong>
+                    </div>
+                    <div>
+                        <span class="summary-label">Planned Time</span>
+                        <strong id="programDurationLabel">0:00</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cockpit-tabs" role="tablist" aria-label="Meeting workflow">
+                <button type="button" class="cockpit-tab active" data-program-view="prepare" role="tab" aria-selected="true">Prepare</button>
+                <button type="button" class="cockpit-tab" data-program-view="run" role="tab" aria-selected="false">Run</button>
+                <button type="button" class="cockpit-tab" data-program-view="review" role="tab" aria-selected="false">Review</button>
+            </div>
+
+            <div id="programPrepareView" class="program-view active">
+                <div class="import-panel">
+                    <div>
+                        <h3>Import Weekly Program</h3>
+                        <p>Paste a Watchtower Online Library meeting URL. If browser security blocks the fetch, paste the page text below and import from text.</p>
+                    </div>
+                    <div class="import-controls">
+                        <input id="wolImportUrl" type="url" placeholder="https://wol.jw.org/en/wol/d/r1/lp-e/202026168" aria-label="Weekly meeting URL">
+                        <button id="fetchWolProgramBtn" type="button">Fetch URL</button>
+                    </div>
+                    <textarea id="wolImportText" rows="7" placeholder="Optional fallback: paste the copied meeting page text here." aria-label="Meeting page text"></textarea>
+                    <div class="import-actions">
+                        <button id="importWolTextBtn" type="button">Import From Text</button>
+                        <button id="loadSampleProgramBtn" type="button">Load Sample Week</button>
+                        <span id="programImportStatus" role="status" aria-live="polite"></span>
+                    </div>
+                </div>
+                <div id="programSectionSummary" class="section-summary" aria-label="Imported meeting sections"></div>
+            </div>
+
+            <div id="programRunView" class="program-view">
+                <div id="runDashboard" class="run-dashboard" aria-live="polite"></div>
+            </div>
+
+            <div id="programReviewView" class="program-view">
+                <div id="reviewDashboard" class="review-dashboard"></div>
+            </div>
+        </section>
+
         <!-- Timer Display Section -->
         <section id="timerSection" aria-labelledby="timer-heading" class="timer-section">
             <div class="section-heading">
