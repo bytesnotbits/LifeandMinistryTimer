@@ -66,23 +66,16 @@ const render = {
         }
         container.classList.remove('hidden');
         const now = Date.now();
-        const start = state.meetingScheduledStart;
-        const end = state.meetingScheduledEnd;
-        const totalSec = end && start ? (end - start) / 1000 : 0;
-        let elapsed = 0;
-        if (state.meetingActualEnd) {
-            elapsed = (state.meetingActualEnd - start) / 1000;
-        } else if (now >= start) {
-            elapsed = (now - start) / 1000;
+        const displayState = meetingScheduleModel.getDisplayState(state, now);
+        if (!displayState) {
+            container.classList.add('hidden');
+            return;
         }
-        elapsed = Math.max(0, elapsed);
-        const percent = totalSec > 0 ? Math.min(100, (elapsed / totalSec) * 100) : 0;
         const bar = document.getElementById('globalProgress');
         if (bar) {
-            bar.style.width = percent + '%';
+            bar.style.width = displayState.percent + '%';
             // Detect overtime: if elapsed > total and meeting is still running
-            const isOvertime = state.meetingIsRunning && !state.meetingActualEnd && elapsed > totalSec && totalSec > 0;
-            if (isOvertime) {
+            if (displayState.isOvertime) {
                 bar.classList.add('overtime-pulse');
             } else {
                 bar.classList.remove('overtime-pulse');
@@ -90,16 +83,15 @@ const render = {
         }
         const label = document.getElementById('globalTimerLabel');
         if (label) {
-            label.textContent = formatMeetingTime(elapsed);
+            label.textContent = formatMeetingTime(displayState.elapsed);
         }
         const remainingLabel = document.getElementById('globalTimerRemaining');
         if (remainingLabel) {
-            const remaining = totalSec > 0 ? (totalSec - elapsed) : 0;
-            remainingLabel.textContent = totalSec > 0 ? formatMeetingTimeWithSign(remaining) : '';
+            remainingLabel.textContent = displayState.totalSec > 0 ? formatMeetingTimeWithSign(displayState.remaining) : '';
         }
         const endBtn = document.getElementById('endMeetingBtn');
         if (endBtn) {
-            if (now >= start && !state.meetingActualEnd) {
+            if (displayState.canEnd) {
                 endBtn.classList.remove('hidden');
             } else {
                 endBtn.classList.add('hidden');

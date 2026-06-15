@@ -605,17 +605,11 @@ if (this.elements.commentHistory) {
                 }
                 if (endTs <= startTs) {
                     // If end clock time is before start clock time, treat it as crossing midnight.
-                    endTs += 24 * 60 * 60 * 1000;
+                    endTs = meetingScheduleModel.normalizeEndTime(startTs, endTs);
                 }
 
                 const repeatChecked = this.elements.meetingRepeatCheckbox ? this.elements.meetingRepeatCheckbox.checked : true;
-                const recurringStartTime = state.recurringBaseStart ? formatLocalTime(state.recurringBaseStart) : '';
-                const recurringTimeChanged = state.recurringDurationMs
-                    ? (
-                        recurringStartTime !== startTimeVal
-                        || formatLocalTime(state.recurringBaseStart + state.recurringDurationMs) !== endTimeVal
-                    )
-                    : recurringStartTime !== startTimeVal;
+                const recurringTimeChanged = meetingScheduleModel.didRecurringTimeChange(state, startTimeVal, endTimeVal);
 
                 // If currently repeating and the user changes the time, ask whether to apply to recurring schedule
                 if (state.meetingRepeatsWeekly && state.recurringBaseStart && repeatChecked && recurringTimeChanged) {
@@ -785,6 +779,83 @@ const persistence = {
         } else {
             this.remove(key);
         }
+    }
+};
+
+const meetingScheduleModel = {
+    WEEK_MS: 7 * 24 * 60 * 60 * 1000,
+    DAY_MS: 24 * 60 * 60 * 1000,
+
+    normalizeEndTime(startTs, endTs) {
+        return endTs <= startTs ? endTs + this.DAY_MS : endTs;
+    },
+
+    getDurationMs(startTs, endTs) {
+        return startTs && endTs ? endTs - startTs : null;
+    },
+
+    didRecurringTimeChange({ recurringBaseStart, recurringDurationMs }, startTimeVal, endTimeVal) {
+        const recurringStartTime = recurringBaseStart ? formatLocalTime(recurringBaseStart) : '';
+        if (!recurringDurationMs) {
+            return recurringStartTime !== startTimeVal;
+        }
+
+        return (
+            recurringStartTime !== startTimeVal
+            || formatLocalTime(recurringBaseStart + recurringDurationMs) !== endTimeVal
+        );
+    },
+
+    shouldStartMeeting({ meetingScheduledStart, meetingIsRunning, meetingActualEnd }, now) {
+        return !!meetingScheduledStart && !meetingIsRunning && !meetingActualEnd && now >= meetingScheduledStart;
+    },
+
+    getFailsafeCutoff({ meetingScheduledStart, meetingScheduledEnd, recurringDurationMs }) {
+        const totalMs = this.getDurationMs(meetingScheduledStart, meetingScheduledEnd) || recurringDurationMs || 0;
+        return totalMs > 0 ? meetingScheduledStart + Math.floor(totalMs * 1.5) : null;
+    },
+
+    shouldAutoEndMeeting(schedule, now) {
+        if (!schedule.meetingIsRunning || !schedule.meetingScheduledStart || schedule.meetingActualEnd) return false;
+        const cutoff = this.getFailsafeCutoff(schedule);
+        return cutoff !== null && now >= cutoff;
+    },
+
+    getNextRecurringStart(baseStart, afterTs) {
+        let next = baseStart;
+        while (next <= afterTs) {
+            next += this.WEEK_MS;
+        }
+        return next;
+    },
+
+    getDisplayState(schedule, now) {
+        const start = schedule.meetingScheduledStart;
+        const end = schedule.meetingScheduledEnd;
+        if (!start) {
+            return null;
+        }
+
+        const durationMs = this.getDurationMs(start, end);
+        const totalSec = durationMs ? durationMs / 1000 : 0;
+        let elapsed = 0;
+        if (schedule.meetingActualEnd) {
+            elapsed = (schedule.meetingActualEnd - start) / 1000;
+        } else if (now >= start) {
+            elapsed = (now - start) / 1000;
+        }
+
+        elapsed = Math.max(0, elapsed);
+        const remaining = totalSec > 0 ? totalSec - elapsed : 0;
+
+        return {
+            elapsed,
+            totalSec,
+            remaining,
+            percent: totalSec > 0 ? Math.min(100, (elapsed / totalSec) * 100) : 0,
+            isOvertime: !!schedule.meetingIsRunning && !schedule.meetingActualEnd && elapsed > totalSec && totalSec > 0,
+            canEnd: now >= start && !schedule.meetingActualEnd
+        };
     }
 };
 
@@ -961,18 +1032,18 @@ let state = {
         this.meetingRepeatsWeekly = !!repeat;
         if (repeat) {
             this.recurringBaseStart = startTs;
-            this.recurringDurationMs = endTs ? (endTs - startTs) : null;
+            this.recurringDurationMs = meetingScheduleModel.getDurationMs(startTs, endTs);
             this.meetingOverride = null;
         } else {
             this.recurringBaseStart = this.recurringBaseStart || null;
             // keep existing recurringDuration if present
-            this.recurringDurationMs = this.recurringDurationMs || (endTs ? (endTs - startTs) : null);
+            this.recurringDurationMs = this.recurringDurationMs || meetingScheduleModel.getDurationMs(startTs, endTs);
             this.meetingOverride = null;
         }
 
         // If the start time is already in the past, mark meeting as started immediately.
         // Elapsed progress still uses meetingScheduledStart as the baseline.
-        if (Date.now() >= this.meetingScheduledStart) {
+        if (meetingScheduleModel.shouldStartMeeting(this, Date.now())) {
             this.startMeeting();
         } else {
             this.saveState();
@@ -990,7 +1061,7 @@ let state = {
         this.meetingIsRunning = false;
 
         // Match scheduleMeeting behavior for past start times.
-        if (Date.now() >= this.meetingScheduledStart) {
+        if (meetingScheduleModel.shouldStartMeeting(this, Date.now())) {
             this.startMeeting();
         } else {
             this.saveState();
@@ -1006,20 +1077,14 @@ let state = {
         this.meetingInterval = setInterval(() => {
             const now = Date.now();
             // auto-start if scheduled and time has arrived
-            if (this.meetingScheduledStart && !this.meetingIsRunning && !this.meetingActualEnd && now >= this.meetingScheduledStart) {
+            if (meetingScheduleModel.shouldStartMeeting(this, now)) {
                 this.startMeeting();
             }
             // Failsafe: if meeting is running and 1.5x scheduled duration has elapsed since scheduled start, auto-end
-            if (this.meetingIsRunning && this.meetingScheduledStart && (this.meetingScheduledEnd || this.recurringDurationMs) && !this.meetingActualEnd) {
-                const totalMs = (this.meetingScheduledEnd && this.meetingScheduledStart) ? (this.meetingScheduledEnd - this.meetingScheduledStart) : (this.recurringDurationMs || 0);
-                if (totalMs > 0) {
-                    const cutoff = this.meetingScheduledStart + Math.floor(totalMs * 1.5);
-                    if (now >= cutoff) {
-                        notify.show('Meeting automatically ended (failsafe)', 'info');
-                        this.endMeeting();
-                        // render will be updated inside endMeeting
-                    }
-                }
+            if (meetingScheduleModel.shouldAutoEndMeeting(this, now)) {
+                notify.show('Meeting automatically ended (failsafe)', 'info');
+                this.endMeeting();
+                // render will be updated inside endMeeting
             }
             // update display even if not running (to show countdown to start or progress)
             render.globalTimerDisplay();
@@ -1054,18 +1119,8 @@ let state = {
         }
         // If repeating weekly, advance to next occurrence after this meeting
         if (this.meetingRepeatsWeekly && this.recurringBaseStart) {
-            // Helper: compute next recurring start after now based on recurringBaseStart
-            const getNextRecurringStart = (base, afterTs) => {
-                const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-                let next = base;
-                while (next <= afterTs) {
-                    next += WEEK_MS;
-                }
-                return next;
-            };
-
             const now = Date.now();
-            const nextStart = getNextRecurringStart(this.recurringBaseStart, now);
+            const nextStart = meetingScheduleModel.getNextRecurringStart(this.recurringBaseStart, now);
             this.meetingScheduledStart = nextStart;
             if (this.recurringDurationMs) {
                 this.meetingScheduledEnd = nextStart + this.recurringDurationMs;
