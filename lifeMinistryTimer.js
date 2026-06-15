@@ -1107,6 +1107,16 @@ let state = {
         this.updateEditModeUi();
     },
 
+    _getPlannedMeetingDurationMs(startTs = this.meetingScheduledStart, endTs = this.meetingScheduledEnd) {
+        const scheduledDurationMs = meetingScheduleModel.getDurationMs(startTs, endTs);
+        if (scheduledDurationMs && scheduledDurationMs > 0) {
+            return scheduledDurationMs;
+        }
+
+        const plannedSeconds = this.meetingParts.reduce((sum, part) => sum + Math.max(0, part.duration || 0), 0);
+        return plannedSeconds > 0 ? plannedSeconds * 1000 : null;
+    },
+
     // Schedule a meeting with start/end timestamps (milliseconds)
     scheduleMeeting(startTs, endTs, repeat = true) {
         this.meetingScheduledStart = startTs;
@@ -1192,12 +1202,21 @@ let state = {
     },
 
     // Called when the meeting officially begins (automatically or manually)
-    startMeeting() {
-        if (!this.meetingScheduledStart) return;
+    startMeeting(startTs = this.meetingScheduledStart, forceStartTime = false) {
+        const now = startTs || Date.now();
+        const shouldResetStart = forceStartTime || !this.meetingScheduledStart || this.meetingActualEnd;
+        const plannedDurationMs = this._getPlannedMeetingDurationMs();
+
+        if (shouldResetStart) {
+            this.meetingScheduledStart = now;
+            this.meetingScheduledEnd = plannedDurationMs ? now + plannedDurationMs : null;
+            this.meetingActualEnd = null;
+        }
+
         this.meetingIsRunning = true;
-        // when meeting starts we don't need separate interval—the _setupMeetingInterval covers updates
-        // play a notification if desired
+        this._setupMeetingInterval();
         this.saveState();
+        render.globalTimerDisplay();
     },
 
     startMeetingIfDue(now = Date.now()) {
@@ -1243,6 +1262,15 @@ let state = {
     // Start the timer
     startTimer() {
         if (this.activePart !== null) {
+            const now = Date.now();
+            if (!this.meetingIsRunning) {
+                if (!this.meetingScheduledStart || this.meetingActualEnd || now < this.meetingScheduledStart) {
+                    this.startMeeting(now, true);
+                } else {
+                    this.startMeetingIfDue(now);
+                }
+            }
+
             this.isRunning = true;
             
             // Clear any existing interval

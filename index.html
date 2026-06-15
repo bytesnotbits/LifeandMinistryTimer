@@ -120,38 +120,77 @@
                 </div>
             </div>
 
-            <div class="cockpit-tabs" role="tablist" aria-label="Meeting workflow">
-                <button type="button" class="cockpit-tab active" data-program-view="prepare" role="tab" aria-selected="true">Prepare</button>
-                <button type="button" class="cockpit-tab" data-program-view="run" role="tab" aria-selected="false">Run</button>
-                <button type="button" class="cockpit-tab" data-program-view="review" role="tab" aria-selected="false">Review</button>
-            </div>
+            <div class="cockpit-workspace">
+                <div class="cockpit-main">
+                    <div class="cockpit-tabs" role="tablist" aria-label="Meeting workflow">
+                        <button type="button" class="cockpit-tab active" data-program-view="prepare" role="tab" aria-selected="true">Prepare</button>
+                        <button type="button" class="cockpit-tab" data-program-view="run" role="tab" aria-selected="false">Run</button>
+                        <button type="button" class="cockpit-tab" data-program-view="review" role="tab" aria-selected="false">Review</button>
+                    </div>
 
-            <div id="programPrepareView" class="program-view active">
-                <div class="import-panel">
-                    <div>
-                        <h3>Import Weekly Program</h3>
-                        <p>Paste a Watchtower Online Library meeting URL. URL import uses a readable text fallback, so review the imported parts; paste page text below for the most complete import.</p>
+                    <div id="programPrepareView" class="program-view active">
+                        <div class="import-panel">
+                            <div>
+                                <h3>Import Weekly Program</h3>
+                                <p>Paste a Watchtower Online Library meeting URL. URL import uses a readable text fallback, so review the imported parts; paste page text below for the most complete import.</p>
+                            </div>
+                            <div class="import-controls">
+                                <input id="wolImportUrl" type="url" placeholder="https://wol.jw.org/en/wol/d/r1/lp-e/202026168" aria-label="Weekly meeting URL">
+                                <button id="fetchWolProgramBtn" type="button">Fetch URL</button>
+                            </div>
+                            <textarea id="wolImportText" rows="7" placeholder="Optional fallback: paste the copied meeting page text here." aria-label="Meeting page text"></textarea>
+                            <div class="import-actions">
+                                <button id="importWolTextBtn" type="button">Import From Text</button>
+                                <button id="loadSampleProgramBtn" type="button">Load Sample Week</button>
+                                <span id="programImportStatus" role="status" aria-live="polite"></span>
+                            </div>
+                        </div>
+                        <div id="programSectionSummary" class="section-summary" aria-label="Imported meeting sections"></div>
                     </div>
-                    <div class="import-controls">
-                        <input id="wolImportUrl" type="url" placeholder="https://wol.jw.org/en/wol/d/r1/lp-e/202026168" aria-label="Weekly meeting URL">
-                        <button id="fetchWolProgramBtn" type="button">Fetch URL</button>
+
+                    <div id="programRunView" class="program-view">
+                        <div id="runDashboard" class="run-dashboard" aria-live="polite"></div>
                     </div>
-                    <textarea id="wolImportText" rows="7" placeholder="Optional fallback: paste the copied meeting page text here." aria-label="Meeting page text"></textarea>
-                    <div class="import-actions">
-                        <button id="importWolTextBtn" type="button">Import From Text</button>
-                        <button id="loadSampleProgramBtn" type="button">Load Sample Week</button>
-                        <span id="programImportStatus" role="status" aria-live="polite"></span>
+
+                    <div id="programReviewView" class="program-view">
+                        <div id="reviewDashboard" class="review-dashboard"></div>
                     </div>
                 </div>
-                <div id="programSectionSummary" class="section-summary" aria-label="Imported meeting sections"></div>
-            </div>
-
-            <div id="programRunView" class="program-view">
-                <div id="runDashboard" class="run-dashboard" aria-live="polite"></div>
-            </div>
-
-            <div id="programReviewView" class="program-view">
-                <div id="reviewDashboard" class="review-dashboard"></div>
+                <aside class="cockpit-timer-rail" aria-label="Live meeting timers">
+                    <!-- Global meeting timer bar (sticky) -->
+                    <div id="globalTimerContainer" class="global-timer-container hidden">
+                        <div class="active-timer-grid">
+                            <div id="globalTimerPanel" class="active-timer-panel">
+                                <div class="active-timer-label-row">
+                                    <span>Meeting</span>
+                                    <strong id="globalTimerStatus"></strong>
+                                </div>
+                                <div class="global-progress-bar progress-bar h-10 relative">
+                                    <div id="globalSegments" class="global-segments" aria-hidden="true"></div>
+                                    <div id="globalProgress" class="progress-bar-bg bg-green-500" style="width:0%"></div>
+                                    <span id="globalTimerLabel" class="left-label"></span>
+                                    <span id="globalTimerRemaining" class="countdown"></span>
+                                </div>
+                            </div>
+                            <div id="activePartTimerPanel" class="active-timer-panel">
+                                <div class="active-timer-label-row">
+                                    <span>Current Part</span>
+                                    <strong id="activePartTimerName"></strong>
+                                </div>
+                                <div class="part-progress-bar progress-bar h-10 relative">
+                                    <div id="activePartProgress" class="progress-bar-bg bg-blue-500" style="width:0%"></div>
+                                    <span id="activePartTimerLabel" class="left-label"></span>
+                                    <span id="activePartTimerRemaining" class="countdown"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button id="endMeetingBtn" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 hidden">
+                                End Meeting
+                            </button>
+                        </div>
+                    </div>
+                </aside>
             </div>
         </section>
 
@@ -243,39 +282,7 @@
                 </details>
                 <p class="text-sm text-gray-600 mt-1">Set the regular midweek or weekend meeting. The next matching date is scheduled automatically and repeats weekly.</p>
             </div>
-            <!-- Global meeting timer bar (sticky) -->
-            <div id="globalTimerContainer" class="global-timer-container hidden">
-                <div class="active-timer-grid">
-                    <div id="globalTimerPanel" class="active-timer-panel">
-                        <div class="active-timer-label-row">
-                            <span>Meeting</span>
-                            <strong id="globalTimerStatus"></strong>
-                        </div>
-                        <div class="global-progress-bar progress-bar h-10 relative">
-                            <div id="globalSegments" class="global-segments" aria-hidden="true"></div>
-                            <div id="globalProgress" class="progress-bar-bg bg-green-500" style="width:0%"></div>
-                            <span id="globalTimerLabel" class="left-label"></span>
-                            <span id="globalTimerRemaining" class="countdown"></span>
-                        </div>
-                    </div>
-                    <div id="activePartTimerPanel" class="active-timer-panel">
-                        <div class="active-timer-label-row">
-                            <span>Current Part</span>
-                            <strong id="activePartTimerName"></strong>
-                        </div>
-                        <div class="part-progress-bar progress-bar h-10 relative">
-                            <div id="activePartProgress" class="progress-bar-bg bg-blue-500" style="width:0%"></div>
-                            <span id="activePartTimerLabel" class="left-label"></span>
-                            <span id="activePartTimerRemaining" class="countdown"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <button id="endMeetingBtn" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 hidden">
-                        End Meeting
-                    </button>
-                </div>
-            </div>
+
             <div id="partsDisplay" class="space-y-4" role="region" aria-label="Active timers" data-drag-container></div>
         </section>
 
