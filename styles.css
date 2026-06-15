@@ -333,6 +333,35 @@ main {
     font-size: 1.1rem;
 }
 
+.run-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.run-actions button {
+    min-height: 2.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-weight: 700;
+    padding: 0.55rem 0.85rem;
+}
+
+.run-actions button.primary-action {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+}
+
+.run-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
 .review-table {
     width: 100%;
     border-collapse: collapse;
@@ -400,11 +429,44 @@ main {
     gap: 0.75rem;
 }
 
-.meeting-scheduler > div {
+.meeting-scheduler > div,
+.one-time-schedule > div {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
     gap: 0.75rem;
     align-items: end;
+}
+
+.meeting-schedule-presets {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.meeting-schedule-row {
+    display: grid;
+    grid-template-columns: minmax(9.5rem, 1.1fr) repeat(3, minmax(8rem, 1fr)) auto;
+    gap: 0.75rem;
+    align-items: end;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.75rem;
+}
+
+.meeting-schedule-row:last-child {
+    border-bottom: 0;
+}
+
+.meeting-schedule-row strong {
+    align-self: center;
+}
+
+.one-time-schedule {
+    margin-top: 0.75rem;
+}
+
+.one-time-schedule summary {
+    cursor: pointer;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
 }
 
 .meeting-scheduler label {
@@ -420,8 +482,15 @@ main {
 }
 
 .meeting-scheduler input,
+.meeting-scheduler select,
 .meeting-scheduler button {
     min-height: 2.5rem;
+}
+
+@media (max-width: 780px) {
+    .meeting-schedule-row {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* App header and toolbar */

@@ -159,6 +159,14 @@ const DOM = { // eslint-disable-line no-unused-vars
             meetingEndTimeInput: 'meetingEndTimeInput',
             scheduleMeetingBtn: 'scheduleMeetingBtn',
             meetingRepeatCheckbox: 'meetingRepeatCheckbox',
+            midweekMeetingDayInput: 'midweekMeetingDayInput',
+            midweekMeetingStartInput: 'midweekMeetingStartInput',
+            midweekMeetingEndInput: 'midweekMeetingEndInput',
+            scheduleMidweekMeetingBtn: 'scheduleMidweekMeetingBtn',
+            weekendMeetingDayInput: 'weekendMeetingDayInput',
+            weekendMeetingStartInput: 'weekendMeetingStartInput',
+            weekendMeetingEndInput: 'weekendMeetingEndInput',
+            scheduleWeekendMeetingBtn: 'scheduleWeekendMeetingBtn',
             endMeetingBtn: 'endMeetingBtn',
             globalTimerContainer: 'globalTimerContainer',
             confirmationModal: 'confirmationModal',
@@ -209,6 +217,17 @@ const DOM = { // eslint-disable-line no-unused-vars
         if (this.elements.meetingRepeatCheckbox) {
             this.elements.meetingRepeatCheckbox.checked = !!state.meetingRepeatsWeekly;
         }
+
+        const schedules = state.weeklyMeetingSchedules || DEFAULT_WEEKLY_MEETING_SCHEDULES;
+        const midweek = schedules.midweek || DEFAULT_WEEKLY_MEETING_SCHEDULES.midweek;
+        const weekend = schedules.weekend || DEFAULT_WEEKLY_MEETING_SCHEDULES.weekend;
+        if (this.elements.midweekMeetingDayInput) this.elements.midweekMeetingDayInput.value = midweek.day;
+        if (this.elements.midweekMeetingStartInput) this.elements.midweekMeetingStartInput.value = midweek.start;
+        if (this.elements.midweekMeetingEndInput) this.elements.midweekMeetingEndInput.value = midweek.end;
+        if (this.elements.weekendMeetingDayInput) this.elements.weekendMeetingDayInput.value = weekend.day;
+        if (this.elements.weekendMeetingStartInput) this.elements.weekendMeetingStartInput.value = weekend.start;
+        if (this.elements.weekendMeetingEndInput) this.elements.weekendMeetingEndInput.value = weekend.end;
+
         render.globalTimerDisplay();
     },
     _setupEventListeners() {
@@ -588,6 +607,39 @@ if (this.elements.commentHistory) {
         });
     },
       _setupSchedulerListeners() {
+        const scheduleWeeklyPreset = (kind) => {
+            const dayInput = kind === 'midweek' ? this.elements.midweekMeetingDayInput : this.elements.weekendMeetingDayInput;
+            const startInput = kind === 'midweek' ? this.elements.midweekMeetingStartInput : this.elements.weekendMeetingStartInput;
+            const endInput = kind === 'midweek' ? this.elements.midweekMeetingEndInput : this.elements.weekendMeetingEndInput;
+            const label = kind === 'midweek' ? 'Midweek meeting' : 'Weekend meeting';
+            const dayVal = dayInput ? dayInput.value : '';
+            const startTimeVal = startInput ? startInput.value : '';
+            const endTimeVal = endInput ? endInput.value : '';
+            if (!dayVal || !startTimeVal || !endTimeVal) {
+                notify.show(`Please provide ${label.toLowerCase()} day, start time, and end time`, 'error');
+                return;
+            }
+            state.weeklyMeetingSchedules = {
+                ...(state.weeklyMeetingSchedules || DEFAULT_WEEKLY_MEETING_SCHEDULES),
+                [kind]: { day: dayVal, start: startTimeVal, end: endTimeVal }
+            };
+            const nextMeeting = state.scheduleNextWeeklyMeeting(Date.now());
+            this.updateMeetingForm();
+            if (nextMeeting) {
+                notify.show(`${label} saved. Next meeting is ${formatLocalDate(nextMeeting.startTs)} at ${formatLocalTime(nextMeeting.startTs)}`, 'success');
+            } else {
+                notify.show('Invalid meeting day/time format', 'error');
+            }
+        };
+
+        if (this.elements.scheduleMidweekMeetingBtn) {
+            this.elements.scheduleMidweekMeetingBtn.addEventListener('click', () => scheduleWeeklyPreset('midweek'));
+        }
+
+        if (this.elements.scheduleWeekendMeetingBtn) {
+            this.elements.scheduleWeekendMeetingBtn.addEventListener('click', () => scheduleWeeklyPreset('weekend'));
+        }
+
         if (this.elements.scheduleMeetingBtn) {
             this.elements.scheduleMeetingBtn.addEventListener('click', () => {
                 const dateVal = this.elements.meetingDateInput ? this.elements.meetingDateInput.value : '';
@@ -738,9 +790,15 @@ const STORAGE_KEYS = {
     recurringBaseStart: 'recurringBaseStart',
     recurringDurationMs: 'recurringDurationMs',
     meetingOverride: 'meetingOverride',
+    weeklyMeetingSchedules: 'weeklyMeetingSchedules',
     savedTemplates: 'savedTemplates',
     theme: 'theme',
     soundEnabled: 'soundEnabled'
+};
+
+const DEFAULT_WEEKLY_MEETING_SCHEDULES = {
+    midweek: { day: '3', start: '19:00', end: '20:45' },
+    weekend: { day: '6', start: '10:00', end: '11:45' }
 };
 
 const persistence = {
@@ -829,6 +887,25 @@ const meetingScheduleModel = {
         return next;
     },
 
+    getNextWeeklyWindow(dayOfWeek, startTimeVal, endTimeVal, now = Date.now()) {
+        const today = new Date(now);
+        const date = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const daysAhead = (Number(dayOfWeek) - date.getDay() + 7) % 7;
+        date.setDate(date.getDate() + daysAhead);
+        const dateVal = formatLocalDate(date.getTime());
+        let startTs = buildLocalTimestamp(dateVal, startTimeVal);
+        let endTs = buildLocalTimestamp(dateVal, endTimeVal);
+        if (Number.isNaN(startTs) || Number.isNaN(endTs)) {
+            return null;
+        }
+        endTs = this.normalizeEndTime(startTs, endTs);
+        if (startTs <= now) {
+            startTs += this.WEEK_MS;
+            endTs += this.WEEK_MS;
+        }
+        return { startTs, endTs };
+    },
+
     getDisplayState(schedule, now) {
         const start = schedule.meetingScheduledStart;
         const end = schedule.meetingScheduledEnd;
@@ -887,6 +964,7 @@ let state = {
     recurringBaseStart: null, // base timestamp for recurring pattern
     recurringDurationMs: null,
     meetingOverride: null, // { start, end } for one-time overrides
+    weeklyMeetingSchedules: JSON.parse(JSON.stringify(DEFAULT_WEEKLY_MEETING_SCHEDULES)),
     
     // Initialize application state
     init() {
@@ -935,6 +1013,10 @@ let state = {
             const savedRecDur = persistence.getString(STORAGE_KEYS.recurringDurationMs);
             this.recurringDurationMs = savedRecDur ? parseInt(savedRecDur, 10) : null;
             this.meetingOverride = persistence.getJson(STORAGE_KEYS.meetingOverride, null);
+            this.weeklyMeetingSchedules = {
+                ...DEFAULT_WEEKLY_MEETING_SCHEDULES,
+                ...persistence.getJson(STORAGE_KEYS.weeklyMeetingSchedules, {})
+            };
             // meetingIsRunning will be determined later in init
             
             // Legacy edit-mode toggle is no longer user-facing; always default to card-level editing.
@@ -966,6 +1048,7 @@ let state = {
             persistence.setOptionalNumber(STORAGE_KEYS.recurringBaseStart, this.recurringBaseStart);
             persistence.setOptionalNumber(STORAGE_KEYS.recurringDurationMs, this.recurringDurationMs);
             persistence.setOptionalJson(STORAGE_KEYS.meetingOverride, this.meetingOverride);
+            persistence.setJson(STORAGE_KEYS.weeklyMeetingSchedules, this.weeklyMeetingSchedules || DEFAULT_WEEKLY_MEETING_SCHEDULES);
         } catch (error) {
             console.error('Error saving state:', error);
             notify.show('Failed to save state to local storage', 'error');
@@ -1006,6 +1089,7 @@ let state = {
         persistence.remove(STORAGE_KEYS.meetingScheduledStart);
         persistence.remove(STORAGE_KEYS.meetingScheduledEnd);
         persistence.remove(STORAGE_KEYS.meetingActualEnd);
+        persistence.remove(STORAGE_KEYS.weeklyMeetingSchedules);
         
         this.meetingParts = DEFAULT_PARTS;
         this.isEditMode = false;
@@ -1014,6 +1098,7 @@ let state = {
         this.meetingScheduledEnd = null;
         this.meetingActualEnd = null;
         this.meetingIsRunning = false;
+        this.weeklyMeetingSchedules = JSON.parse(JSON.stringify(DEFAULT_WEEKLY_MEETING_SCHEDULES));
         if (this.meetingInterval) {
             clearInterval(this.meetingInterval);
             this.meetingInterval = null;
@@ -1050,6 +1135,20 @@ let state = {
         }
         this._setupMeetingInterval();
         render.globalTimerDisplay();
+    },
+
+    scheduleNextWeeklyMeeting(afterTs = Date.now()) {
+        const schedules = this.weeklyMeetingSchedules || DEFAULT_WEEKLY_MEETING_SCHEDULES;
+        const candidates = Object.values(schedules)
+            .map((schedule) => meetingScheduleModel.getNextWeeklyWindow(schedule.day, schedule.start, schedule.end, afterTs))
+            .filter(Boolean)
+            .sort((a, b) => a.startTs - b.startTs);
+
+        const nextMeeting = candidates[0] || null;
+        if (!nextMeeting) return null;
+
+        this.scheduleMeeting(nextMeeting.startTs, nextMeeting.endTs, true);
+        return nextMeeting;
     },
 
     // Schedule a one-time change while keeping recurring pattern intact
@@ -1117,8 +1216,11 @@ let state = {
             clearInterval(this.meetingInterval);
             this.meetingInterval = null;
         }
-        // If repeating weekly, advance to next occurrence after this meeting
-        if (this.meetingRepeatsWeekly && this.recurringBaseStart) {
+        // If weekly schedules are configured, advance to whichever saved meeting comes next.
+        if (this.meetingRepeatsWeekly && this.weeklyMeetingSchedules) {
+            this.meetingOverride = null;
+            this.scheduleNextWeeklyMeeting(Date.now());
+        } else if (this.meetingRepeatsWeekly && this.recurringBaseStart) {
             const now = Date.now();
             const nextStart = meetingScheduleModel.getNextRecurringStart(this.recurringBaseStart, now);
             this.meetingScheduledStart = nextStart;
@@ -1265,23 +1367,21 @@ let state = {
         render.timerDisplay();
     },
     
-    // Move to the next part
+    // Move to the next part without starting the next timer.
     startNextPart() {
         if (this.activePart < this.meetingParts.length - 1) {
+            if (this.isRunning) {
+                this.stopTimer();
+            }
+
             this.activePart++;
-            
-            // Ensure we have an elapsed time for the new part
+
+            // Ensure we have an elapsed time for the new part.
             if (!this.elapsedTimes[this.activePart]) {
                 this.elapsedTimes[this.activePart] = 0;
             }
-            
+
             this.saveState();
-            
-            // If timer wasn't running, start it
-            if (!this.isRunning) {
-                this.startTimer();
-            }
-            
             render.timerDisplay();
         }
     },

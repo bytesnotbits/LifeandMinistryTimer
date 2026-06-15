@@ -89,6 +89,27 @@ const programCockpit = {
                 this.importProgram(SAMPLE_PROGRAM_TEXT, 'sample:june-15-21');
             });
         }
+
+        const runView = document.getElementById('programRunView');
+        if (runView) {
+            runView.addEventListener('click', (event) => {
+                const action = event.target.closest('[data-run-action]')?.dataset.runAction;
+                if (!action) return;
+                if (action === 'start') {
+                    state.startTimer();
+                    notify.show('Program run started', 'success');
+                } else if (action === 'stop') {
+                    state.stopTimer();
+                    notify.show('Program run paused', 'info');
+                } else if (action === 'next') {
+                    state.startNextPart();
+                    notify.show('Advanced to the next part', 'success');
+                }
+                state.saveState();
+                render.timerDisplay();
+                this.renderAll();
+            });
+        }
     },
 
     setView(view) {
@@ -520,6 +541,14 @@ const programCockpit = {
                     <div><span>Planned</span><strong>${formatTime(current.duration)}</strong></div>
                     <div><span>Actual</span><strong>${formatTime(state.elapsedTimes[state.activePart] || 0)}</strong></div>
                     <div><span>Meeting Pace</span><strong>${variance > 0 ? '+' : ''}${formatMeetingTime(Math.abs(variance))}</strong></div>
+                </div>
+                <div class="run-actions">
+                    <button type="button" class="primary-action" data-run-action="${state.isRunning ? 'stop' : 'start'}">
+                        ${state.isRunning ? 'Pause Current Part' : 'Start Current Part'}
+                    </button>
+                    <button type="button" data-run-action="next" ${state.activePart >= state.meetingParts.length - 1 ? 'disabled' : ''}>
+                        Next Part
+                    </button>
                 </div>
             </div>
             <div class="run-next">
