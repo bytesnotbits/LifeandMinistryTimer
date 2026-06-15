@@ -14,7 +14,7 @@ const themeManager = {
     // Initialize theme manager
     init() {
         // Load theme preference from localStorage
-        const savedTheme = localStorage.getItem('theme');
+        const savedTheme = persistence.getString(STORAGE_KEYS.theme);
         if (savedTheme) {
             this.setTheme(savedTheme);
         } else {
@@ -33,7 +33,7 @@ const themeManager = {
     // Set theme
     setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
+        persistence.setString(STORAGE_KEYS.theme, theme);
     },
     
     // Toggle theme
@@ -73,7 +73,7 @@ const soundManager = {
     // Initialize sound manager
     init() {
         // Load sound preference from localStorage
-        const savedSoundPreference = localStorage.getItem('soundEnabled');
+        const savedSoundPreference = persistence.getString(STORAGE_KEYS.soundEnabled);
         if (savedSoundPreference !== null) {
             this.isSoundEnabled = savedSoundPreference === 'true'; // Set the flag based on saved preference
 
@@ -86,7 +86,7 @@ const soundManager = {
     // Toggle sound on/off
     toggleSound() {
         this.isSoundEnabled = !this.isSoundEnabled;
-        localStorage.setItem('soundEnabled', this.isSoundEnabled.toString());
+        persistence.setString(STORAGE_KEYS.soundEnabled, this.isSoundEnabled);
         this.updateSoundToggle();
     },
     

@@ -157,11 +157,11 @@ const render = {
             `;
             container.appendChild(partElement);
         });
-        
+
         // Save template to localStorage
-        localStorage.setItem('meetingTemplate', JSON.stringify(state.meetingParts));
+        persistence.setJson(STORAGE_KEYS.meetingTemplate, state.meetingParts);
     },
-    
+
     // Render timer display
     timerDisplay() {
         const container = DOM.elements.partsDisplay;

@@ -731,6 +731,63 @@ const COMMENT_LIMIT = 4*60; // Limit comments to 4 minutes
 const TIMER_UPDATE_INTERVAL = 100; // 100ms interval for more accurate timer updates
 const COMMENT_DISPLAY_UPDATE_INTERVAL = 200; // 200ms for smoother comment timer display
 
+const STORAGE_KEYS = {
+    meetingTemplate: 'meetingTemplate',
+    elapsedTimes: 'elapsedTimes',
+    activePart: 'activePart',
+    meetingComments: 'meetingComments',
+    isEditMode: 'isEditMode',
+    meetingScheduledStart: 'meetingScheduledStart',
+    meetingScheduledEnd: 'meetingScheduledEnd',
+    meetingActualEnd: 'meetingActualEnd',
+    meetingRepeatsWeekly: 'meetingRepeatsWeekly',
+    recurringBaseStart: 'recurringBaseStart',
+    recurringDurationMs: 'recurringDurationMs',
+    meetingOverride: 'meetingOverride',
+    savedTemplates: 'savedTemplates',
+    theme: 'theme',
+    soundEnabled: 'soundEnabled'
+};
+
+const persistence = {
+    getString(key) {
+        return localStorage.getItem(key);
+    },
+
+    setString(key, value) {
+        localStorage.setItem(key, String(value));
+    },
+
+    getJson(key, fallback = null) {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+    },
+
+    setJson(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    },
+
+    remove(key) {
+        localStorage.removeItem(key);
+    },
+
+    setOptionalNumber(key, value) {
+        if (value) {
+            this.setString(key, value);
+        } else {
+            this.remove(key);
+        }
+    },
+
+    setOptionalJson(key, value) {
+        if (value) {
+            this.setJson(key, value);
+        } else {
+            this.remove(key);
+        }
+    }
+};
+
 // Application state
 let state = {
     meetingParts: [],
@@ -782,40 +839,36 @@ let state = {
     loadState() {
         try {
             // Load meeting parts
-            const savedTemplate = localStorage.getItem('meetingTemplate');
-            this.meetingParts = savedTemplate ? JSON.parse(savedTemplate) : DEFAULT_PARTS;
+            this.meetingParts = persistence.getJson(STORAGE_KEYS.meetingTemplate, DEFAULT_PARTS);
             
             // Load elapsed times
-            const savedTimes = localStorage.getItem('elapsedTimes');
-            this.elapsedTimes = savedTimes ? JSON.parse(savedTimes) : {};
+            this.elapsedTimes = persistence.getJson(STORAGE_KEYS.elapsedTimes, {});
             
             // Load active part
-            this.activePart = parseInt(localStorage.getItem('activePart')) || 0;
+            this.activePart = parseInt(persistence.getString(STORAGE_KEYS.activePart), 10) || 0;
             
             // Load comments
-            const savedComments = localStorage.getItem('meetingComments');
-            this.comments = savedComments ? JSON.parse(savedComments) : [];
+            this.comments = persistence.getJson(STORAGE_KEYS.meetingComments, []);
             
             // Load meeting schedule
-            const savedStart = localStorage.getItem('meetingScheduledStart');
+            const savedStart = persistence.getString(STORAGE_KEYS.meetingScheduledStart);
             this.meetingScheduledStart = savedStart ? parseInt(savedStart, 10) : null;
-            const savedEnd = localStorage.getItem('meetingScheduledEnd');
+            const savedEnd = persistence.getString(STORAGE_KEYS.meetingScheduledEnd);
             this.meetingScheduledEnd = savedEnd ? parseInt(savedEnd, 10) : null;
-            const savedActual = localStorage.getItem('meetingActualEnd');
+            const savedActual = persistence.getString(STORAGE_KEYS.meetingActualEnd);
             this.meetingActualEnd = savedActual ? parseInt(savedActual, 10) : null;
-            const savedRepeats = localStorage.getItem('meetingRepeatsWeekly');
+            const savedRepeats = persistence.getString(STORAGE_KEYS.meetingRepeatsWeekly);
             this.meetingRepeatsWeekly = savedRepeats !== null ? (savedRepeats === 'true') : true;
-            const savedRecurring = localStorage.getItem('recurringBaseStart');
+            const savedRecurring = persistence.getString(STORAGE_KEYS.recurringBaseStart);
             this.recurringBaseStart = savedRecurring ? parseInt(savedRecurring, 10) : null;
-            const savedRecDur = localStorage.getItem('recurringDurationMs');
+            const savedRecDur = persistence.getString(STORAGE_KEYS.recurringDurationMs);
             this.recurringDurationMs = savedRecDur ? parseInt(savedRecDur, 10) : null;
-            const savedOverride = localStorage.getItem('meetingOverride');
-            this.meetingOverride = savedOverride ? JSON.parse(savedOverride) : null;
+            this.meetingOverride = persistence.getJson(STORAGE_KEYS.meetingOverride, null);
             // meetingIsRunning will be determined later in init
             
             // Legacy edit-mode toggle is no longer user-facing; always default to card-level editing.
             this.isEditMode = false;
-            localStorage.removeItem('isEditMode');
+            persistence.remove(STORAGE_KEYS.isEditMode);
             
         } catch (error) {
             console.error('Error loading state:', error);
@@ -831,41 +884,17 @@ let state = {
     // Save current state to localStorage
     saveState() {
         try {
-            localStorage.setItem('elapsedTimes', JSON.stringify(this.elapsedTimes));
-            localStorage.setItem('activePart', this.activePart.toString());
-            localStorage.setItem('meetingComments', JSON.stringify(this.comments));
+            persistence.setJson(STORAGE_KEYS.elapsedTimes, this.elapsedTimes);
+            persistence.setString(STORAGE_KEYS.activePart, this.activePart);
+            persistence.setJson(STORAGE_KEYS.meetingComments, this.comments);
             // persist meeting schedule information
-            if (this.meetingScheduledStart) {
-                localStorage.setItem('meetingScheduledStart', this.meetingScheduledStart.toString());
-            } else {
-                localStorage.removeItem('meetingScheduledStart');
-            }
-            if (this.meetingScheduledEnd) {
-                localStorage.setItem('meetingScheduledEnd', this.meetingScheduledEnd.toString());
-            } else {
-                localStorage.removeItem('meetingScheduledEnd');
-            }
-            if (this.meetingActualEnd) {
-                localStorage.setItem('meetingActualEnd', this.meetingActualEnd.toString());
-            } else {
-                localStorage.removeItem('meetingActualEnd');
-            }
-            localStorage.setItem('meetingRepeatsWeekly', this.meetingRepeatsWeekly ? 'true' : 'false');
-            if (this.recurringBaseStart) {
-                localStorage.setItem('recurringBaseStart', this.recurringBaseStart.toString());
-            } else {
-                localStorage.removeItem('recurringBaseStart');
-            }
-            if (this.recurringDurationMs) {
-                localStorage.setItem('recurringDurationMs', this.recurringDurationMs.toString());
-            } else {
-                localStorage.removeItem('recurringDurationMs');
-            }
-            if (this.meetingOverride) {
-                localStorage.setItem('meetingOverride', JSON.stringify(this.meetingOverride));
-            } else {
-                localStorage.removeItem('meetingOverride');
-            }
+            persistence.setOptionalNumber(STORAGE_KEYS.meetingScheduledStart, this.meetingScheduledStart);
+            persistence.setOptionalNumber(STORAGE_KEYS.meetingScheduledEnd, this.meetingScheduledEnd);
+            persistence.setOptionalNumber(STORAGE_KEYS.meetingActualEnd, this.meetingActualEnd);
+            persistence.setString(STORAGE_KEYS.meetingRepeatsWeekly, this.meetingRepeatsWeekly ? 'true' : 'false');
+            persistence.setOptionalNumber(STORAGE_KEYS.recurringBaseStart, this.recurringBaseStart);
+            persistence.setOptionalNumber(STORAGE_KEYS.recurringDurationMs, this.recurringDurationMs);
+            persistence.setOptionalJson(STORAGE_KEYS.meetingOverride, this.meetingOverride);
         } catch (error) {
             console.error('Error saving state:', error);
             notify.show('Failed to save state to local storage', 'error');
@@ -898,14 +927,14 @@ let state = {
     
     // Clear all data and reset to defaults
     clearAllData() {
-        localStorage.removeItem('meetingTemplate');
-        localStorage.removeItem('elapsedTimes');
-        localStorage.removeItem('activePart');
-        localStorage.removeItem('meetingComments');
-        localStorage.removeItem('isEditMode');
-        localStorage.removeItem('meetingScheduledStart');
-        localStorage.removeItem('meetingScheduledEnd');
-        localStorage.removeItem('meetingActualEnd');
+        persistence.remove(STORAGE_KEYS.meetingTemplate);
+        persistence.remove(STORAGE_KEYS.elapsedTimes);
+        persistence.remove(STORAGE_KEYS.activePart);
+        persistence.remove(STORAGE_KEYS.meetingComments);
+        persistence.remove(STORAGE_KEYS.isEditMode);
+        persistence.remove(STORAGE_KEYS.meetingScheduledStart);
+        persistence.remove(STORAGE_KEYS.meetingScheduledEnd);
+        persistence.remove(STORAGE_KEYS.meetingActualEnd);
         
         this.meetingParts = DEFAULT_PARTS;
         this.isEditMode = false;
@@ -1431,7 +1460,7 @@ let state = {
         this.isEditMode = !this.isEditMode;
         
         // Save edit mode state to localStorage
-        localStorage.setItem('isEditMode', this.isEditMode.toString());
+        persistence.setString(STORAGE_KEYS.isEditMode, this.isEditMode);
         
         this.updateEditModeUi();
         
@@ -1523,7 +1552,7 @@ let state = {
             enableComments: enableComments
         };
 
-        localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+        persistence.setJson(STORAGE_KEYS.meetingTemplate, this.meetingParts);
         this.editingPartIndex = null;
         this.inlineEditDraft = null;
         render.timerDisplay();
@@ -1554,7 +1583,7 @@ let state = {
             };
             
             // Save to localStorage
-            localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+            persistence.setJson(STORAGE_KEYS.meetingTemplate, this.meetingParts);
             
             // Re-render
             render.timerDisplay();
@@ -1594,7 +1623,7 @@ render.timerDisplay();
         this.meetingParts.splice(index, 0, newPart);
         
         // Save to localStorage
-        localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+        persistence.setJson(STORAGE_KEYS.meetingTemplate, this.meetingParts);
         
         // Re-render
         render.timerDisplay();
@@ -1666,7 +1695,7 @@ render.timerDisplay();
                 }
                 
                 // Save to localStorage
-                localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+                persistence.setJson(STORAGE_KEYS.meetingTemplate, this.meetingParts);
                 this.saveState();
                 
                 // Re-render
@@ -1768,7 +1797,7 @@ render.timerDisplay();
         }
         
         // Save to localStorage
-        localStorage.setItem('meetingTemplate', JSON.stringify(this.meetingParts));
+        persistence.setJson(STORAGE_KEYS.meetingTemplate, this.meetingParts);
         this.saveState();
         
         // Re-render
@@ -1801,9 +1830,8 @@ const templateManager = {
     // Migrate old templates to new format
     migrateTemplates() {
         try {
-            const oldTemplates = localStorage.getItem('savedTemplates');
-            if (oldTemplates) {
-                const oldTemplatesObj = JSON.parse(oldTemplates);
+            const oldTemplatesObj = persistence.getJson(STORAGE_KEYS.savedTemplates, null);
+            if (oldTemplatesObj) {
                 
                 // Check if we need to migrate (old format is an object with template names as keys)
                 if (oldTemplatesObj && typeof oldTemplatesObj === 'object' && !oldTemplatesObj.templates) {
@@ -1832,7 +1860,7 @@ const templateManager = {
                     });
                     
                     // Save new templates
-                    localStorage.setItem('savedTemplates', JSON.stringify(newTemplates));
+                    this.saveTemplates(newTemplates);
                     console.log('Templates migrated successfully');
                 }
             }
@@ -1849,7 +1877,7 @@ const templateManager = {
             // If no categories exist, add default categories
             if (!templates.categories || !Array.isArray(templates.categories)) {
                 templates.categories = this.defaultCategories;
-                localStorage.setItem('savedTemplates', JSON.stringify(templates));
+                this.saveTemplates(templates);
             }
             
             // Populate category dropdowns
@@ -1906,10 +1934,8 @@ const templateManager = {
     // Get all saved templates
     getTemplates() {
         try {
-            const templates = localStorage.getItem('savedTemplates');
-            if (templates) {
-                return JSON.parse(templates);
-            }
+            const templates = persistence.getJson(STORAGE_KEYS.savedTemplates, null);
+            if (templates) return templates;
             
             // Return empty templates object if none exist
             return {
@@ -1923,6 +1949,10 @@ const templateManager = {
                 categories: this.defaultCategories
             };
         }
+    },
+
+    saveTemplates(templates) {
+        persistence.setJson(STORAGE_KEYS.savedTemplates, templates);
     },
     
     // Generate a unique template ID
@@ -1950,7 +1980,7 @@ const templateManager = {
             };
             
             // Save templates
-            localStorage.setItem('savedTemplates', JSON.stringify(templates));
+            this.saveTemplates(templates);
             
             notify.show(`Template "${name}" saved successfully`, 'success');
         } catch (error) {
@@ -1974,7 +2004,7 @@ const templateManager = {
             // Add category
             categories.push(name);
             templates.categories = categories;
-            localStorage.setItem('savedTemplates', JSON.stringify(templates));
+            this.saveTemplates(templates);
             
             // Populate category dropdowns
             this.populateCategoryDropdowns();
@@ -2278,7 +2308,7 @@ const templateManager = {
                     delete templates.templates[templateId];
                     
                     // Save templates
-                    localStorage.setItem('savedTemplates', JSON.stringify(templates));
+                    this.saveTemplates(templates);
                     
                     // Repopulate templates list
                     this.populateTemplatesList();
@@ -2451,7 +2481,7 @@ const templateManager = {
             });
             
             // Save templates
-            localStorage.setItem('savedTemplates', JSON.stringify(templates));
+            this.saveTemplates(templates);
             
             // Populate category dropdowns
             this.populateCategoryDropdowns();
