@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer
- * Version 3.6.5
+ * Version 3.6.6
  * 
  * A comprehensive timer application for managing meeting parts,
  * tracking comments, and maintaining meeting templates.
@@ -626,7 +626,7 @@ if (this.elements.commentHistory) {
             const nextMeeting = state.scheduleNextWeeklyMeeting(Date.now());
             this.updateMeetingForm();
             if (nextMeeting) {
-                notify.show(`${label} saved. Next meeting is ${formatLocalDate(nextMeeting.startTs)} at ${formatLocalTime(nextMeeting.startTs)}`, 'success');
+                notify.show(`${label} saved`, 'success');
             } else {
                 notify.show('Invalid meeting day/time format', 'error');
             }
