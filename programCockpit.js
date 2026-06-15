@@ -226,12 +226,6 @@ const programCockpit = {
                 continue;
             }
 
-            const sameLineDuration = this.extractDuration(line);
-            const nextLine = lines[index + 1] || '';
-            const nextLineIsBoundary = PROGRAM_SECTIONS.includes(this.normalizeHeading(nextLine))
-                || this.isPartHeading(nextLine)
-                || /^song\s+\d+$/i.test(nextLine);
-            const nextLineDuration = nextLineIsBoundary ? null : this.extractDuration(nextLine);
             const isPartHeading = this.isPartHeading(line);
             const isOpening = /song\s+\d+.*opening comments/i.test(line);
             const isClosing = /concluding comments/i.test(line);
@@ -245,15 +239,17 @@ const programCockpit = {
                 continue;
             }
 
-            const duration = sameLineDuration || nextLineDuration || this.inferDefaultDuration(line, currentSection);
+            const partBlock = this.collectPartBlock(lines, index);
+            const duration = this.extractDurationFromBlock(partBlock) || this.inferDefaultDuration(line, currentSection);
             if (duration === null) {
                 continue;
             }
 
             const name = isOpening ? 'Opening Comments' : isClosing ? 'Concluding Comments' : this.cleanPartName(line);
-            const detailLines = this.collectDetails(lines, index + 1);
+            const detailLines = this.collectDetails(partBlock.slice(1), 0);
             const section = isOpening ? 'Opening' : isClosing ? 'Closing' : currentSection;
             const type = this.inferPartType(name, section, detailLines.join(' '));
+            const usedInferredDuration = !this.extractDurationFromBlock(partBlock);
 
             parts.push({
                 name,
@@ -262,7 +258,11 @@ const programCockpit = {
                 enableComments: this.shouldEnableComments(name, type),
                 section,
                 type,
-                notes: detailLines.slice(0, 3).join(' '),
+                notes: [
+                    ...detailLines.slice(0, 3),
+                    ...(usedInferredDuration ? [`Review time: inferred ${duration} min.`] : [])
+                ].join(' '),
+                durationSource: usedInferredDuration ? 'inferred' : 'imported',
                 sourceUrl
             });
         }
@@ -339,6 +339,23 @@ const programCockpit = {
         return match ? parseInt(match[1], 10) : null;
     },
 
+    extractDurationFromBlock(lines) {
+        const durationLine = lines.find((line) => this.extractDuration(line) !== null);
+        return durationLine ? this.extractDuration(durationLine) : null;
+    },
+
+    collectPartBlock(lines, startIndex) {
+        const block = [];
+        for (let i = startIndex; i < lines.length; i += 1) {
+            const line = lines[i];
+            if (i > startIndex && this.isPartBoundary(line)) {
+                break;
+            }
+            block.push(line);
+        }
+        return block;
+    },
+
     inferDefaultDuration(line, section = '') {
         const text = String(line || '').toLowerCase();
         if (/opening comments/.test(text)) return 1;
@@ -365,7 +382,7 @@ const programCockpit = {
         const details = [];
         for (let i = startIndex; i < lines.length && details.length < 4; i += 1) {
             const line = lines[i];
-            if (PROGRAM_SECTIONS.includes(this.normalizeHeading(line)) || this.isPartHeading(line) || /^song\s+\d+$/i.test(line)) {
+            if (this.isPartBoundary(line)) {
                 break;
             }
             if (!this.extractDuration(line) && !this.shouldSkipLine(line)) {
@@ -373,6 +390,12 @@ const programCockpit = {
             }
         }
         return details;
+    },
+
+    isPartBoundary(line) {
+        return PROGRAM_SECTIONS.includes(this.normalizeHeading(line))
+            || this.isPartHeading(line)
+            || /^song\s+\d+$/i.test(line);
     },
 
     inferPartType(name, section, details) {
@@ -568,6 +591,7 @@ const programCockpit = {
             meta.innerHTML = `
                 <span>${this.escapeHtml(part.section || 'Meeting')}</span>
                 <span>${this.escapeHtml(part.type || 'part')}</span>
+                <span>${part.durationSource === 'inferred' ? 'time inferred' : 'time imported'}</span>
                 ${part.notes ? `<span title="${this.escapeHtml(part.notes)}">Notes</span>` : ''}
             `;
             heading.insertAdjacentElement('afterend', meta);
