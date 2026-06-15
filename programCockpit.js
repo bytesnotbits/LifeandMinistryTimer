@@ -15,6 +15,7 @@ const PROGRAM_SECTIONS = [
 ];
 
 const MONTH_PATTERN = '(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)';
+const DATE_DASH_PATTERN = '[-\\u2013â€“]';
 
 const SAMPLE_PROGRAM_TEXT = `
 JUNE 15-21
@@ -117,12 +118,7 @@ const programCockpit = {
 
         this.setStatus('Fetching the weekly program...', 'loading');
         try {
-            const response = await fetch(url, { mode: 'cors' });
-            if (!response.ok) {
-                throw new Error(`Fetch failed with ${response.status}`);
-            }
-            const html = await response.text();
-            const text = this.extractTextFromHtml(html);
+            const text = await this.fetchProgramText(url);
             const textArea = document.getElementById('wolImportText');
             if (textArea) {
                 textArea.value = text;
@@ -130,8 +126,42 @@ const programCockpit = {
             this.importProgram(text, url);
         } catch (error) {
             console.warn('Could not fetch WOL program directly:', error);
-            this.setStatus('The browser blocked the direct fetch. Paste the page text and use Import From Text.', 'warning');
+            this.setStatus('The URL import was blocked. Paste the page text and use Import From Text.', 'warning');
         }
+    },
+
+    async fetchProgramText(url) {
+        const isWolUrl = /^https?:\/\/wol\.jw\.org\//i.test(url);
+        const attempts = isWolUrl
+            ? [
+                { url: this.buildReaderUrl(url), kind: 'text' },
+                { url, kind: 'html' }
+            ]
+            : [
+                { url, kind: 'html' },
+                { url: this.buildReaderUrl(url), kind: 'text' }
+            ];
+
+        let lastError = null;
+        for (const attempt of attempts) {
+            try {
+                const response = await fetch(attempt.url, { mode: 'cors' });
+                if (!response.ok) {
+                    throw new Error(`Fetch failed with ${response.status}`);
+                }
+                const content = await response.text();
+                return attempt.kind === 'html' ? this.extractTextFromHtml(content) : content;
+            } catch (error) {
+                lastError = error;
+                console.warn(`Program fetch failed for ${attempt.url}:`, error);
+            }
+        }
+
+        throw lastError || new Error('Program fetch failed');
+    },
+
+    buildReaderUrl(url) {
+        return `https://r.jina.ai/http://r.jina.ai/http://${url}`;
     },
 
     extractTextFromHtml(html) {
@@ -167,15 +197,18 @@ const programCockpit = {
     },
 
     parseProgram(rawText, sourceUrl = '') {
-        const lines = String(rawText || '')
+        const sourceLines = String(rawText || '')
             .replace(/\u00a0/g, ' ')
             .replace(/[“”]/g, '"')
             .split(/\r?\n/)
-            .map((line) => line.trim())
-            .filter(Boolean)
-            .filter((line) => !/^(your answer|share|log in|log out|sorry, there was an error|no video available)$/i.test(line));
+            .map((line) => this.cleanSourceLine(line));
 
-        const week = this.findWeek(lines);
+        const titleLine = sourceLines.find((line) => /^title:/i.test(line)) || '';
+        const lines = sourceLines
+            .filter(Boolean)
+            .filter((line) => !/^(title:|url source:|markdown content:|your answer|share|log in|log out|sorry, there was an error|no video available)$/i.test(line));
+
+        const week = this.findWeek(lines) || this.findWeek([titleLine.replace(/^title:\s*/i, '')]);
         const reading = this.findReading(lines);
         const parts = [];
         let currentSection = 'Opening';
@@ -194,7 +227,11 @@ const programCockpit = {
             }
 
             const sameLineDuration = this.extractDuration(line);
-            const nextLineDuration = this.extractDuration(lines[index + 1] || '');
+            const nextLine = lines[index + 1] || '';
+            const nextLineIsBoundary = PROGRAM_SECTIONS.includes(this.normalizeHeading(nextLine))
+                || this.isPartHeading(nextLine)
+                || /^song\s+\d+$/i.test(nextLine);
+            const nextLineDuration = nextLineIsBoundary ? null : this.extractDuration(nextLine);
             const isPartHeading = this.isPartHeading(line);
             const isOpening = /song\s+\d+.*opening comments/i.test(line);
             const isClosing = /concluding comments/i.test(line);
@@ -237,17 +274,43 @@ const programCockpit = {
         };
     },
 
+    cleanSourceLine(line) {
+        return String(line || '')
+            .trim()
+            .replace(/^#{1,6}\s*/, '')
+            .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+            .replace(/\*\*/g, '')
+            .replace(/__/g, '')
+            .replace(/[_`]/g, '')
+            .replace(/\\\[/g, '[')
+            .replace(/\\\]/g, ']')
+            .replace(/(Song\s+\d+)(and Prayer)/ig, '$1 $2')
+            .replace(/\s+/g, ' ')
+            .trim();
+    },
+
     findWeek(lines) {
-        const sameMonthRange = new RegExp(`^${MONTH_PATTERN} \\d{1,2}[-–]\\d{1,2}$`);
-        const crossMonthRange = new RegExp(`^${MONTH_PATTERN} \\d{1,2}[-–]${MONTH_PATTERN} \\d{1,2}$`);
+        const sameMonthRange = new RegExp(`^${MONTH_PATTERN} \\d{1,2}${DATE_DASH_PATTERN}\\d{1,2}$`);
+        const crossMonthRange = new RegExp(`^${MONTH_PATTERN} \\d{1,2}${DATE_DASH_PATTERN}${MONTH_PATTERN} \\d{1,2}$`);
         const weekLine = lines.find((line) => sameMonthRange.test(line.toUpperCase()) || crossMonthRange.test(line.toUpperCase()));
-        return weekLine ? this.toTitleText(weekLine) : '';
+        if (weekLine) return this.toTitleText(weekLine);
+
+        const sameMonthMatch = lines
+            .map((line) => line.toUpperCase().match(new RegExp(`${MONTH_PATTERN} \\d{1,2}${DATE_DASH_PATTERN}\\d{1,2}`)))
+            .find(Boolean);
+        if (sameMonthMatch) return this.toTitleText(sameMonthMatch[0]);
+
+        const crossMonthMatch = lines
+            .map((line) => line.toUpperCase().match(new RegExp(`${MONTH_PATTERN} \\d{1,2}${DATE_DASH_PATTERN}${MONTH_PATTERN} \\d{1,2}`)))
+            .find(Boolean);
+        return crossMonthMatch ? this.toTitleText(crossMonthMatch[0]) : '';
     },
 
     findReading(lines) {
         const ignored = new Set(['BIBLE', 'PUBLICATIONS', 'MEETINGS']);
-        const sameMonthRange = new RegExp(`^${MONTH_PATTERN} \\d{1,2}[-–]\\d{1,2}$`);
-        const crossMonthRange = new RegExp(`^${MONTH_PATTERN} \\d{1,2}[-–]${MONTH_PATTERN} \\d{1,2}$`);
+        const sameMonthRange = new RegExp(`^${MONTH_PATTERN} \\d{1,2}${DATE_DASH_PATTERN}\\d{1,2}$`);
+        const crossMonthRange = new RegExp(`^${MONTH_PATTERN} \\d{1,2}${DATE_DASH_PATTERN}${MONTH_PATTERN} \\d{1,2}$`);
         const readingLine = lines.find((line) => {
             const upper = line.toUpperCase();
             const isDateRange = sameMonthRange.test(upper) || crossMonthRange.test(upper);
@@ -260,12 +323,11 @@ const programCockpit = {
 
     shouldSkipLine(line) {
         return /^(our christian life and ministry|mwb\d|english publications|copyright|terms of use|privacy)/i.test(line)
-            || /^#/.test(line)
             || /^image:/i.test(line);
     },
 
     isPartHeading(line) {
-        return /^\d+\.\s+/.test(line) || /^(concluding comments|song\s+\d+.*opening comments)/i.test(line);
+        return /^\d+\.\s+/.test(line) || /^(concluding comments|song\s+\d+.*opening comments|song\s+\d+\s+and prayer.*opening comments)/i.test(line);
     },
 
     extractDuration(line) {
