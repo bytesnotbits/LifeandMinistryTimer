@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer - Rendering Module
- * Version 3.6.9
+ * Version 3.7.0
  * 
  * Handles all DOM updates and rendering for the Life and Ministry Timer application
  */
@@ -348,6 +348,11 @@ const render = {
                 ? inlineDraft.durationValue
                 : Math.max(1, Math.floor(part.duration / 60));
             const inlineCommentsChecked = inlineDraft ? inlineDraft.enableComments : part.enableComments;
+            const escapedPartName = escapeHtmlAttribute(part.name);
+            const escapedSpeaker = escapeHtmlAttribute(part.speaker || '');
+            const escapedInlineNameValue = escapeHtmlAttribute(inlineNameValue);
+            const escapedInlineSpeakerValue = escapeHtmlAttribute(inlineSpeakerValue);
+            const escapedInlineDurationValue = escapeHtmlAttribute(inlineDurationValue);
             const canRemove = !state.isRunning && state.meetingParts.length > 1;
             const removeDisabledClass = canRemove ? '' : 'opacity-40 cursor-not-allowed';
             const removeDisabledAttr = canRemove ? '' : 'disabled';
@@ -372,23 +377,23 @@ const render = {
                 ` : ''}
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold flex items-center gap-2">
-                        <span>${part.name}</span>
+                        <span>${escapedPartName}</span>
                         ${state.isEditMode ? `
                         <button data-action="edit-part" data-part-index="${index}"
                             class="p-1 text-blue-600 hover:text-blue-800 rounded"
-                            aria-label="Edit ${part.name}">
+                            aria-label="Edit ${escapedPartName}">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path d="M17.414 2.586a2 2 0 010 2.828l-8.5 8.5a1 1 0 01-.447.264l-4 1a1 1 0 01-1.213-1.213l1-4a1 1 0 01.264-.447l8.5-8.5a2 2 0 012.828 0zM5.978 10.607l-.5 2 2-.5 7.95-7.95-1.5-1.5-7.95 7.95z"/>
                             </svg>
                         </button>
                         ` : ''}
                     </h3>
-                    <div class="text-sm text-gray-600">${part.speaker}</div>
+                    <div class="text-sm text-gray-600">${escapedSpeaker}</div>
                     <div class="ml-2 flex items-center gap-1">
                         ${state.isEditMode ? `
                             <button data-action="remove-part" data-part-index="${index}"
                                 class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 ${removeDisabledClass}"
-                                aria-label="Remove ${part.name}" ${removeDisabledAttr}>
+                                aria-label="Remove ${escapedPartName}" ${removeDisabledAttr}>
                                 ×
                             </button>
                         ` : ''}
@@ -396,19 +401,19 @@ const render = {
                 </div>
 
                 ${isInlineEditing ? `
-                    <div class="inline-part-editor mb-3 p-3 border rounded bg-gray-50">
+                    <div class="inline-part-editor mb-3 p-3 border rounded bg-gray-50" role="group" aria-label="Editing ${escapedPartName}">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
                             <div>
                                 <label for="editPartName-inline-${index}" class="block text-sm font-medium text-gray-700 mb-1">Part Name</label>
-                                <input id="editPartName-inline-${index}" type="text" class="w-full px-2 py-1 border rounded" value="${inlineNameValue}">
+                                <input id="editPartName-inline-${index}" type="text" class="w-full px-2 py-1 border rounded" value="${escapedInlineNameValue}" data-inline-edit-field="name" autocomplete="off">
                             </div>
                             <div>
                                 <label for="editPartSpeaker-inline-${index}" class="block text-sm font-medium text-gray-700 mb-1">Speaker</label>
-                                <input id="editPartSpeaker-inline-${index}" type="text" class="w-full px-2 py-1 border rounded" value="${inlineSpeakerValue}">
+                                <input id="editPartSpeaker-inline-${index}" type="text" class="w-full px-2 py-1 border rounded" value="${escapedInlineSpeakerValue}" data-inline-edit-field="speaker" autocomplete="off">
                             </div>
                             <div>
                                 <label for="editPartDuration-inline-${index}" class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
-                                <input id="editPartDuration-inline-${index}" type="number" min="1" max="180" class="w-full px-2 py-1 border rounded" value="${inlineDurationValue}">
+                                <input id="editPartDuration-inline-${index}" type="number" min="1" max="180" class="w-full px-2 py-1 border rounded" value="${escapedInlineDurationValue}" data-inline-edit-field="duration" inputmode="numeric">
                             </div>
                             <div class="flex items-end">
                                 <label class="inline-flex items-center">
@@ -420,12 +425,12 @@ const render = {
                         <div class="flex gap-2">
                             <button data-action="save-inline-part" data-part-index="${index}"
                                 class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                aria-label="Save ${part.name} changes">
+                                aria-label="Save ${escapedPartName} changes">
                                 Save
                             </button>
                             <button data-action="cancel-inline-part" data-part-index="${index}"
                                 class="px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-                                aria-label="Cancel editing ${part.name}">
+                                aria-label="Cancel editing ${escapedPartName}">
                                 Cancel
                             </button>
                         </div>
@@ -559,6 +564,15 @@ const render = {
         });
 
         this.globalTimerDisplay();
+    },
+
+    focusInlinePartEditor(index) {
+        window.requestAnimationFrame(() => {
+            const input = document.getElementById(`editPartName-inline-${index}`);
+            if (!input) return;
+            input.focus();
+            input.select();
+        });
     },
 
     // Update live timer values without rebuilding cards (preserves inline edit focus/typing)

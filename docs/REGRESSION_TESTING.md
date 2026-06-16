@@ -322,6 +322,28 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-012
 - Related files: `programCockpit.js`, `styles.css`, `index.html`
 
+## REG-019: Inline card editing handles keyboard and validation safely
+- Priority: High
+- Area: Editing
+- Preconditions:
+  - App loaded with multiple parts.
+  - Edit mode is enabled.
+- Steps:
+  1. Start a part timer and open inline editing on a card.
+  2. Type a part name and speaker containing quotes or apostrophes.
+  3. Press `Esc` and verify edits are canceled without stopping the timer.
+  4. Reopen inline editing, enter the same punctuation-heavy values, and press `Ctrl+Enter`.
+  5. Reopen inline editing, blank the part name, and attempt to save.
+  6. Enter `0` or `181` for duration and attempt to save.
+  7. Enter a valid duration and press `Enter` from the duration field.
+- Expected:
+  - Inline fields render punctuation safely and keep the timer updating.
+  - `Esc` cancels, `Ctrl+Enter` saves, and duration-field `Enter` saves valid edits.
+  - Invalid names/durations are not committed and focus returns to the field that needs correction.
+  - Footer version displays `3.7.0`.
+- Related decisions: DEC-013
+- Related files: `lifeMinistryTimer.js`, `render.js`, `index.html`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.

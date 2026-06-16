@@ -288,3 +288,28 @@ Track important decisions that explain *why* the code changed.
     - Verify version displays as 3.6.9.
   - Risks:
     - Duplicate start/pause controls could be confusing if labels drift from run dashboard labels.
+
+## DEC-013: Make inline card editing live-safe
+- Date: 2026-06-16
+- Status: Accepted
+- Related files: `lifeMinistryTimer.js`, `render.js`, `index.html`, `styles.css`, `newFeatures.js`
+- Context:
+  - Inline editing already preserved drafts during live timer refreshes, but typing punctuation into names/speakers could break rendered input attributes.
+  - Saving invalid durations was too forgiving, and keyboard users needed a faster commit/cancel path during live meetings.
+- Decision:
+  - Escape inline editor display and input values before rendering them into HTML.
+  - Focus and select the part name when opening an inline editor.
+  - Support `Esc` to cancel, `Ctrl+Enter` to save, and `Enter` from the duration field to save.
+  - Validate required part names and 1-180 minute durations before committing edits, returning focus to the field needing attention.
+  - Bump the app version to 3.7.0.
+- Consequences:
+  - Live edits are less likely to lose typed content or commit surprising values.
+  - Keyboard-first editing is quicker without changing the existing button workflow.
+- Validation:
+  - Manual checks:
+    - Open inline editing during a running timer and type part names/speakers containing quotes and apostrophes.
+    - Use `Esc`, `Ctrl+Enter`, and duration-field `Enter` and verify the expected cancel/save behavior.
+    - Attempt blank names and out-of-range durations and verify focus returns to the problem field.
+    - Verify footer version displays 3.7.0.
+  - Risks:
+    - Attribute escaping now protects inline rendering, but other legacy render paths may still deserve a broader escaping audit.

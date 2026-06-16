@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer
- * Version 3.6.9
+ * Version 3.7.0
  * 
  * A comprehensive timer application for managing meeting parts,
  * tracking comments, and maintaining meeting templates.
@@ -366,6 +366,25 @@ if (this.elements.partsDisplay) {
             // Track inline editor changes so typed values survive full re-renders.
             this.elements.partsDisplay.addEventListener('input', syncInlineDraftFromEvent);
             this.elements.partsDisplay.addEventListener('change', syncInlineDraftFromEvent);
+            this.elements.partsDisplay.addEventListener('keydown', (event) => {
+                const editor = event.target.closest('.inline-part-editor');
+                if (!editor) return;
+
+                const partCard = editor.closest('.part-card');
+                const partIndex = partCard ? parseInt(partCard.dataset.partIndex, 10) : -1;
+                if (Number.isNaN(partIndex) || state.editingPartIndex !== partIndex) return;
+
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    state.cancelPartEdits();
+                    return;
+                }
+
+                if ((event.key === 'Enter' && event.ctrlKey) || (event.key === 'Enter' && event.target.type === 'number')) {
+                    event.preventDefault();
+                    state.saveInlinePartEdits(partIndex);
+                }
+            });
 
             // Handle part selection via click (only if not running and not edit mode)
              this.elements.partsDisplay.addEventListener('click', (event) => {
@@ -1679,6 +1698,7 @@ let state = {
             enableComments: !!part.enableComments
         };
         render.timerDisplay();
+        render.focusInlinePartEditor(index);
     },
 
     // Keep unsaved inline editor values in state so re-renders do not clear user input.
@@ -1730,14 +1750,24 @@ let state = {
 
         const name = (nameInput ? nameInput.value : (draft ? draft.name : '')).trim();
         const speaker = (speakerInput ? speakerInput.value : (draft ? draft.speaker : '')).trim();
-        const durationMinutes = Math.max(
-            1,
-            parseInt(durationInput ? durationInput.value : (draft ? draft.durationValue : '1'), 10) || 1
-        );
+        const durationValue = durationInput ? durationInput.value : (draft ? draft.durationValue : '');
+        const durationMinutes = parseInt(durationValue, 10);
         const enableComments = commentsCheckbox ? commentsCheckbox.checked : !!(draft && draft.enableComments);
 
         if (!name) {
             notify.show('Please enter a part name', 'error');
+            if (nameInput) {
+                nameInput.focus();
+            }
+            return;
+        }
+
+        if (!Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 180) {
+            notify.show('Enter a duration from 1 to 180 minutes', 'error');
+            if (durationInput) {
+                durationInput.focus();
+                durationInput.select();
+            }
             return;
         }
 

@@ -38,6 +38,7 @@ Document behavior in terms of user outcomes.
 - UI reflects the current application state after initialization.
 - Inline editing state tracks a single active card editor (`editingPartIndex`).
 - Duration edits for the active part can be saved while timer is running and should update countdown/progress immediately.
+- Inline card editing should preserve typed values during live timer updates, safely handle punctuation in names/speakers, support `Esc` to cancel, support `Ctrl+Enter` or duration-field `Enter` to save, and validate part names/durations before committing.
 
 ## 3. State Model (High-Level)
 
@@ -82,3 +83,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-15: Improved the program cockpit import flow with a readiness summary, automatic review handoff after import, and a corrected Jina Reader URL fallback.
 - 2026-06-15: Enhanced the program review tab with pre-flight summary metrics and imported/suggested timing badges.
 - 2026-06-15: Added review-to-live handoff actions and bumped the app version to 3.6.9.
+- 2026-06-16: Polished inline card editing with escaped values, keyboard save/cancel, validation focus, and version 3.7.0.
