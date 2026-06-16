@@ -49,6 +49,12 @@ function minutes(part) {
   return part.duration / 60;
 }
 
+assert(
+  programCockpit.buildReaderUrl('https://wol.jw.org/en/wol/d/r1/lp-e/202026167') ===
+    'https://r.jina.ai/https://wol.jw.org/en/wol/d/r1/lp-e/202026167',
+  'Reader URL should prepend the Jina Reader prefix once'
+);
+
 const readerLikeFixture = [
   'Title: June 15-21 - Watchtower ONLINE LIBRARY',
   '',

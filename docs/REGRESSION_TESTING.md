@@ -269,6 +269,23 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-009
 - Related files: `index.html`, `render.js`, `programCockpit.js`, `styles.css`
 
+## REG-016: Program import shows readiness and opens review
+- Priority: High
+- Area: Rendering
+- Preconditions:
+  - App loaded.
+  - Program cockpit is visible.
+- Steps:
+  1. Click `Load Sample Week`.
+  2. Verify the `Review` tab is active.
+  3. Inspect the import readiness summary.
+  4. Verify part count, planned duration, inferred timing count, and comment-enabled part count are shown.
+- Expected:
+  - Successful import moves the user into review.
+  - Readiness summary clearly indicates whether timing needs review before running the meeting.
+- Related decisions: DEC-010
+- Related files: `index.html`, `programCockpit.js`, `styles.css`, `tests/importer-fixtures.test.cjs`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.

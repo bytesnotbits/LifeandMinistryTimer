@@ -225,3 +225,25 @@ Track important decisions that explain *why* the code changed.
     - Advance to the next part and verify next-part preview changes.
   - Risks:
     - Additional live labels must remain readable on narrow screens and in dark mode.
+
+## DEC-010: Add cockpit import readiness and review handoff
+- Date: 2026-06-15
+- Status: Accepted
+- Related files: `index.html`, `programCockpit.js`, `styles.css`, `tests/importer-fixtures.test.cjs`
+- Context:
+  - Importing a weekly program left users without a concise signal about whether inferred timings needed review.
+  - The WOL reader fallback URL was malformed, reducing the chance that URL import could recover through Jina Reader.
+- Decision:
+  - Add an import readiness summary with part count, planned duration, inferred timing count, and comment-enabled part count.
+  - Switch to the review tab after successful import so users immediately inspect parsed timing.
+  - Build Jina Reader fallback URLs by prefixing `https://r.jina.ai/` exactly once.
+- Consequences:
+  - Program setup has a clearer “import -> review -> run” flow.
+  - Users can quickly spot inferred timings before starting a live meeting.
+- Validation:
+  - Manual checks:
+    - Import sample text and verify the review tab opens with a readiness summary.
+    - Confirm inferred timing count is visible when parsed parts use defaults.
+    - Try URL import fallback path when direct fetch is blocked.
+  - Risks:
+    - Automatic review handoff may surprise users who expected to remain on the prepare tab after import.

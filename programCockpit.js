@@ -182,7 +182,8 @@ const programCockpit = {
     },
 
     buildReaderUrl(url) {
-        return `https://r.jina.ai/http://r.jina.ai/http://${url}`;
+        const normalizedUrl = String(url || '').trim();
+        return normalizedUrl ? `https://r.jina.ai/${normalizedUrl}` : '';
     },
 
     extractTextFromHtml(html) {
@@ -215,6 +216,7 @@ const programCockpit = {
         this.decorateTimerCards();
 
         this.setStatus(`Imported ${parsed.parts.length} parts for ${parsed.meta.week || 'this week'}.`, 'success');
+        this.setView('review');
     },
 
     parseProgram(rawText, sourceUrl = '') {
@@ -478,6 +480,7 @@ const programCockpit = {
 
     renderAll() {
         this.renderHeader();
+        this.renderImportReadiness();
         this.renderSectionSummary();
         this.renderRunDashboard();
         this.renderReviewDashboard();
@@ -517,6 +520,43 @@ const programCockpit = {
                 </article>
             `;
         }).join('');
+    },
+
+    renderImportReadiness() {
+        const container = document.getElementById('programImportReadiness');
+        if (!container) return;
+
+        if (!state.meetingParts.length) {
+            container.innerHTML = `
+                <div class="readiness-card readiness-empty">
+                    <strong>No program imported</strong>
+                    <span>Import a week to preview timing and prepare the live meeting.</span>
+                </div>
+            `;
+            return;
+        }
+
+        const totalDuration = state.meetingParts.reduce((sum, part) => sum + (part.duration || 0), 0);
+        const inferredCount = state.meetingParts.filter((part) => part.durationSource === 'inferred').length;
+        const commentParts = state.meetingParts.filter((part) => part.enableComments).length;
+        const status = inferredCount > 0 ? 'Review suggested times' : 'Ready to run';
+        const statusClass = inferredCount > 0 ? 'needs-review' : 'ready';
+
+        container.innerHTML = `
+            <div class="readiness-card ${statusClass}">
+                <div>
+                    <span class="run-label">Import Status</span>
+                    <strong>${status}</strong>
+                    <p>${this.escapeHtml(this.meta.week || 'Imported program')}${this.meta.reading ? ` - ${this.escapeHtml(this.meta.reading)}` : ''}</p>
+                </div>
+                <div class="readiness-metrics">
+                    <span><b>${state.meetingParts.length}</b> parts</span>
+                    <span><b>${formatMeetingTime(totalDuration)}</b> planned</span>
+                    <span><b>${inferredCount}</b> inferred</span>
+                    <span><b>${commentParts}</b> comment parts</span>
+                </div>
+            </div>
+        `;
     },
 
     renderRunDashboard() {
