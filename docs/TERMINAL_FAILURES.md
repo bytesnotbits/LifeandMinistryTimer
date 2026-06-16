@@ -110,3 +110,59 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - The helper appends the next TERM id and validates that the entry was written.
 
+
+## TERM-007: PowerShell provider-qualified UNC path breaks native tools
+- Date observed: 2026-06-15
+- Failed pattern:
+  - Using Get-Location directly in Join-Path, then passing result to git -C and rg
+- Symptom:
+  - git and rg received Microsoft.PowerShell.Core\\FileSystem::\\\\wsl.localhost... and failed with invalid path
+- Likely cause:
+  - PowerShell provider-qualified path string is not a native filesystem path for external executables
+- Preferred workaround:
+  - Use (Get-Location).ProviderPath before building paths passed to native tools
+- Notes:
+  - Observed during timer UI inspection on 2026-06-16
+
+
+## TERM-008: PowerShell markdown backtick regex parse failure
+- Date observed: 2026-06-15
+- Failed pattern:
+  - Double quoted rg pattern with literal markdown code ticks
+- Symptom:
+  - PowerShell reported missing string terminator before verification script could run
+- Likely cause:
+  - Backtick is an escape character in double quoted PowerShell strings
+- Preferred workaround:
+  - Use single quoted regex strings or avoid literal markdown code ticks in PowerShell patterns
+- Notes:
+  - Observed during timer redesign verification on 2026-06-16
+
+
+## TERM-009: git-publish paths need PowerShell array syntax
+- Date observed: 2026-06-15
+- Failed pattern:
+  - Calling git-publish.ps1 -Paths path1 path2 path3 from a single command string
+- Symptom:
+  - PowerShell reported that a positional parameter could not accept the second path
+- Likely cause:
+  - The helper expects the Paths parameter as one string array argument, not loose positional tokens
+- Preferred workaround:
+  - Pass -Paths with a PowerShell array expression or splat the path list from a wrapper script
+- Notes:
+  - Observed while publishing timer redesign on 2026-06-16
+
+
+## TERM-010: git-publish helper collapses path array into one pathspec
+- Date observed: 2026-06-15
+- Failed pattern:
+  - Invoking git-publish.ps1 with a string array for -Paths from a wrapper script
+- Symptom:
+  - Helper printed each path but git add received one space-joined pathspec and failed
+- Likely cause:
+  - The helper Invoke-Git function receives the Paths array as a nested array or single argument when forwarded
+- Preferred workaround:
+  - Use explicit git add -- path calls in the wrapper or patch the helper to splat Paths into git add
+- Notes:
+  - Observed while publishing timer redesign on 2026-06-16
+

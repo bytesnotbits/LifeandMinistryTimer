@@ -601,6 +601,15 @@ const programCockpit = {
         }, 0);
         const variance = totalElapsed - plannedElapsedToCurrent;
         const currentTiming = getPartTimingState(currentElapsed, current.duration || 0, state.isRunning);
+        const currentProgressClass = getProgressColorClass(currentTiming.percent, currentTiming.state === 'overtime');
+        const commentTiming = getCommentTimingState(state.activePart);
+        const commentProgressClass = getProgressColorClass(commentTiming.percent, commentTiming.state === 'overtime');
+        const activeCommentDuration = state.activeComment && state.activeComment.partIndex === state.activePart
+            ? Math.max(0, (state.elapsedTimes[state.activePart] || 0) - state.activeComment.startElapsed)
+            : 0;
+        const commentStatus = state.activeComment && state.activeComment.partIndex === state.activePart
+            ? commentTiming.label
+            : 'Ready';
         const pace = getMeetingPaceState(variance);
         const completedParts = state.meetingParts.filter((part, index) => {
             const elapsed = state.elapsedTimes[index] || 0;
@@ -624,8 +633,20 @@ const programCockpit = {
                     <div><span>Meeting Pace</span><strong class="${pace.className}">${pace.text}</strong></div>
                 </div>
                 <div class="run-progress-line" aria-hidden="true">
-                    <span style="width:${currentTiming.percent}%"></span>
+                    <span class="${currentProgressClass} ${currentTiming.state === 'overtime' ? 'overtime-pulse' : ''}" style="width:${currentTiming.percent}%"></span>
                 </div>
+                ${current.enableComments ? `
+                    <div class="run-comment-timer timer-state-${commentTiming.state}">
+                        <div class="run-comment-meta">
+                            <span>Comment</span>
+                            <strong>${formatTime(activeCommentDuration)}</strong>
+                            <b>${commentStatus}</b>
+                        </div>
+                        <div class="run-progress-line run-progress-line--comment" aria-hidden="true">
+                            <span class="${commentProgressClass} ${commentTiming.state === 'overtime' ? 'overtime-pulse' : ''}" style="width:${commentTiming.percent}%"></span>
+                        </div>
+                    </div>
+                ` : ''}
                 <div class="run-actions">
                     <button type="button" class="primary-action" data-run-action="${state.isRunning ? 'stop' : 'start'}">
                         ${state.isRunning ? 'Pause Current Part' : 'Start Current Part'}

@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer - Rendering Module
- * Version 3.7.0
+ * Version 3.7.1
  * 
  * Handles all DOM updates and rendering for the Life and Ministry Timer application
  */
@@ -25,6 +25,8 @@ function buildCommentStatsByPart() {
 
 const GLOBAL_MEETING_EDGE_BUFFER_SECONDS = 5 * 60;
 const GLOBAL_MEETING_MID_SONG_GAP_SECONDS = 3 * 60;
+const GLOBAL_SEGMENT_ACTUAL_SHIFT_THRESHOLD_SECONDS = 30;
+const COMMENT_GLANCE_TARGET_SECONDS = 30;
 
 //----------------------------------------------------------------------------------------------
 // RENDERING - Handles all DOM updates
@@ -63,12 +65,9 @@ const render = {
         const container = document.getElementById('globalTimerContainer');
         if (!container) return;
 
-        const currentPart = state.meetingParts[state.activePart];
-        const currentPartElapsed = state.elapsedTimes[state.activePart] || 0;
         const hasGlobalTimer = !!state.meetingScheduledStart;
-        const hasActivePartTimer = !!currentPart && (state.isRunning || currentPartElapsed > 0);
 
-        if (!hasGlobalTimer && !hasActivePartTimer) {
+        if (!hasGlobalTimer) {
             container.classList.add('hidden');
             return;
         }
@@ -80,17 +79,14 @@ const render = {
             globalPanel.classList.toggle('hidden', !hasGlobalTimer);
         }
 
-        const activePartPanel = document.getElementById('activePartTimerPanel');
-        if (activePartPanel) {
-            activePartPanel.classList.toggle('hidden', !hasActivePartTimer);
-        }
-
         const now = Date.now();
         const displayState = meetingScheduleModel.getDisplayState(state, now);
         if (hasGlobalTimer && displayState) {
         const bar = document.getElementById('globalProgress');
         if (bar) {
             bar.style.width = displayState.percent + '%';
+            bar.classList.remove('bg-green-500', 'bg-yellow-500', 'bg-red-500');
+            bar.classList.add(getProgressColorClass(displayState.percent, displayState.isOvertime, 'bg-green-500'));
             // Detect overtime: if elapsed > total and meeting is still running
             if (displayState.isOvertime) {
                 bar.classList.add('overtime-pulse');
@@ -104,7 +100,7 @@ const render = {
                 .map((segment) => `
                     <span class="global-segment"
                         style="left:${segment.left}%;width:${segment.width}%"
-                        title="${escapeHtmlAttribute(segment.title)}"></span>
+                        title="${escapeHtmlAttribute(segment.title)}">${segment.label ? `<span class="global-segment-label">${segment.label}</span>` : ''}</span>
                 `)
                 .join('');
         }
@@ -135,52 +131,6 @@ const render = {
             }
         }
 
-        if (hasActivePartTimer && currentPart) {
-            const partDuration = currentPart.duration || 0;
-            const partTiming = getPartTimingState(currentPartElapsed, partDuration, state.isRunning);
-            const partPercent = partTiming.percent;
-            const partProgress = document.getElementById('activePartProgress');
-            if (partProgress) {
-                partProgress.style.width = `${partPercent}%`;
-                partProgress.classList.remove('bg-blue-500', 'bg-yellow-500', 'bg-red-500');
-                if (partTiming.state === 'overtime' || partPercent >= 90) {
-                    partProgress.classList.add('bg-red-500');
-                } else if (partPercent >= 75) {
-                    partProgress.classList.add('bg-yellow-500');
-                } else {
-                    partProgress.classList.add('bg-blue-500');
-                }
-            }
-            if (activePartPanel) {
-                activePartPanel.classList.remove('timer-state-ready', 'timer-state-running', 'timer-state-closing', 'timer-state-overtime', 'timer-state-paused');
-                activePartPanel.classList.add(`timer-state-${partTiming.state}`);
-            }
-            const partName = document.getElementById('activePartTimerName');
-            if (partName) {
-                partName.textContent = currentPart.name || 'Selected part';
-            }
-            const partStatus = document.getElementById('activePartTimerStatus');
-            if (partStatus) {
-                partStatus.textContent = partTiming.label;
-                partStatus.className = `timer-status-pill timer-status-${partTiming.state}`;
-            }
-            const partElapsed = document.getElementById('activePartTimerLabel');
-            if (partElapsed) {
-                partElapsed.textContent = formatTime(currentPartElapsed);
-            }
-            const partRemaining = document.getElementById('activePartTimerRemaining');
-            if (partRemaining) {
-                partRemaining.textContent = formatTimeWithSign(partTiming.remaining);
-                partRemaining.classList.toggle('is-over', partTiming.state === 'overtime');
-            }
-            const nextPart = state.meetingParts[state.activePart + 1];
-            const nextPartLabel = document.getElementById('activePartTimerNext');
-            if (nextPartLabel) {
-                nextPartLabel.textContent = nextPart
-                    ? `Next: ${nextPart.name || 'Meeting part'} (${formatTime(nextPart.duration || 0)})`
-                    : 'Final part';
-            }
-        }
     },
     
     // Render template editor
@@ -838,21 +788,52 @@ function buildGlobalMeetingSegments(totalSec) {
     const segmentPoolSec = Math.max(0, interiorSec - Math.min(totalGapSec, interiorSec / 3));
     const sourceDurationSec = state.meetingParts.reduce((sum, part) => sum + Math.max(0, part.duration || 0), 0);
     const fallbackDurationSec = state.meetingParts.length;
+    const sourceScale = sourceDurationSec > 0 ? segmentPoolSec / sourceDurationSec : 0;
 
     let cursorSec = bufferSec;
     return state.meetingParts.map((part, index) => {
         cursorSec += gapSecondsByIndex[index] || 0;
         const sourcePartSec = sourceDurationSec > 0 ? Math.max(0, part.duration || 0) : 1;
         const denominator = sourceDurationSec > 0 ? sourceDurationSec : fallbackDurationSec;
-        const widthSec = denominator > 0 ? (sourcePartSec / denominator) * segmentPoolSec : 0;
+        const widthSec = sourceDurationSec > 0
+            ? sourcePartSec * sourceScale
+            : (denominator > 0 ? (sourcePartSec / denominator) * segmentPoolSec : 0);
+        const elapsed = Number(state.elapsedTimes[index] || 0);
+        const shouldShiftByActual = index < state.activePart && elapsed >= GLOBAL_SEGMENT_ACTUAL_SHIFT_THRESHOLD_SECONDS;
+        const cursorAdvanceSec = shouldShiftByActual
+            ? Math.max(0, elapsed) * sourceScale
+            : widthSec;
         const segment = {
             left: Math.max(0, Math.min(100, (cursorSec / totalSec) * 100)),
             width: Math.max(0.3, Math.min(100, (widthSec / totalSec) * 100)),
-            title: `${part.name || 'Meeting part'}: ${formatTime(part.duration || 0)}`
+            title: `${index + 1}. ${part.name || 'Meeting part'}: ${formatTime(part.duration || 0)}`,
+            label: state.meetingParts.length <= 16 && (widthSec / totalSec) * 100 >= 3.5 ? String(index + 1) : ''
         };
-        cursorSec += widthSec;
+        cursorSec += cursorAdvanceSec;
         return segment;
     });
+}
+
+function getProgressColorClass(percent, isOvertime = false, defaultClass = 'bg-blue-500') {
+    if (isOvertime || percent >= 90) {
+        return 'bg-red-500';
+    }
+
+    if (percent >= 75) {
+        return 'bg-yellow-500';
+    }
+
+    return defaultClass;
+}
+
+function getCommentTimingState(partIndex) {
+    let elapsed = 0;
+    const activeForPart = !!(state.activeComment && state.activeComment.partIndex === partIndex);
+    if (activeForPart) {
+        elapsed = Math.max(0, (state.elapsedTimes[partIndex] || 0) - state.activeComment.startElapsed);
+    }
+
+    return getPartTimingState(elapsed, COMMENT_GLANCE_TARGET_SECONDS, activeForPart);
 }
 
 function getPartTimingState(elapsedSeconds, durationSeconds, isRunning = false) {

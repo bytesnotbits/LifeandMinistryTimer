@@ -362,6 +362,31 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-014
 - Related files: `index.html`, `styles.css`, `newFeatures.js`, `lifeMinistryTimer.js`
 
+## REG-021: Live timer progress is consolidated and meeting segments adjust
+- Priority: High
+- Area: Timer
+- Preconditions:
+  - A weekly program has been imported or the sample program is loaded.
+  - A meeting schedule is set so the global meeting timer is visible.
+- Steps:
+  1. Start the current part from the run dashboard.
+  2. Verify the sticky timer area shows the global meeting timer without a second sticky current-part timer.
+  3. Let or adjust the current part past 75%, 90%, and overtime.
+  4. Start a comment on a comment-enabled current part and let it pass 75%, 90%, and 30 seconds.
+  5. Advance a part after more than 30 seconds of elapsed time.
+  6. Reset and advance a part in under 30 seconds.
+  7. Resize from desktop width to mobile width.
+- Expected:
+  - The run dashboard thin part line is the only current-part progress line in the live run area.
+  - Global, part, and comment progress lines change to orange, then red, and pulse in overtime.
+  - The comment line counts against a fixed 30-second target.
+  - Later global meeting segments shift when a completed part has at least 30 seconds of actual time.
+  - Rapid under-30-second advances do not pull later global segments backward.
+  - Part numbers appear inside global segments only when there is enough width.
+  - Footer version displays `3.7.1`.
+- Related decisions: DEC-015
+- Related files: `index.html`, `render.js`, `programCockpit.js`, `styles.css`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.

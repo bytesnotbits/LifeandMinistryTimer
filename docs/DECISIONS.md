@@ -335,3 +335,30 @@ Track important decisions that explain *why* the code changed.
     - Refresh after collapsing and verify the collapsed state persists.
   - Risks:
     - Very narrow desktop widths may need follow-up tuning if the compact rail competes with timer content.
+
+## DEC-015: Consolidate live timer progress and pace display
+- Date: 2026-06-16
+- Status: Accepted
+- Related files: `index.html`, `render.js`, `programCockpit.js`, `styles.css`, `lifeMinistryTimer.js`
+- Context:
+  - The sticky current-part timer duplicated the run dashboard part timer and made the global meeting timer cramped.
+  - Meeting pace needed to react to early finishes across the whole meeting instead of only presenting each part in isolation.
+- Decision:
+  - Remove the sticky current-part timer panel and keep the run dashboard's thinner current-part progress line as the primary part timer.
+  - Apply orange, red, and overtime pulse states to the global meeting line and the thin run-dashboard part/comment lines.
+  - Add a 30-second comment glance timer below the current-part progress line.
+  - Show part numbers in global meeting segments only on wider screens and only when individual segments have enough space.
+  - Shift future global meeting segments from completed actual part timing, but ignore completed parts under 30 seconds to avoid accidental rapid advances moving the whole meeting.
+  - Bump the app version to 3.7.1.
+- Consequences:
+  - The meeting timer receives the full sticky timer width and is easier to read.
+  - Early or late completed parts adjust the remaining segment layout while very short accidental starts are treated as planned.
+- Validation:
+  - Manual checks:
+    - Start the sample program and verify only one current-part progress line appears in the live run area.
+    - Let the meeting/current/comment progress pass 75%, 90%, and overtime and verify orange, red, and pulse states.
+    - Advance a part early after more than 30 seconds and verify later global segments shift earlier; repeat under 30 seconds and verify they do not shift.
+    - Resize the page and verify part numbers disappear before segment labels crowd each other.
+    - Verify footer version displays 3.7.1.
+  - Risks:
+    - Segment shifting is based on stored elapsed seconds rather than explicit wall-clock part end timestamps.

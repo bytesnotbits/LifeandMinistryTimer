@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer
- * Version 3.7.0
+ * Version 3.7.1
  * 
  * A comprehensive timer application for managing meeting parts,
  * tracking comments, and maintaining meeting templates.

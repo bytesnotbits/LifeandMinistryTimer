@@ -525,8 +525,58 @@ main {
     transition: width 0.5s ease;
 }
 
+.run-progress-line span.bg-yellow-500 {
+    background: var(--warning-color);
+}
+
+.run-progress-line span.bg-red-500 {
+    background: var(--danger-color);
+}
+
 .timer-state-overtime .run-progress-line span {
     background: var(--danger-color);
+}
+
+.run-progress-line span.overtime-pulse {
+    animation: overtime-pulse-animation 1s infinite;
+}
+
+.run-comment-timer {
+    margin-top: 0.55rem;
+}
+
+.run-comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text-light);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.run-comment-meta strong {
+    color: var(--text-primary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.92rem;
+}
+
+.run-comment-meta b {
+    color: var(--text-light);
+    font-size: 0.72rem;
+}
+
+.run-comment-timer.timer-state-closing .run-comment-meta b {
+    color: #b45309;
+}
+
+.run-comment-timer.timer-state-overtime .run-comment-meta b {
+    color: var(--danger-color);
+}
+
+.run-progress-line--comment {
+    height: 0.28rem;
+    margin-top: 0.28rem;
 }
 
 .run-actions {
@@ -1152,6 +1202,19 @@ main {
     background: rgba(255, 255, 255, 0.16);
 }
 
+.global-segment-label {
+    display: none;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+    text-shadow: 0 1px 1px rgba(15, 23, 42, 0.45);
+}
+
 .global-progress-bar .left-label,
 .global-progress-bar .countdown,
 .part-progress-bar .left-label,
@@ -1199,6 +1262,10 @@ main {
     .meeting-workspace .active-timer-grid:has(.active-timer-panel:not(.hidden) + .active-timer-panel:not(.hidden)) {
         grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.9fr);
         align-items: end;
+    }
+
+    .global-segment-label {
+        display: flex;
     }
 }
 

@@ -18,6 +18,9 @@ Document behavior in terms of user outcomes.
 - Display updates at expected intervals.
 - Timer state should not desync from UI controls.
 - The live timer surface should make the active part state glanceable: ready, running, closing, paused, or overtime.
+- The sticky live timer area should prioritize the global meeting timer; current-part progress belongs in the run dashboard's thin progress line.
+- Global meeting segments should shift from completed actual part timing after a 30-second guard threshold so meeting pace reflects early/late parts without reacting to accidental rapid advances.
+- Comment timing in the run dashboard uses a fixed 30-second glance target and mirrors the same orange/red/overtime visual states as part timing.
 - The active part panel and run dashboard should show the next part when one exists.
 
 ### 2.2 Program/Segment Management
@@ -91,3 +94,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-15: Added review-to-live handoff actions and bumped the app version to 3.6.9.
 - 2026-06-16: Polished inline card editing with escaped values, keyboard save/cancel, validation focus, and version 3.7.0.
 - 2026-06-16: Documented task completion expectations for version bumps, docs synchronization, commits, and pushes.
+- 2026-06-16: Consolidated live timer progress, expanded the global meeting timer, added 30-second comment timing, adaptive global segment numbering, actual-time segment shifting, and version 3.7.1.
