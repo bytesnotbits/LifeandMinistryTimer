@@ -16,15 +16,20 @@ Use this index as the single source of truth for project documentation.
   - Maps features to manual regression checks and expected results.
   - Update whenever a feature is added/changed or a bug is fixed.
 
+- `docs/TERMINAL_FAILURES.md`
+  - Tracks recurring terminal failures, symptoms, likely causes, and preferred workarounds.
+  - Review before repeating script, PowerShell/WSL, Git, build, verification, or publish workflows.
+
 ## Update Workflow (Recommended)
 
 1. Make code change.
 2. Add a decision note in `DECISIONS.md` if behavior/implementation choices changed.
 3. Update the relevant feature section in `KNOWLEDGE_BASE.md`.
 4. Add or update a regression test case in `REGRESSION_TESTING.md`.
-5. For user-visible app changes, bump the footer version in `index.html` and mention the new version in the related decision/regression entries.
-6. Run through impacted regression checks before release.
-7. Commit with a short imperative message and push the branch when a remote is configured.
+5. Add or update `TERMINAL_FAILURES.md` when a terminal workflow fails or repeats a known workaround.
+6. For user-visible app changes, bump the footer version in `index.html` and mention the new version in the related decision/regression entries.
+7. Run through impacted regression checks before release.
+8. Commit with a short imperative message and push the branch when a remote is configured.
 
 ## Naming and Date Conventions
 
