@@ -179,3 +179,17 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed during inline editing verification on 2026-06-16.
 
+## TERM-012: Git push succeeds but geometric repack fails on WSL share
+- Date observed: 2026-06-16
+- Failed pattern:
+  - Running `git push` from Windows Git against the WSL UNC repository after committing changes.
+- Symptom:
+  - Push completes, but Git reports `fatal: could not write multi-pack-index: Permission denied`, followed by `failed to perform geometric repack`.
+- Likely cause:
+  - Windows Git can update the remote while still failing a local maintenance/repack step on the WSL share because of filesystem permission or lock behavior.
+- Preferred workaround:
+  - Verify whether the push completed by checking the remote update line and rerunning `git status --short`.
+  - If local maintenance is needed, run Git maintenance from WSL or disable automatic maintenance for the repository before retrying publish workflows.
+- Notes:
+  - Observed after pushing commit `ad47820` on 2026-06-16.
+
