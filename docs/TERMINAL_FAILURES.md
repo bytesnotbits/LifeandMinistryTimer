@@ -193,3 +193,16 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed after pushing commit `ad47820` on 2026-06-16.
 
+## TERM-013: Over-escaped verification regex in PowerShell scripts
+- Date observed: 2026-06-16
+- Failed pattern:
+  - Using a heavily escaped `-match` regex in a temporary PowerShell verification script to check JavaScript source text.
+- Symptom:
+  - The verification script failed with a false negative even though the target function existed.
+- Likely cause:
+  - Escaping for JavaScript regex text inside PowerShell string literals made the verification pattern harder to reason about than the source check required.
+- Preferred workaround:
+  - Use simple `.Contains(...)` checks for exact source snippets when regex semantics are not needed.
+- Notes:
+  - Observed while verifying imported program part numbering.
+

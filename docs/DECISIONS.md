@@ -397,19 +397,19 @@ Track important decisions that explain *why* the code changed.
   - Global meeting timer segment numbers needed to identify the same part numbers shown in the part cards.
   - Repeating raw index math in different render paths made the relationship easy to miss.
 - Decision:
-  - Use a shared part display-number helper for part card numbering and global meeting segment labels.
-  - Show that part number as a badge beside each part title so imported agenda numbers in titles are not confused with app part numbers.
-  - Add the part number to each global segment's DOM metadata and title.
-  - Show the active card as `Current - Part N of total` so the active part has the same visible number as its segment.
-  - Bump the app version to 3.7.3.
+  - Parse imported program part numbers from part titles such as `1. They Treated...`.
+  - Show that program number as a badge beside each numbered part title and strip the duplicate leading number from the visible title.
+  - Leave unnumbered items such as Opening Comments without a badge or global segment label.
+  - Add the program part number to each numbered global segment's DOM metadata and title.
+  - Bump the app version to 3.7.4.
 - Consequences:
-  - Segment labels now explicitly represent their source part number rather than an independent segment count.
-  - Debugging and visual inspection can compare card badges, card text, segment labels, segment titles, and `data-part-number`.
+  - Segment labels now represent program part numbers rather than card ordinal positions.
+  - Debugging and visual inspection can compare card badges, cleaned card text, segment labels, segment titles, and `data-part-number`.
 - Validation:
   - Manual checks:
     - Load a scheduled meeting so the global timer segments render.
-    - Compare visible global segment labels with the corresponding part card number badges.
-    - Verify the active card still reads as current while including its part number.
-    - Verify footer version displays 3.7.3.
+    - Verify Opening Comments has no global segment label.
+    - Compare visible global segment labels with the corresponding numbered part card badges.
+    - Verify footer version displays 3.7.4.
   - Risks:
-    - Very narrow or short segments may still hide their label to prevent crowding; hidden labels should not be treated as renumbering.
+    - Very narrow or short numbered segments may still hide their label to prevent crowding; hidden labels should not be treated as renumbering.

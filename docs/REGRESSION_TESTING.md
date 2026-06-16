@@ -409,22 +409,23 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-016
 - Related files: `lifeMinistryTimer.js`, `render.js`, `styles.css`, `index.html`
 
-## REG-023: Global segment labels match part card numbers
+## REG-023: Global segment labels match imported program part numbers
 - Priority: High
 - Area: Timer
 - Preconditions:
   - App loaded with multiple meeting parts.
   - A meeting schedule is set so the global meeting timer is visible.
 - Steps:
-  1. Inspect the first several part cards and note their displayed part number badges.
-  2. Inspect global meeting timer segment labels and hover titles.
-  3. Advance to another active part.
-  4. Reinspect the active card and the corresponding global segment.
+  1. Inspect Opening Comments and verify it has no part number badge.
+  2. Inspect the first numbered program part and note its displayed part number badge.
+  3. Inspect global meeting timer segment labels and hover titles.
+  4. Advance to another active part.
+  5. Reinspect the active card and the corresponding global segment.
 - Expected:
-  - Each visible global segment label is the same number as the part card badge it represents.
+  - Opening Comments does not consume global segment number `1`.
+  - Each visible global segment label is the same imported program number as the part card badge it represents.
   - Global segment hover titles identify `Part N` using the same number.
-  - The active card displays `Current - Part N of total`.
-  - Footer version displays `3.7.3`.
+  - Footer version displays `3.7.4`.
 - Related decisions: DEC-017
 - Related files: `render.js`, `index.html`
 

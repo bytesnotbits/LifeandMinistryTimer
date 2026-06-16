@@ -20,7 +20,7 @@ Document behavior in terms of user outcomes.
 - The live timer surface should make the active part state glanceable: ready, running, closing, paused, or overtime.
 - The sticky live timer area should prioritize the global meeting timer; current-part progress belongs in the run dashboard's thin progress line.
 - Global meeting segments should shift from completed actual part timing after a 30-second guard threshold so meeting pace reflects early/late parts without reacting to accidental rapid advances.
-- Global meeting segment labels should use the same part number badge shown on the corresponding part card.
+- Global meeting segment labels should use the same imported program part number shown on the corresponding part card; unnumbered items such as Opening Comments should not consume a segment number.
 - Comment timing in the run dashboard uses a fixed 30-second glance target and mirrors the same orange/red/overtime visual states as part timing.
 - The active part panel and run dashboard should show the next part when one exists.
 
@@ -99,4 +99,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-16: Documented task completion expectations for version bumps, docs synchronization, commits, and pushes.
 - 2026-06-16: Consolidated live timer progress, expanded the global meeting timer, added 30-second comment timing, adaptive global segment numbering, actual-time segment shifting, and version 3.7.1.
 - 2026-06-16: Restored single-card inline editing, moved add-before/add-after into the active card editor, improved dark-mode editor/modal contrast, fixed reset timer contrast, and version 3.7.2.
-- 2026-06-16: Made global meeting segment labels derive from the same part display number used by card badges and version 3.7.3.
+- 2026-06-16: Made global meeting segment labels derive from imported program part numbers, left unnumbered items unlabeled, and version 3.7.4.
