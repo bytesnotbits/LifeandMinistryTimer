@@ -313,3 +313,25 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.7.0.
   - Risks:
     - Attribute escaping now protects inline rendering, but other legacy render paths may still deserve a broader escaping audit.
+
+## DEC-014: Move admin controls into a collapsible left sidebar
+- Date: 2026-06-16
+- Status: Accepted
+- Related files: `index.html`, `styles.css`, `newFeatures.js`, `lifeMinistryTimer.js`
+- Context:
+  - Administrative setup controls were taking space on the right side of the live meeting workspace.
+  - Users need the live timer area to remain primary while still having quick access to setup/review tools.
+- Decision:
+  - Place the admin sidebar as the left desktop column and keep the live meeting workspace on the right.
+  - Add an admin sidebar toggle that collapses the panel to a compact rail and persists its state in `localStorage`.
+  - Preserve mobile access by letting the same toggle hide or show the admin content on narrow screens.
+- Consequences:
+  - Live meeting content receives more visual priority when admin controls are collapsed.
+  - The layout now depends on a persisted UI preference that must keep `aria-expanded` synchronized.
+- Validation:
+  - Manual checks:
+    - Load the page at desktop width and verify admin controls appear on the left.
+    - Collapse and expand the admin panel and verify the live workspace resizes without overlapping content.
+    - Refresh after collapsing and verify the collapsed state persists.
+  - Risks:
+    - Very narrow desktop widths may need follow-up tuning if the compact rail competes with timer content.

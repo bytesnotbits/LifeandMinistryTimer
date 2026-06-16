@@ -149,6 +149,51 @@ const soundManager = {
 };
 
 //----------------------------------------------------------------------------------------------
+// ADMIN SIDEBAR MANAGEMENT
+//----------------------------------------------------------------------------------------------
+const adminSidebarManager = {
+    isCollapsed: false,
+
+    init() {
+        const savedValue = persistence.getString(STORAGE_KEYS.adminSidebarCollapsed);
+        this.isCollapsed = savedValue === 'true';
+        this.updateSidebar();
+
+        const toggle = document.getElementById('adminSidebarToggle');
+        if (toggle) {
+            toggle.addEventListener('click', () => this.toggle());
+        }
+    },
+
+    toggle() {
+        this.isCollapsed = !this.isCollapsed;
+        persistence.setString(STORAGE_KEYS.adminSidebarCollapsed, this.isCollapsed);
+        this.updateSidebar();
+    },
+
+    updateSidebar() {
+        const layout = document.querySelector('.meeting-layout');
+        const sidebar = document.getElementById('adminSidebar');
+        const toggle = document.getElementById('adminSidebarToggle');
+        const collapseIcon = toggle?.querySelector('.admin-toggle-collapse-icon');
+        const expandIcon = toggle?.querySelector('.admin-toggle-expand-icon');
+
+        layout?.classList.toggle('admin-collapsed', this.isCollapsed);
+        sidebar?.classList.toggle('is-collapsed', this.isCollapsed);
+
+        if (toggle) {
+            const label = this.isCollapsed ? 'Expand admin panel' : 'Collapse admin panel';
+            toggle.setAttribute('aria-expanded', this.isCollapsed ? 'false' : 'true');
+            toggle.setAttribute('aria-label', label);
+            toggle.title = label;
+        }
+
+        collapseIcon?.classList.toggle('hidden', this.isCollapsed);
+        expandIcon?.classList.toggle('hidden', !this.isCollapsed);
+    }
+};
+
+//----------------------------------------------------------------------------------------------
 // REPORT MANAGEMENT
 //----------------------------------------------------------------------------------------------
 const reportManager = {
@@ -287,6 +332,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize sound manager
     soundManager.init();
+
+    // Initialize admin sidebar state
+    adminSidebarManager.init();
 // Add sound toggle button event listener
     const soundToggle = document.getElementById('soundToggle');
     if (soundToggle) {

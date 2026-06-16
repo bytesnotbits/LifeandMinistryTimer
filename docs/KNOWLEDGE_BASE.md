@@ -65,13 +65,19 @@ Use this section to track the source of truth for each major state key.
   - Save code changes and refresh browser.
   - Use hard refresh (`Ctrl+Shift+R`) if stale assets are cached.
 
-## 6. Open Questions
+## 6. Task Completion Expectations
+
+- For user-visible app behavior changes, bump the footer version in `index.html`.
+- Keep decision notes, regression cases, and knowledge-base expectations synchronized with the change.
+- Finish completed work by committing with a short imperative message and pushing the branch when a remote is configured.
+
+## 7. Open Questions
 
 - Which exact `localStorage` keys are currently in use?
 - Which features are fully implemented vs partially implemented in `newFeatures.js`?
 - Are there expected audible alerts, visual alerts, or both when timers expire?
 
-## 7. Change Log for Behavior (Knowledge-Level)
+## 8. Change Log for Behavior (Knowledge-Level)
 
 - 2026-03-01: Edit mode toggle visual feedback and persistence confirmed in README notes.
 - 2026-03-01: Added local development instructions for live browser preview via `python3 -m http.server 8000`.
@@ -84,3 +90,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-15: Enhanced the program review tab with pre-flight summary metrics and imported/suggested timing badges.
 - 2026-06-15: Added review-to-live handoff actions and bumped the app version to 3.6.9.
 - 2026-06-16: Polished inline card editing with escaped values, keyboard save/cancel, validation focus, and version 3.7.0.
+- 2026-06-16: Documented task completion expectations for version bumps, docs synchronization, commits, and pushes.

@@ -344,6 +344,24 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-013
 - Related files: `lifeMinistryTimer.js`, `render.js`, `index.html`
 
+## REG-020: Admin sidebar sits left and collapses persistently
+- Priority: Medium
+- Area: Rendering
+- Preconditions:
+  - App loaded at desktop width.
+- Steps:
+  1. Verify the admin panel appears to the left of the live meeting workspace.
+  2. Click the admin toggle button.
+  3. Verify the admin content collapses to a compact rail and the live workspace expands.
+  4. Refresh the page.
+  5. Click the admin toggle again.
+- Expected:
+  - The admin panel starts on the left at desktop width.
+  - Collapsed and expanded states update without content overlap.
+  - The collapsed state persists after refresh and `aria-expanded` matches the visible state.
+- Related decisions: DEC-014
+- Related files: `index.html`, `styles.css`, `newFeatures.js`, `lifeMinistryTimer.js`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.

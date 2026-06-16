@@ -94,6 +94,61 @@ main {
 .admin-sidebar {
     display: grid;
     gap: 1rem;
+    align-content: start;
+}
+
+.admin-sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.55rem;
+    min-height: 2.6rem;
+    width: 100%;
+    padding: 0 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    color: var(--text-color);
+    background: var(--bg-card);
+    box-shadow: 0 2px 5px var(--shadow-color);
+    cursor: pointer;
+    font-weight: 800;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.admin-sidebar-toggle:hover,
+.admin-sidebar-toggle:focus-visible {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.admin-toggle-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    flex: 0 0 auto;
+}
+
+.admin-toggle-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.admin-toggle-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-sidebar-content {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.admin-sidebar.is-collapsed .admin-sidebar-content {
+    display: none;
 }
 
 .timer-section {
@@ -1608,16 +1663,44 @@ main {
     }
 
     .meeting-layout {
-        grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
+        grid-template-columns: minmax(20rem, 24rem) minmax(0, 1fr);
         gap: 1.5rem;
+        transition: grid-template-columns 0.2s ease;
+    }
+
+    .meeting-layout.admin-collapsed {
+        grid-template-columns: 3.25rem minmax(0, 1fr);
+    }
+
+    .meeting-workspace {
+        grid-column: 2;
+        grid-row: 1;
     }
 
     .admin-sidebar {
+        grid-column: 1;
+        grid-row: 1;
         position: sticky;
         top: 1rem;
         max-height: calc(100vh - 2rem);
         overflow: auto;
         padding-right: 0.15rem;
+    }
+
+    .admin-sidebar.is-collapsed {
+        overflow: visible;
+        padding-right: 0;
+    }
+
+    .admin-sidebar.is-collapsed .admin-sidebar-toggle {
+        justify-content: center;
+        min-height: 3rem;
+        padding: 0;
+    }
+
+    .admin-sidebar.is-collapsed .admin-toggle-label,
+    .admin-sidebar.is-collapsed .admin-sidebar-content {
+        display: none;
     }
 
     #commentHistory {

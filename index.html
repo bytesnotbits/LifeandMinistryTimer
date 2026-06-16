@@ -178,7 +178,19 @@
                 </section>
             </section>
 
-            <aside class="admin-sidebar" aria-label="Meeting administration">
+            <aside id="adminSidebar" class="admin-sidebar" aria-label="Meeting administration">
+                <button id="adminSidebarToggle" class="admin-sidebar-toggle" type="button" aria-expanded="true" aria-controls="adminSidebarContent" aria-label="Collapse admin panel" title="Collapse admin panel">
+                    <span class="admin-toggle-icon" aria-hidden="true">
+                        <svg class="admin-toggle-collapse-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m15 18-6-6 6-6"></path>
+                        </svg>
+                        <svg class="admin-toggle-expand-icon hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m9 18 6-6-6-6"></path>
+                        </svg>
+                    </span>
+                    <span class="admin-toggle-label">Admin</span>
+                </button>
+                <div id="adminSidebarContent" class="admin-sidebar-content">
                 <!-- Program Cockpit Section -->
                 <section id="programCockpit" class="program-cockpit admin-panel" aria-labelledby="program-cockpit-heading">
                     <div class="cockpit-hero">
@@ -361,6 +373,7 @@
                 </div>
             </header>
                 </section>
+                </div>
             </aside>
         </div>
         <!-- Parts Template Container (hidden) -->

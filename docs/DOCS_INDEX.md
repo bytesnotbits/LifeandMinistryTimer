@@ -22,7 +22,9 @@ Use this index as the single source of truth for project documentation.
 2. Add a decision note in `DECISIONS.md` if behavior/implementation choices changed.
 3. Update the relevant feature section in `KNOWLEDGE_BASE.md`.
 4. Add or update a regression test case in `REGRESSION_TESTING.md`.
-5. Run through impacted regression checks before release.
+5. For user-visible app changes, bump the footer version in `index.html` and mention the new version in the related decision/regression entries.
+6. Run through impacted regression checks before release.
+7. Commit with a short imperative message and push the branch when a remote is configured.
 
 ## Naming and Date Conventions
 

@@ -811,6 +811,7 @@ const STORAGE_KEYS = {
     meetingOverride: 'meetingOverride',
     weeklyMeetingSchedules: 'weeklyMeetingSchedules',
     savedTemplates: 'savedTemplates',
+    adminSidebarCollapsed: 'adminSidebarCollapsed',
     theme: 'theme',
     soundEnabled: 'soundEnabled'
 };
