@@ -96,3 +96,17 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
   - Pass explicit `-Paths` to `git-publish.ps1` unless deliberately staging all changes with `-All`.
 - Notes:
   - If a project needs special publish behavior, prefer improving the reusable helper or wrapping it with a small project script.
+
+## TERM-006: Rewriting failure log entries wastes effort
+- Date observed: 2026-06-15
+- Failed pattern:
+  - Manually adding TERM entries after the failure log format and numbering convention are established.
+- Symptom:
+  - Each entry repeats ID lookup, markdown formatting, and verification by hand.
+- Likely cause:
+  - The failure log convention was durable, but the append workflow was not yet scripted.
+- Preferred workaround:
+  - Use C:/Users/joefi/.codex/skills/script-first-execution/scripts/failure-log.ps1 with -LogPath for project logs.
+- Notes:
+  - The helper appends the next TERM id and validates that the entry was written.
+
