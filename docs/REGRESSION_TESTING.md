@@ -252,6 +252,76 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-008
 - Related files: `newFeatures.js`, `styles.css`, `index.html`
 
+## REG-015: Live timer state remains glanceable across part states
+- Priority: High
+- Area: Rendering
+- Preconditions:
+  - App loaded with at least two meeting parts.
+- Steps:
+  1. Select the first part and verify the sticky current-part panel and run dashboard show the current part and next part.
+  2. Start the active part and verify status changes to running in the sticky panel, active card, and run dashboard.
+  3. Let or adjust the active part near its planned duration and verify closing/overtime cues appear.
+  4. Pause the active part and verify paused state appears without losing elapsed/remaining values.
+  5. Advance to the next part and verify the next-part preview updates.
+- Expected:
+  - Current-part status, remaining time, meeting pace, and next-part preview stay synchronized across the sticky panel, active card, and run dashboard.
+  - Overtime is visibly distinct from normal running state.
+- Related decisions: DEC-009
+- Related files: `index.html`, `render.js`, `programCockpit.js`, `styles.css`
+
+## REG-016: Program import shows readiness and opens review
+- Priority: High
+- Area: Rendering
+- Preconditions:
+  - App loaded.
+  - Program cockpit is visible.
+- Steps:
+  1. Click `Load Sample Week`.
+  2. Verify the `Review` tab is active.
+  3. Inspect the import readiness summary.
+  4. Verify part count, planned duration, inferred timing count, and comment-enabled part count are shown.
+- Expected:
+  - Successful import moves the user into review.
+  - Readiness summary clearly indicates whether timing needs review before running the meeting.
+- Related decisions: DEC-010
+- Related files: `index.html`, `programCockpit.js`, `styles.css`, `tests/importer-fixtures.test.cjs`
+
+## REG-017: Program review summarizes timing readiness
+- Priority: High
+- Area: Rendering
+- Preconditions:
+  - A weekly program has been imported.
+- Steps:
+  1. Open the `Review` tab.
+  2. Inspect the summary metrics above the review table.
+  3. Inspect rows with imported and inferred/suggested durations.
+  4. Start/stop a part timer and return to review.
+- Expected:
+  - Review summary shows planned total, actual total, meeting variance, and suggested-time count.
+  - Each row shows imported or suggested timing source.
+  - Actual and variance values update after timing activity.
+- Related decisions: DEC-011
+- Related files: `programCockpit.js`, `styles.css`
+
+## REG-018: Review handoff starts live meeting flow
+- Priority: High
+- Area: Timer
+- Preconditions:
+  - A weekly program has been imported.
+  - The `Review` tab is active.
+- Steps:
+  1. Click `Focus Live View`.
+  2. Verify the live meeting workspace is brought into view.
+  3. Click `Start Current Part` from the review actions.
+  4. Verify sticky timer, active card, and run dashboard show running state.
+  5. Click the review action again to pause.
+- Expected:
+  - Review handoff controls use the same timer state as the live controls.
+  - Starting/pausing from review does not desynchronize elapsed time, active part, or displayed status.
+  - Footer version displays `3.6.9`.
+- Related decisions: DEC-012
+- Related files: `programCockpit.js`, `styles.css`, `index.html`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.

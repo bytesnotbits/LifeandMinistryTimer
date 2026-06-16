@@ -110,6 +110,23 @@ const programCockpit = {
                 this.renderAll();
             });
         }
+
+        const reviewView = document.getElementById('programReviewView');
+        if (reviewView) {
+            reviewView.addEventListener('click', (event) => {
+                const action = event.target.closest('[data-review-action]')?.dataset.reviewAction;
+                if (!action) return;
+                if (action === 'focus-run') {
+                    document.getElementById('programRunView')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else if (action === 'toggle-current') {
+                    state.toggleTimer();
+                    notify.show(state.isRunning ? 'Current part started' : 'Current part paused', state.isRunning ? 'success' : 'info');
+                    state.saveState();
+                    render.timerDisplay();
+                    this.renderAll();
+                }
+            });
+        }
     },
 
     setView(view) {
@@ -182,7 +199,8 @@ const programCockpit = {
     },
 
     buildReaderUrl(url) {
-        return `https://r.jina.ai/http://r.jina.ai/http://${url}`;
+        const normalizedUrl = String(url || '').trim();
+        return normalizedUrl ? `https://r.jina.ai/${normalizedUrl}` : '';
     },
 
     extractTextFromHtml(html) {
@@ -215,6 +233,7 @@ const programCockpit = {
         this.decorateTimerCards();
 
         this.setStatus(`Imported ${parsed.parts.length} parts for ${parsed.meta.week || 'this week'}.`, 'success');
+        this.setView('review');
     },
 
     parseProgram(rawText, sourceUrl = '') {
@@ -478,6 +497,7 @@ const programCockpit = {
 
     renderAll() {
         this.renderHeader();
+        this.renderImportReadiness();
         this.renderSectionSummary();
         this.renderRunDashboard();
         this.renderReviewDashboard();
@@ -519,16 +539,48 @@ const programCockpit = {
         }).join('');
     },
 
+    renderImportReadiness() {
+        const container = document.getElementById('programImportReadiness');
+        if (!container) return;
+
+        if (!state.meetingParts.length) {
+            container.innerHTML = `
+                <div class="readiness-card readiness-empty">
+                    <strong>No program imported</strong>
+                    <span>Import a week to preview timing and prepare the live meeting.</span>
+                </div>
+            `;
+            return;
+        }
+
+        const totalDuration = state.meetingParts.reduce((sum, part) => sum + (part.duration || 0), 0);
+        const inferredCount = state.meetingParts.filter((part) => part.durationSource === 'inferred').length;
+        const commentParts = state.meetingParts.filter((part) => part.enableComments).length;
+        const status = inferredCount > 0 ? 'Review suggested times' : 'Ready to run';
+        const statusClass = inferredCount > 0 ? 'needs-review' : 'ready';
+
+        container.innerHTML = `
+            <div class="readiness-card ${statusClass}">
+                <div>
+                    <span class="run-label">Import Status</span>
+                    <strong>${status}</strong>
+                    <p>${this.escapeHtml(this.meta.week || 'Imported program')}${this.meta.reading ? ` - ${this.escapeHtml(this.meta.reading)}` : ''}</p>
+                </div>
+                <div class="readiness-metrics">
+                    <span><b>${state.meetingParts.length}</b> parts</span>
+                    <span><b>${formatMeetingTime(totalDuration)}</b> planned</span>
+                    <span><b>${inferredCount}</b> inferred</span>
+                    <span><b>${commentParts}</b> comment parts</span>
+                </div>
+            </div>
+        `;
+    },
+
     renderRunDashboard() {
         const container = document.getElementById('runDashboard');
         if (!container) return;
 
         const current = state.meetingParts[state.activePart];
-        const totalPlanned = typeof getActiveMeetingPlannedSeconds === 'function'
-            ? getActiveMeetingPlannedSeconds()
-            : state.meetingParts.reduce((sum, part) => sum + part.duration, 0);
-        const totalElapsed = Object.values(state.elapsedTimes).reduce((sum, seconds) => sum + Number(seconds || 0), 0);
-        const variance = totalElapsed - totalPlanned;
         const next = state.meetingParts[state.activePart + 1];
 
         if (!current) {
@@ -536,15 +588,43 @@ const programCockpit = {
             return;
         }
 
+        const currentElapsed = state.elapsedTimes[state.activePart] || 0;
+        const totalElapsed = Object.values(state.elapsedTimes).reduce((sum, seconds) => sum + Number(seconds || 0), 0);
+        const plannedElapsedToCurrent = state.meetingParts.reduce((sum, part, index) => {
+            if (index < state.activePart) {
+                return sum + (part.duration || 0);
+            }
+            if (index === state.activePart) {
+                return sum + Math.min(currentElapsed, part.duration || 0);
+            }
+            return sum;
+        }, 0);
+        const variance = totalElapsed - plannedElapsedToCurrent;
+        const currentTiming = getPartTimingState(currentElapsed, current.duration || 0, state.isRunning);
+        const pace = getMeetingPaceState(variance);
+        const completedParts = state.meetingParts.filter((part, index) => {
+            const elapsed = state.elapsedTimes[index] || 0;
+            return elapsed >= (part.duration || 0);
+        }).length;
+
         container.innerHTML = `
-            <div class="run-now">
-                <span class="run-label">Current Part</span>
-                <h3>${this.escapeHtml(current.name)}</h3>
+            <div class="run-now timer-state-${currentTiming.state}">
+                <div class="run-title-row">
+                    <div>
+                        <span class="run-label">Current Part</span>
+                        <h3>${this.escapeHtml(current.name)}</h3>
+                    </div>
+                    <span class="timer-status-pill timer-status-${currentTiming.state}">${currentTiming.label}</span>
+                </div>
                 <p>${this.escapeHtml(current.section || 'Meeting')} ${current.speaker ? `- ${this.escapeHtml(current.speaker)}` : ''}</p>
                 <div class="run-metrics">
                     <div><span>Planned</span><strong>${formatTime(current.duration)}</strong></div>
-                    <div><span>Actual</span><strong>${formatTime(state.elapsedTimes[state.activePart] || 0)}</strong></div>
-                    <div><span>Meeting Pace</span><strong>${variance > 0 ? '+' : ''}${formatMeetingTime(Math.abs(variance))}</strong></div>
+                    <div><span>Actual</span><strong>${formatTime(currentElapsed)}</strong></div>
+                    <div><span>Remaining</span><strong class="${currentTiming.state === 'overtime' ? 'behind' : ''}">${formatTimeWithSign(currentTiming.remaining)}</strong></div>
+                    <div><span>Meeting Pace</span><strong class="${pace.className}">${pace.text}</strong></div>
+                </div>
+                <div class="run-progress-line" aria-hidden="true">
+                    <span style="width:${currentTiming.percent}%"></span>
                 </div>
                 <div class="run-actions">
                     <button type="button" class="primary-action" data-run-action="${state.isRunning ? 'stop' : 'start'}">
@@ -556,9 +636,15 @@ const programCockpit = {
                 </div>
             </div>
             <div class="run-next">
-                <span class="run-label">Next</span>
-                <strong>${next ? this.escapeHtml(next.name) : 'End of meeting'}</strong>
-                <p>${next ? this.escapeHtml(next.section || '') : 'Ready for concluding review.'}</p>
+                <div>
+                    <span class="run-label">Next</span>
+                    <strong>${next ? this.escapeHtml(next.name) : 'End of meeting'}</strong>
+                    <p>${next ? `${this.escapeHtml(next.section || 'Meeting')} - ${formatTime(next.duration || 0)}` : 'Ready for concluding review.'}</p>
+                </div>
+                <div class="run-next-count">
+                    <span>${completedParts}</span>
+                    <b>done</b>
+                </div>
             </div>
         `;
     },
@@ -576,17 +662,45 @@ const programCockpit = {
             const actual = state.elapsedTimes[index] || 0;
             const variance = actual - part.duration;
             const varianceClass = variance > 0 ? 'behind' : variance < 0 ? 'ahead' : '';
+            const sourceClass = part.durationSource === 'inferred' ? 'time-source-inferred' : 'time-source-imported';
+            const sourceLabel = part.durationSource === 'inferred' ? 'Suggested' : 'Imported';
             return `
                 <tr>
-                    <td>${this.escapeHtml(part.name)}</td>
+                    <td>
+                        <strong>${this.escapeHtml(part.name)}</strong>
+                        <span class="review-part-meta">${this.escapeHtml(part.section || 'Meeting')}${part.speaker ? ` - ${this.escapeHtml(part.speaker)}` : ''}</span>
+                        ${part.notes ? `<span class="review-part-note">${this.escapeHtml(part.notes)}</span>` : ''}
+                    </td>
                     <td>${formatTime(part.duration)}</td>
                     <td>${formatTime(actual)}</td>
                     <td class="${varianceClass}">${variance > 0 ? '+' : variance < 0 ? '-' : ''}${formatTime(Math.abs(variance))}</td>
+                    <td><span class="time-source ${sourceClass}">${sourceLabel}</span></td>
                 </tr>
             `;
         }).join('');
 
+        const plannedTotal = state.meetingParts.reduce((sum, part) => sum + (part.duration || 0), 0);
+        const actualTotal = Object.values(state.elapsedTimes).reduce((sum, seconds) => sum + Number(seconds || 0), 0);
+        const inferredCount = state.meetingParts.filter((part) => part.durationSource === 'inferred').length;
+        const pace = actualTotal > 0
+            ? getMeetingPaceState(actualTotal - plannedTotal)
+            : { className: 'on-pace', text: 'Not started' };
+
         container.innerHTML = `
+            <div class="review-summary">
+                <div><span>Planned</span><strong>${formatMeetingTime(plannedTotal)}</strong></div>
+                <div><span>Actual</span><strong>${formatMeetingTime(actualTotal)}</strong></div>
+                <div><span>Meeting variance</span><strong class="${pace.className}">${pace.text}</strong></div>
+                <div><span>Suggested times</span><strong>${inferredCount}</strong></div>
+            </div>
+            <div class="review-actions">
+                <button type="button" class="primary-action" data-review-action="focus-run">
+                    Focus Live View
+                </button>
+                <button type="button" data-review-action="toggle-current">
+                    ${state.isRunning ? 'Pause Current Part' : 'Start Current Part'}
+                </button>
+            </div>
             <table class="review-table">
                 <thead>
                     <tr>
@@ -594,6 +708,7 @@ const programCockpit = {
                         <th>Planned</th>
                         <th>Actual</th>
                         <th>Variance</th>
+                        <th>Time</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>

@@ -96,188 +96,208 @@
                 </button>
             </div>
         </header>
-        <!-- Program Cockpit Section -->
-        <section id="programCockpit" class="program-cockpit" aria-labelledby="program-cockpit-heading">
-            <div class="cockpit-hero">
-                <div>
-                    <p class="cockpit-kicker">Life and Ministry Meeting</p>
-                    <h2 id="program-cockpit-heading" class="cockpit-title">Prepare, run, and review this week's program</h2>
-                    <p id="programSubtitle" class="cockpit-subtitle">Import a weekly meeting page, assign names, then run the program as a live meeting flow.</p>
-                </div>
-                <div class="cockpit-summary" aria-label="Program summary">
+        <div class="meeting-layout">
+            <section class="meeting-workspace" aria-labelledby="meeting-workspace-heading">
+                <div class="meeting-live-header">
                     <div>
-                        <span class="summary-label">Week</span>
-                        <strong id="programWeekLabel">Not imported</strong>
+                        <p class="cockpit-kicker">Live Meeting</p>
+                        <h2 id="meeting-workspace-heading" class="cockpit-title">Run the meeting</h2>
+                        <p class="cockpit-subtitle">Keep the timers, current part, and meeting parts in one focused workspace.</p>
                     </div>
-                    <div>
-                        <span class="summary-label">Bible Reading</span>
-                        <strong id="programReadingLabel">-</strong>
-                    </div>
-                    <div>
-                        <span class="summary-label">Planned Time</span>
-                        <strong id="programDurationLabel">0:00</strong>
-                    </div>
-                </div>
-            </div>
-
-            <div class="cockpit-tabs" role="tablist" aria-label="Meeting workflow">
-                <button type="button" class="cockpit-tab active" data-program-view="prepare" role="tab" aria-selected="true">Prepare</button>
-                <button type="button" class="cockpit-tab" data-program-view="run" role="tab" aria-selected="false">Run</button>
-                <button type="button" class="cockpit-tab" data-program-view="review" role="tab" aria-selected="false">Review</button>
-            </div>
-
-            <div id="programPrepareView" class="program-view active">
-                <div class="import-panel">
-                    <div>
-                        <h3>Import Weekly Program</h3>
-                        <p>Paste a Watchtower Online Library meeting URL. URL import uses a readable text fallback, so review the imported parts; paste page text below for the most complete import.</p>
-                    </div>
-                    <div class="import-controls">
-                        <input id="wolImportUrl" type="url" placeholder="https://wol.jw.org/en/wol/d/r1/lp-e/202026168" aria-label="Weekly meeting URL">
-                        <button id="fetchWolProgramBtn" type="button">Fetch URL</button>
-                    </div>
-                    <textarea id="wolImportText" rows="7" placeholder="Optional fallback: paste the copied meeting page text here." aria-label="Meeting page text"></textarea>
-                    <div class="import-actions">
-                        <button id="importWolTextBtn" type="button">Import From Text</button>
-                        <button id="loadSampleProgramBtn" type="button">Load Sample Week</button>
-                        <span id="programImportStatus" role="status" aria-live="polite"></span>
+                    <div class="cockpit-summary" aria-label="Program summary">
+                        <div>
+                            <span class="summary-label">Week</span>
+                            <strong id="programWeekLabel">Not imported</strong>
+                        </div>
+                        <div>
+                            <span class="summary-label">Bible Reading</span>
+                            <strong id="programReadingLabel">-</strong>
+                        </div>
+                        <div>
+                            <span class="summary-label">Planned Time</span>
+                            <strong id="programDurationLabel">0:00</strong>
+                        </div>
                     </div>
                 </div>
-                <div id="programSectionSummary" class="section-summary" aria-label="Imported meeting sections"></div>
-            </div>
 
-            <div id="programRunView" class="program-view">
-                <div id="runDashboard" class="run-dashboard" aria-live="polite"></div>
-            </div>
-
-            <div id="programReviewView" class="program-view">
-                <div id="reviewDashboard" class="review-dashboard"></div>
-            </div>
-        </section>
-
-        <!-- Timer Display Section -->
-        <section id="timerSection" aria-labelledby="timer-heading" class="timer-section">
-            <div class="section-heading">
-                <h2 id="timer-heading" class="text-xl font-bold">Meeting Parts</h2>
-            </div>
-            <div id="editModeControls" class="edit-mode-controls hidden mb-4">
-                <p class="text-sm">Edit mode is active. Use the card insertion handles to add a part between cards.</p>
-            </div>
-            <div id="editModeInstructions" class="edit-mode-instructions hidden mb-4">
-                <p class="text-sm">
-                    Tip: Use the left-side <strong>+</strong> handle on a card to insert a part after that card.
-                </p>
-            </div>
-            <!-- Meeting scheduler inputs -->
-            <div id="meetingScheduler" class="meeting-scheduler mb-4">
-                <div class="meeting-schedule-presets" aria-label="Weekly meeting schedule presets">
-                    <div class="meeting-schedule-row">
-                        <strong>Midweek meeting</strong>
-                        <label>
-                            <span>Day</span>
-                            <select id="midweekMeetingDayInput" class="border rounded px-2 py-1">
-                                <option value="1">Monday</option>
-                                <option value="2">Tuesday</option>
-                                <option value="3" selected>Wednesday</option>
-                                <option value="4">Thursday</option>
-                                <option value="5">Friday</option>
-                            </select>
-                        </label>
-                        <label>
-                            <span>Start</span>
-                            <input type="time" id="midweekMeetingStartInput" class="border rounded px-2 py-1" value="19:00">
-                        </label>
-                        <label>
-                            <span>End</span>
-                            <input type="time" id="midweekMeetingEndInput" class="border rounded px-2 py-1" value="20:45">
-                        </label>
-                        <button id="scheduleMidweekMeetingBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                            Schedule Midweek
-                        </button>
+                <!-- Global meeting timer bar (sticky) -->
+                <div id="globalTimerContainer" class="global-timer-container hidden">
+                    <div class="active-timer-grid">
+                        <div id="globalTimerPanel" class="active-timer-panel">
+                            <div class="active-timer-label-row">
+                                <span>Meeting</span>
+                                <strong id="globalTimerStatus"></strong>
+                            </div>
+                            <div class="global-progress-bar progress-bar h-10 relative">
+                                <div id="globalSegments" class="global-segments" aria-hidden="true"></div>
+                                <div id="globalProgress" class="progress-bar-bg bg-green-500" style="width:0%"></div>
+                                <span id="globalTimerLabel" class="left-label"></span>
+                                <span id="globalTimerRemaining" class="countdown"></span>
+                            </div>
+                        </div>
+                        <div id="activePartTimerPanel" class="active-timer-panel">
+                            <div class="active-timer-label-row">
+                                <span>Current Part</span>
+                                <strong id="activePartTimerStatus" class="timer-status-pill"></strong>
+                            </div>
+                            <div id="activePartTimerName" class="active-timer-title"></div>
+                            <div class="part-progress-bar progress-bar h-10 relative">
+                                <div id="activePartProgress" class="progress-bar-bg bg-blue-500" style="width:0%"></div>
+                                <span id="activePartTimerLabel" class="left-label"></span>
+                                <span id="activePartTimerRemaining" class="countdown"></span>
+                            </div>
+                            <div id="activePartTimerNext" class="active-timer-next"></div>
+                        </div>
                     </div>
-                    <div class="meeting-schedule-row">
-                        <strong>Weekend meeting</strong>
-                        <label>
-                            <span>Day</span>
-                            <select id="weekendMeetingDayInput" class="border rounded px-2 py-1">
-                                <option value="6" selected>Saturday</option>
-                                <option value="0">Sunday</option>
-                            </select>
-                        </label>
-                        <label>
-                            <span>Start</span>
-                            <input type="time" id="weekendMeetingStartInput" class="border rounded px-2 py-1" value="10:00">
-                        </label>
-                        <label>
-                            <span>End</span>
-                            <input type="time" id="weekendMeetingEndInput" class="border rounded px-2 py-1" value="11:45">
-                        </label>
-                        <button id="scheduleWeekendMeetingBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                            Schedule Weekend
+                    <div class="mt-2">
+                        <button id="endMeetingBtn" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 hidden">
+                            End Meeting
                         </button>
                     </div>
                 </div>
-                <details class="one-time-schedule">
-                    <summary>One-time schedule or override</summary>
-                    <div class="flex flex-wrap gap-2 items-center">
-                        <label class="flex items-center gap-1">
-                            <span>Date:</span>
-                            <input type="date" id="meetingDateInput" class="border rounded px-2 py-1">
-                        </label>
-                        <label class="flex items-center gap-1">
-                            <span>Start:</span>
-                            <input type="time" id="meetingStartTimeInput" class="border rounded px-2 py-1">
-                        </label>
-                        <label class="flex items-center gap-1">
-                            <span>End:</span>
-                            <input type="time" id="meetingEndTimeInput" class="border rounded px-2 py-1">
-                        </label>
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" id="meetingRepeatCheckbox" checked>
-                            <span class="text-sm">Repeat weekly</span>
-                        </label>
-                        <button id="scheduleMeetingBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                            Schedule
-                        </button>
+
+                <section id="programRunView" class="meeting-run-panel" aria-label="Current meeting part">
+                    <div id="runDashboard" class="run-dashboard" aria-live="polite"></div>
+                </section>
+
+                <!-- Timer Display Section -->
+                <section id="timerSection" aria-labelledby="timer-heading" class="timer-section">
+                    <div class="section-heading">
+                        <h2 id="timer-heading" class="text-xl font-bold">Meeting Parts</h2>
                     </div>
-                </details>
-                <p class="text-sm text-gray-600 mt-1">Set the regular midweek or weekend meeting. The next matching date is scheduled automatically and repeats weekly.</p>
-            </div>
-            <!-- Global meeting timer bar (sticky) -->
-            <div id="globalTimerContainer" class="global-timer-container hidden">
-                <div class="active-timer-grid">
-                    <div id="globalTimerPanel" class="active-timer-panel">
-                        <div class="active-timer-label-row">
-                            <span>Meeting</span>
-                            <strong id="globalTimerStatus"></strong>
-                        </div>
-                        <div class="global-progress-bar progress-bar h-10 relative">
-                            <div id="globalSegments" class="global-segments" aria-hidden="true"></div>
-                            <div id="globalProgress" class="progress-bar-bg bg-green-500" style="width:0%"></div>
-                            <span id="globalTimerLabel" class="left-label"></span>
-                            <span id="globalTimerRemaining" class="countdown"></span>
+                    <div id="editModeControls" class="edit-mode-controls hidden mb-4">
+                        <p class="text-sm">Edit mode is active. Use the card insertion handles to add a part between cards.</p>
+                    </div>
+                    <div id="editModeInstructions" class="edit-mode-instructions hidden mb-4">
+                        <p class="text-sm">
+                            Tip: Use the left-side <strong>+</strong> handle on a card to insert a part after that card.
+                        </p>
+                    </div>
+
+                    <div id="partsDisplay" class="space-y-4" role="region" aria-label="Active timers" data-drag-container></div>
+                </section>
+            </section>
+
+            <aside class="admin-sidebar" aria-label="Meeting administration">
+                <!-- Program Cockpit Section -->
+                <section id="programCockpit" class="program-cockpit admin-panel" aria-labelledby="program-cockpit-heading">
+                    <div class="cockpit-hero">
+                        <div>
+                            <p class="cockpit-kicker">Admin</p>
+                            <h2 id="program-cockpit-heading" class="cockpit-title">Prepare and review</h2>
+                            <p id="programSubtitle" class="cockpit-subtitle">Import the weekly program, review timing, and keep setup out of the live meeting workspace.</p>
                         </div>
                     </div>
-                    <div id="activePartTimerPanel" class="active-timer-panel">
-                        <div class="active-timer-label-row">
-                            <span>Current Part</span>
-                            <strong id="activePartTimerName"></strong>
-                        </div>
-                        <div class="part-progress-bar progress-bar h-10 relative">
-                            <div id="activePartProgress" class="progress-bar-bg bg-blue-500" style="width:0%"></div>
-                            <span id="activePartTimerLabel" class="left-label"></span>
-                            <span id="activePartTimerRemaining" class="countdown"></span>
-                        </div>
+
+                    <div class="cockpit-tabs" role="tablist" aria-label="Meeting workflow">
+                        <button type="button" class="cockpit-tab active" data-program-view="prepare" role="tab" aria-selected="true">Prepare</button>
+                        <button type="button" class="cockpit-tab" data-program-view="review" role="tab" aria-selected="false">Review</button>
                     </div>
-                </div>
-                <div class="mt-2">
-                    <button id="endMeetingBtn" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 hidden">
-                        End Meeting
-                    </button>
-                </div>
-            </div>
-            <div id="partsDisplay" class="space-y-4" role="region" aria-label="Active timers" data-drag-container></div>
-        </section>
+
+                    <div id="programPrepareView" class="program-view active">
+                        <div class="import-panel">
+                            <div>
+                                <h3>Import Weekly Program</h3>
+                                <p>Paste a Watchtower Online Library meeting URL, or paste copied meeting text below.</p>
+                            </div>
+                            <div class="import-controls">
+                                <input id="wolImportUrl" type="url" placeholder="https://wol.jw.org/en/wol/d/r1/lp-e/202026168" aria-label="Weekly meeting URL">
+                                <button id="fetchWolProgramBtn" type="button">Fetch URL</button>
+                            </div>
+                            <textarea id="wolImportText" rows="6" placeholder="Optional fallback: paste the copied meeting page text here." aria-label="Meeting page text"></textarea>
+                            <div class="import-actions">
+                                <button id="importWolTextBtn" type="button">Import From Text</button>
+                                <button id="loadSampleProgramBtn" type="button">Load Sample Week</button>
+                                <span id="programImportStatus" role="status" aria-live="polite"></span>
+                            </div>
+                        </div>
+                        <div id="programImportReadiness" class="import-readiness" aria-live="polite"></div>
+                        <div id="programSectionSummary" class="section-summary" aria-label="Imported meeting sections"></div>
+                    </div>
+
+                    <div id="programReviewView" class="program-view">
+                        <div id="reviewDashboard" class="review-dashboard"></div>
+                    </div>
+                </section>
+
+                <section class="meeting-panel admin-panel" aria-labelledby="schedule-heading">
+                    <h2 id="schedule-heading" class="text-lg font-bold mb-4">Weekly Schedule</h2>
+                    <!-- Meeting scheduler inputs -->
+                    <div id="meetingScheduler" class="meeting-scheduler mb-4">
+                        <div class="meeting-schedule-presets" aria-label="Weekly meeting schedule presets">
+                            <div class="meeting-schedule-row">
+                                <strong>Midweek meeting</strong>
+                                <label>
+                                    <span>Day</span>
+                                    <select id="midweekMeetingDayInput" class="border rounded px-2 py-1">
+                                        <option value="1">Monday</option>
+                                        <option value="2">Tuesday</option>
+                                        <option value="3" selected>Wednesday</option>
+                                        <option value="4">Thursday</option>
+                                        <option value="5">Friday</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>Start</span>
+                                    <input type="time" id="midweekMeetingStartInput" class="border rounded px-2 py-1" value="19:00">
+                                </label>
+                                <label>
+                                    <span>End</span>
+                                    <input type="time" id="midweekMeetingEndInput" class="border rounded px-2 py-1" value="20:45">
+                                </label>
+                                <button id="scheduleMidweekMeetingBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                    Schedule Midweek
+                                </button>
+                            </div>
+                            <div class="meeting-schedule-row">
+                                <strong>Weekend meeting</strong>
+                                <label>
+                                    <span>Day</span>
+                                    <select id="weekendMeetingDayInput" class="border rounded px-2 py-1">
+                                        <option value="6" selected>Saturday</option>
+                                        <option value="0">Sunday</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>Start</span>
+                                    <input type="time" id="weekendMeetingStartInput" class="border rounded px-2 py-1" value="10:00">
+                                </label>
+                                <label>
+                                    <span>End</span>
+                                    <input type="time" id="weekendMeetingEndInput" class="border rounded px-2 py-1" value="11:45">
+                                </label>
+                                <button id="scheduleWeekendMeetingBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                    Schedule Weekend
+                                </button>
+                            </div>
+                        </div>
+                        <details class="one-time-schedule">
+                            <summary>One-time schedule or override</summary>
+                            <div class="flex flex-wrap gap-2 items-center">
+                                <label class="flex items-center gap-1">
+                                    <span>Date:</span>
+                                    <input type="date" id="meetingDateInput" class="border rounded px-2 py-1">
+                                </label>
+                                <label class="flex items-center gap-1">
+                                    <span>Start:</span>
+                                    <input type="time" id="meetingStartTimeInput" class="border rounded px-2 py-1">
+                                </label>
+                                <label class="flex items-center gap-1">
+                                    <span>End:</span>
+                                    <input type="time" id="meetingEndTimeInput" class="border rounded px-2 py-1">
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input type="checkbox" id="meetingRepeatCheckbox" checked>
+                                    <span class="text-sm">Repeat weekly</span>
+                                </label>
+                                <button id="scheduleMeetingBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                    Schedule
+                                </button>
+                            </div>
+                        </details>
+                        <p class="text-sm text-gray-600 mt-1">Set the regular midweek or weekend meeting. The next matching date is scheduled automatically and repeats weekly.</p>
+                    </div>
+                </section>
 
         <!-- Part Editor Modal -->
         <div id="partEditorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
@@ -308,8 +328,8 @@
             </div>
         </div>
 
-        <!-- Comment History Section -->
-        <section id="commentSection" aria-labelledby="comment-heading" class="meeting-panel comment-panel">
+                <!-- Comment History Section -->
+                <section id="commentSection" aria-labelledby="comment-heading" class="meeting-panel comment-panel admin-panel">
             <h2 id="comment-heading" class="text-lg font-bold mb-4">Total Meeting Comments</h2>
             <div id="globalCommentStats" class="mb-4 flex flex-wrap gap-4">
                 <p>Total Comments: <span id="globalCommentCount" class="font-semibold" aria-live="polite">0</span></p>
@@ -318,8 +338,8 @@
             <div id="commentHistory" class="space-y-2 max-h-40 overflow-y-auto" role="log" aria-label="Comment history"></div>
         </section>
 
-        <!-- Meeting Template Section -->
-        <section id="templateManagementSection" aria-labelledby="template-management-heading" class="meeting-panel template-panel">
+                <!-- Meeting Template Section -->
+                <section id="templateManagementSection" aria-labelledby="template-management-heading" class="meeting-panel template-panel admin-panel">
             <header class="meeting-panel-header">
                 <h2 id="template-management-heading" class="text-xl font-bold">Template Management</h2>
                 <div class="flex flex-wrap gap-2">
@@ -340,7 +360,9 @@
                     </button>
                 </div>
             </header>
-        </section>
+                </section>
+            </aside>
+        </div>
         <!-- Parts Template Container (hidden) -->
         <div id="partsTemplate" class="hidden"></div>
         
@@ -494,7 +516,7 @@
     </main>
 
     <footer class="p-4 text-sm text-left mt-4">
-        <div>Version: 3.6.6 (06/15/2026)</div>
+        <div>Version: 3.6.9 (06/15/2026)</div>
         <div class="font-bold mt-2">Someday:</div>
         <ul class="list-disc pl-5 mt-1">
             <li>Allow real-time remote viewing</li>

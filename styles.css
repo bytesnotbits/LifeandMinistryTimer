@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer - Styles
- * Version 3.6.6
+ * Version 3.6.9
  * 
  * Styles for the Life and Ministry Timer application
  */
@@ -65,9 +65,35 @@ main {
     align-items: start;
 }
 
+.meeting-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.meeting-workspace,
+.admin-sidebar,
 .timer-section,
 .meeting-panel {
     min-width: 0;
+}
+
+.meeting-workspace {
+    display: grid;
+    gap: 1rem;
+}
+
+.meeting-live-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.admin-sidebar {
+    display: grid;
+    gap: 1rem;
 }
 
 .timer-section {
@@ -83,6 +109,10 @@ main {
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     background: linear-gradient(180deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0));
+}
+
+.admin-panel {
+    align-self: start;
 }
 
 [data-theme="dark"] .program-cockpit {
@@ -253,6 +283,65 @@ main {
     color: var(--danger-color);
 }
 
+.import-readiness {
+    margin-top: 0.75rem;
+}
+
+.readiness-card {
+    display: grid;
+    gap: 0.85rem;
+    padding: 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-card);
+}
+
+.readiness-card.ready {
+    border-color: rgba(16, 185, 129, 0.45);
+    box-shadow: inset 0.25rem 0 0 var(--success-color);
+}
+
+.readiness-card.needs-review {
+    border-color: rgba(245, 158, 11, 0.5);
+    box-shadow: inset 0.25rem 0 0 var(--warning-color);
+}
+
+.readiness-card strong {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 1.05rem;
+}
+
+.readiness-card p,
+.readiness-card span {
+    color: var(--text-light);
+}
+
+.readiness-card p {
+    margin: 0.25rem 0 0;
+    font-size: 0.88rem;
+}
+
+.readiness-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+    gap: 0.5rem;
+}
+
+.readiness-metrics span {
+    display: block;
+    padding: 0.55rem;
+    border-radius: 0.45rem;
+    background: rgba(59, 130, 246, 0.08);
+    font-size: 0.78rem;
+}
+
+.readiness-metrics b {
+    display: block;
+    color: var(--text-color);
+    font-size: 0.98rem;
+}
+
 .section-summary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
@@ -288,6 +377,25 @@ main {
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     background: var(--bg-card);
+}
+
+.run-now.timer-state-running,
+.run-now.timer-state-closing {
+    border-color: rgba(59, 130, 246, 0.45);
+    box-shadow: inset 0.25rem 0 0 var(--primary-color);
+}
+
+.run-now.timer-state-overtime {
+    border-color: rgba(239, 68, 68, 0.55);
+    box-shadow: inset 0.25rem 0 0 var(--danger-color);
+}
+
+.run-title-row,
+.run-next {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
 }
 
 .run-label {
@@ -333,6 +441,39 @@ main {
     font-size: 1.1rem;
 }
 
+.run-metrics .behind {
+    color: var(--danger-color);
+}
+
+.run-metrics .ahead {
+    color: var(--success-color);
+}
+
+.run-metrics .on-pace {
+    color: var(--primary-color);
+}
+
+.run-progress-line {
+    height: 0.4rem;
+    margin-top: 0.85rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--border-color);
+}
+
+.run-progress-line span {
+    display: block;
+    height: 100%;
+    max-width: 100%;
+    border-radius: inherit;
+    background: var(--primary-color);
+    transition: width 0.5s ease;
+}
+
+.timer-state-overtime .run-progress-line span {
+    background: var(--danger-color);
+}
+
 .run-actions {
     display: flex;
     flex-wrap: wrap;
@@ -362,6 +503,31 @@ main {
     opacity: 0.55;
 }
 
+.run-next-count {
+    min-width: 4rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.45rem;
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    text-align: center;
+}
+
+.run-next-count span,
+.run-next-count b {
+    display: block;
+    line-height: 1.1;
+}
+
+.run-next-count span {
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.run-next-count b {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+}
+
 .review-table {
     width: 100%;
     border-collapse: collapse;
@@ -371,11 +537,74 @@ main {
     background: var(--bg-card);
 }
 
+.review-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    gap: 0.7rem;
+}
+
+.review-summary div {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-card);
+}
+
+.review-summary span {
+    display: block;
+    color: var(--text-light);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.review-summary strong {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 1.05rem;
+}
+
+.review-summary .behind {
+    color: var(--danger-color);
+}
+
+.review-summary .ahead {
+    color: var(--success-color);
+}
+
+.review-summary .on-pace {
+    color: var(--primary-color);
+}
+
+.review-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.review-actions button {
+    min-height: 2.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-card);
+    color: var(--text-color);
+    cursor: pointer;
+    font-weight: 700;
+    padding: 0.55rem 0.85rem;
+}
+
+.review-actions button.primary-action {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: #fff;
+}
+
 .review-table th,
 .review-table td {
     padding: 0.7rem;
     border-bottom: 1px solid var(--border-color);
     text-align: left;
+    vertical-align: top;
 }
 
 .review-table th {
@@ -392,6 +621,44 @@ main {
 .review-table .ahead {
     color: var(--success-color);
     font-weight: 700;
+}
+
+.review-part-meta,
+.review-part-note {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--text-light);
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+
+.review-part-note {
+    max-width: 24rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.time-source {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.4rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.time-source-imported {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--success-color);
+}
+
+.time-source-inferred {
+    background: rgba(245, 158, 11, 0.18);
+    color: #b45309;
 }
 
 .empty-copy {
@@ -618,6 +885,11 @@ main {
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
+.part-card.timer-state-overtime.active {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.22);
+}
+
 .part-card.timer-active {
     animation: pulse 2s infinite;
 }
@@ -665,14 +937,40 @@ main {
     right: 0;
 }
 
+.countdown.is-over {
+    color: #fee2e2;
+    font-weight: 800;
+}
+
+.part-timing-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 1.35rem;
+    margin: -0.2rem 0 0.65rem;
+    color: var(--text-light);
+    font-size: 0.78rem;
+}
+
+.part-timing-row > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Global meeting timer bar */
 .global-timer-container {
     position: sticky;
-    top: 0;
+    top: 0.75rem;
     z-index: 90;
-    padding: 0.5rem 0;
+    padding: 0.75rem;
     background-color: var(--bg-card);
-    border-bottom: 1px solid var(--border-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
 }
 
 .active-timer-grid {
@@ -683,6 +981,21 @@ main {
 
 .active-timer-panel {
     min-width: 0;
+    padding: 0.55rem;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.active-timer-panel.timer-state-running,
+.active-timer-panel.timer-state-closing {
+    border-color: rgba(59, 130, 246, 0.35);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.active-timer-panel.timer-state-overtime {
+    border-color: rgba(239, 68, 68, 0.45);
+    background: rgba(239, 68, 68, 0.06);
 }
 
 .active-timer-label-row {
@@ -702,6 +1015,65 @@ main {
     color: var(--text-color);
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.active-timer-title {
+    min-height: 1.45rem;
+    margin: -0.1rem 0 0.35rem;
+    overflow: hidden;
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.active-timer-next {
+    min-height: 1rem;
+    margin-top: 0.35rem;
+    overflow: hidden;
+    color: var(--text-light);
+    font-size: 0.78rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.timer-status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.35rem;
+    max-width: 100%;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(107, 114, 128, 0.14);
+    color: var(--text-color);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.timer-status-running {
+    background: rgba(59, 130, 246, 0.14);
+    color: var(--primary-color);
+}
+
+.timer-status-closing {
+    background: rgba(245, 158, 11, 0.18);
+    color: #b45309;
+}
+
+.timer-status-overtime {
+    background: rgba(239, 68, 68, 0.16);
+    color: var(--danger-color);
+}
+
+.timer-status-paused {
+    background: rgba(107, 114, 128, 0.16);
+    color: var(--text-light);
 }
 
 .global-progress-bar {
@@ -765,8 +1137,12 @@ main {
 }
 
 @media (min-width: 880px) {
-    .active-timer-grid:has(.active-timer-panel:not(.hidden) + .active-timer-panel:not(.hidden)) {
-        grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+    .meeting-live-header {
+        grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+    }
+
+    .meeting-workspace .active-timer-grid:has(.active-timer-panel:not(.hidden) + .active-timer-panel:not(.hidden)) {
+        grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.9fr);
         align-items: end;
     }
 }
@@ -1228,17 +1604,20 @@ main {
     }
 
     .app-shell {
-        grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
         gap: 1.5rem;
     }
 
-    .timer-section {
-        grid-row: 1 / span 3;
+    .meeting-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
+        gap: 1.5rem;
     }
 
-    .comment-panel,
-    .template-panel {
-        align-self: start;
+    .admin-sidebar {
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2rem);
+        overflow: auto;
+        padding-right: 0.15rem;
     }
 
     #commentHistory {
@@ -1322,4 +1701,49 @@ main {
 }
 [data-theme="dark"] .dark\:bg-gray-700:not(:checked) + div {
      background-color: #374151 !important; /* Tailwind dark gray */
+}
+
+.meeting-run-panel {
+    min-width: 0;
+}
+
+.admin-sidebar .cockpit-title {
+    font-size: 1.25rem;
+}
+
+.admin-sidebar .cockpit-hero {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-sidebar .cockpit-subtitle,
+.admin-sidebar .import-panel p,
+.admin-sidebar .meeting-scheduler p {
+    font-size: 0.86rem;
+}
+
+.admin-sidebar .meeting-schedule-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-sidebar .meeting-schedule-row strong,
+.admin-sidebar .meeting-schedule-row button {
+    grid-column: 1 / -1;
+}
+
+.admin-sidebar .one-time-schedule > div {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-sidebar .meeting-panel-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-sidebar .meeting-panel-header .flex {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-sidebar .meeting-panel-header button {
+    min-height: 2.35rem;
 }

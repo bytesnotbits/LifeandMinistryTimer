@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer - Rendering Module
- * Version 3.6.7
+ * Version 3.6.9
  * 
  * Handles all DOM updates and rendering for the Life and Ministry Timer application
  */
@@ -137,12 +137,13 @@ const render = {
 
         if (hasActivePartTimer && currentPart) {
             const partDuration = currentPart.duration || 0;
-            const partPercent = partDuration > 0 ? Math.min(100, (currentPartElapsed / partDuration) * 100) : 0;
+            const partTiming = getPartTimingState(currentPartElapsed, partDuration, state.isRunning);
+            const partPercent = partTiming.percent;
             const partProgress = document.getElementById('activePartProgress');
             if (partProgress) {
                 partProgress.style.width = `${partPercent}%`;
                 partProgress.classList.remove('bg-blue-500', 'bg-yellow-500', 'bg-red-500');
-                if (partPercent >= 90) {
+                if (partTiming.state === 'overtime' || partPercent >= 90) {
                     partProgress.classList.add('bg-red-500');
                 } else if (partPercent >= 75) {
                     partProgress.classList.add('bg-yellow-500');
@@ -150,9 +151,18 @@ const render = {
                     partProgress.classList.add('bg-blue-500');
                 }
             }
+            if (activePartPanel) {
+                activePartPanel.classList.remove('timer-state-ready', 'timer-state-running', 'timer-state-closing', 'timer-state-overtime', 'timer-state-paused');
+                activePartPanel.classList.add(`timer-state-${partTiming.state}`);
+            }
             const partName = document.getElementById('activePartTimerName');
             if (partName) {
                 partName.textContent = currentPart.name || 'Selected part';
+            }
+            const partStatus = document.getElementById('activePartTimerStatus');
+            if (partStatus) {
+                partStatus.textContent = partTiming.label;
+                partStatus.className = `timer-status-pill timer-status-${partTiming.state}`;
             }
             const partElapsed = document.getElementById('activePartTimerLabel');
             if (partElapsed) {
@@ -160,7 +170,15 @@ const render = {
             }
             const partRemaining = document.getElementById('activePartTimerRemaining');
             if (partRemaining) {
-                partRemaining.textContent = formatTimeWithSign(partDuration - currentPartElapsed);
+                partRemaining.textContent = formatTimeWithSign(partTiming.remaining);
+                partRemaining.classList.toggle('is-over', partTiming.state === 'overtime');
+            }
+            const nextPart = state.meetingParts[state.activePart + 1];
+            const nextPartLabel = document.getElementById('activePartTimerNext');
+            if (nextPartLabel) {
+                nextPartLabel.textContent = nextPart
+                    ? `Next: ${nextPart.name || 'Meeting part'} (${formatTime(nextPart.duration || 0)})`
+                    : 'Final part';
             }
         }
     },
@@ -235,11 +253,12 @@ const render = {
         state.meetingParts.forEach((part, index) => {
             const elapsed = state.elapsedTimes[index] || 0;
             const isActive = index === state.activePart;
-            const isOver = elapsed >= part.duration;
-            const progressPercent = Math.min(100, (elapsed / part.duration) * 100);
+            const timing = getPartTimingState(elapsed, part.duration || 0, state.isRunning && isActive);
+            const isOver = timing.state === 'overtime';
+            const progressPercent = timing.percent;
             
             const partElement = document.createElement('div');
-            partElement.className = `part-card p-4 rounded shadow ${isActive ? 'active' : ''} ${canReorder ? 'edit-mode' : ''} ${!isActive && !state.isRunning && state.editingPartIndex === null && !state.isEditMode ? 'clickable' : ''}`;
+            partElement.className = `part-card p-4 rounded shadow timer-state-${timing.state} ${isActive ? 'active' : ''} ${canReorder ? 'edit-mode' : ''} ${!isActive && !state.isRunning && state.editingPartIndex === null && !state.isEditMode ? 'clickable' : ''}`;
             partElement.setAttribute('data-part-index', index);
             
             // Enable drag-and-drop reordering while timer is stopped and no inline editor is open.
@@ -416,7 +435,11 @@ const render = {
                 <div class="progress-bar h-8 mb-2">
                     <div data-role="part-progress" class="progress-bar-bg ${progressColor}" style="width: ${progressPercent}%"></div>
                     <span data-role="part-elapsed" class="left-label">${formatTime(elapsed)}</span>
-                    <span data-role="part-countdown" class="countdown">${formatTimeWithSign(part.duration - elapsed)}</span>
+                    <span data-role="part-countdown" class="countdown ${isOver ? 'is-over' : ''}">${formatTimeWithSign(timing.remaining)}</span>
+                </div>
+                <div class="part-timing-row">
+                    <span data-role="part-status" class="timer-status-pill timer-status-${timing.state}">${timing.label}</span>
+                    <span>${isActive ? 'Current' : `Part ${index + 1} of ${state.meetingParts.length}`}</span>
                 </div>
 
                 ${part.enableComments ? `
@@ -548,9 +571,10 @@ const render = {
             if (!partCard) return;
 
             const elapsed = state.elapsedTimes[index] || 0;
-            const progressPercent = Math.min(100, (elapsed / part.duration) * 100);
+            const timing = getPartTimingState(elapsed, part.duration || 0, state.isRunning && index === state.activePart);
+            const progressPercent = timing.percent;
             let progressColor = 'bg-blue-500';
-            if (progressPercent >= 90) {
+            if (timing.state === 'overtime' || progressPercent >= 90) {
                 progressColor = 'bg-red-500';
             } else if (progressPercent >= 75) {
                 progressColor = 'bg-yellow-500';
@@ -570,7 +594,14 @@ const render = {
 
             const countdownLabel = partCard.querySelector('[data-role="part-countdown"]');
             if (countdownLabel) {
-                countdownLabel.textContent = formatTimeWithSign(part.duration - elapsed);
+                countdownLabel.textContent = formatTimeWithSign(timing.remaining);
+                countdownLabel.classList.toggle('is-over', timing.state === 'overtime');
+            }
+
+            const statusLabel = partCard.querySelector('[data-role="part-status"]');
+            if (statusLabel) {
+                statusLabel.textContent = timing.label;
+                statusLabel.className = `timer-status-pill timer-status-${timing.state}`;
             }
 
             const commentLabel = partCard.querySelector(`#currentComment-${index}`);
@@ -600,6 +631,9 @@ const render = {
         }
 
         this.globalTimerDisplay();
+        if (typeof programCockpit !== 'undefined' && programCockpit && typeof programCockpit.renderRunDashboard === 'function') {
+            programCockpit.renderRunDashboard();
+        }
     },
     
     // Add a drop zone for drag and drop
@@ -805,6 +839,68 @@ function buildGlobalMeetingSegments(totalSec) {
         cursorSec += widthSec;
         return segment;
     });
+}
+
+function getPartTimingState(elapsedSeconds, durationSeconds, isRunning = false) {
+    const elapsed = Math.max(0, Number(elapsedSeconds || 0));
+    const duration = Math.max(0, Number(durationSeconds || 0));
+    const remaining = duration - elapsed;
+    const percent = duration > 0 ? Math.min(100, (elapsed / duration) * 100) : 0;
+
+    if (duration > 0 && remaining < 0) {
+        return {
+            state: 'overtime',
+            label: `Over by ${formatTime(Math.abs(remaining))}`,
+            remaining,
+            percent
+        };
+    }
+
+    if (isRunning && percent >= 90) {
+        return {
+            state: 'closing',
+            label: 'Closing',
+            remaining,
+            percent
+        };
+    }
+
+    if (isRunning) {
+        return {
+            state: 'running',
+            label: 'Running',
+            remaining,
+            percent
+        };
+    }
+
+    if (elapsed > 0) {
+        return {
+            state: 'paused',
+            label: 'Paused',
+            remaining,
+            percent
+        };
+    }
+
+    return {
+        state: 'ready',
+        label: 'Ready',
+        remaining,
+        percent
+    };
+}
+
+function getMeetingPaceState(varianceSeconds) {
+    const variance = Number(varianceSeconds || 0);
+    if (Math.abs(variance) < 1) {
+        return { className: 'on-pace', text: 'On pace' };
+    }
+
+    const label = formatMeetingTime(Math.abs(variance));
+    return variance > 0
+        ? { className: 'behind', text: `Behind ${label}` }
+        : { className: 'ahead', text: `Ahead ${label}` };
 }
 
 function escapeHtmlAttribute(value) {

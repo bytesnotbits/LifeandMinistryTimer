@@ -204,3 +204,87 @@ Track important decisions that explain *why* the code changed.
     - Return to page top and verify controls are visible again.
   - Risks:
     - On very short pages with little scroll movement, hide/reveal may be less noticeable.
+
+## DEC-009: Make the live timer state glanceable
+- Date: 2026-06-15
+- Status: Accepted
+- Related files: `index.html`, `render.js`, `programCockpit.js`, `styles.css`
+- Context:
+  - The app already had a sticky active timer area and run dashboard, but users needed clearer feedback about current part status, remaining time, overtime, and what comes next.
+- Decision:
+  - Add active-part status states (`Ready`, `Running`, `Closing`, `Paused`, `Over by ...`) to the sticky panel, part cards, and run dashboard.
+  - Show the next part in the sticky current-part panel and enrich the run dashboard with remaining time, meeting pace, and completed-part count.
+  - Preserve the existing focused meeting workspace instead of adding a new screen.
+- Consequences:
+  - The live meeting view is easier to scan during active use.
+  - Rendering now shares timing-state helpers between card rendering and the program cockpit.
+- Validation:
+  - Manual checks:
+    - Start, pause, and resume an active part and verify status labels update.
+    - Let a part reach closing/overtime and verify color/state cues update in the sticky panel, card, and run dashboard.
+    - Advance to the next part and verify next-part preview changes.
+  - Risks:
+    - Additional live labels must remain readable on narrow screens and in dark mode.
+
+## DEC-010: Add cockpit import readiness and review handoff
+- Date: 2026-06-15
+- Status: Accepted
+- Related files: `index.html`, `programCockpit.js`, `styles.css`, `tests/importer-fixtures.test.cjs`
+- Context:
+  - Importing a weekly program left users without a concise signal about whether inferred timings needed review.
+  - The WOL reader fallback URL was malformed, reducing the chance that URL import could recover through Jina Reader.
+- Decision:
+  - Add an import readiness summary with part count, planned duration, inferred timing count, and comment-enabled part count.
+  - Switch to the review tab after successful import so users immediately inspect parsed timing.
+  - Build Jina Reader fallback URLs by prefixing `https://r.jina.ai/` exactly once.
+- Consequences:
+  - Program setup has a clearer “import -> review -> run” flow.
+  - Users can quickly spot inferred timings before starting a live meeting.
+- Validation:
+  - Manual checks:
+    - Import sample text and verify the review tab opens with a readiness summary.
+    - Confirm inferred timing count is visible when parsed parts use defaults.
+    - Try URL import fallback path when direct fetch is blocked.
+  - Risks:
+    - Automatic review handoff may surprise users who expected to remain on the prepare tab after import.
+
+## DEC-011: Turn program review into a timing pre-flight check
+- Date: 2026-06-15
+- Status: Accepted
+- Related files: `programCockpit.js`, `styles.css`
+- Context:
+  - The review tab showed per-part timing, but it did not summarize meeting readiness or call out imported vs suggested timing clearly.
+- Decision:
+  - Add planned total, actual total, meeting variance, and suggested-time count above the review table.
+  - Add imported/suggested time badges and compact section/note context to each review row.
+- Consequences:
+  - Users can quickly identify whether timing needs attention before running the meeting.
+  - The review tab becomes useful both before the meeting and after timing data exists.
+- Validation:
+  - Manual checks:
+    - Import sample program and verify review summary appears above the table.
+    - Import or parse a program with inferred durations and verify suggested-time badges/counts appear.
+    - Run part timers and verify actual/variance values remain readable.
+  - Risks:
+    - More review table content may require horizontal care on narrow screens.
+
+## DEC-012: Add review-to-live handoff actions
+- Date: 2026-06-15
+- Status: Accepted
+- Related files: `programCockpit.js`, `styles.css`, `index.html`, `lifeMinistryTimer.js`, `render.js`, `newFeatures.js`
+- Context:
+  - After import and review, users needed a clear next action to return to the live meeting workspace or start the current part.
+- Decision:
+  - Add `Focus Live View` and current-part start/pause actions to the review dashboard.
+  - Reuse existing timer state actions so review controls stay synchronized with the main live timer UI.
+  - Bump the app version to 3.6.9.
+- Consequences:
+  - The cockpit flow now supports import -> review -> run without hunting for controls.
+  - Review can start or pause the current part, so it must preserve existing timer safeguards.
+- Validation:
+  - Manual checks:
+    - Import a program and use `Focus Live View` to scroll to the run workspace.
+    - Use the review start/pause action and verify sticky timer, active card, and dashboard states stay synchronized.
+    - Verify version displays as 3.6.9.
+  - Risks:
+    - Duplicate start/pause controls could be confusing if labels drift from run dashboard labels.
