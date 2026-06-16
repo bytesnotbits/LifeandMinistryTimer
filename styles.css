@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer - Styles
- * Version 3.6.8
+ * Version 3.6.9
  * 
  * Styles for the Life and Ministry Timer application
  */
@@ -574,6 +574,29 @@ main {
 
 .review-summary .on-pace {
     color: var(--primary-color);
+}
+
+.review-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.review-actions button {
+    min-height: 2.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-card);
+    color: var(--text-color);
+    cursor: pointer;
+    font-weight: 700;
+    padding: 0.55rem 0.85rem;
+}
+
+.review-actions button.primary-action {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: #fff;
 }
 
 .review-table th,

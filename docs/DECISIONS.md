@@ -267,3 +267,24 @@ Track important decisions that explain *why* the code changed.
     - Run part timers and verify actual/variance values remain readable.
   - Risks:
     - More review table content may require horizontal care on narrow screens.
+
+## DEC-012: Add review-to-live handoff actions
+- Date: 2026-06-15
+- Status: Accepted
+- Related files: `programCockpit.js`, `styles.css`, `index.html`, `lifeMinistryTimer.js`, `render.js`, `newFeatures.js`
+- Context:
+  - After import and review, users needed a clear next action to return to the live meeting workspace or start the current part.
+- Decision:
+  - Add `Focus Live View` and current-part start/pause actions to the review dashboard.
+  - Reuse existing timer state actions so review controls stay synchronized with the main live timer UI.
+  - Bump the app version to 3.6.9.
+- Consequences:
+  - The cockpit flow now supports import -> review -> run without hunting for controls.
+  - Review can start or pause the current part, so it must preserve existing timer safeguards.
+- Validation:
+  - Manual checks:
+    - Import a program and use `Focus Live View` to scroll to the run workspace.
+    - Use the review start/pause action and verify sticky timer, active card, and dashboard states stay synchronized.
+    - Verify version displays as 3.6.9.
+  - Risks:
+    - Duplicate start/pause controls could be confusing if labels drift from run dashboard labels.

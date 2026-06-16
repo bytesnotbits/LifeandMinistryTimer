@@ -303,6 +303,25 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-011
 - Related files: `programCockpit.js`, `styles.css`
 
+## REG-018: Review handoff starts live meeting flow
+- Priority: High
+- Area: Timer
+- Preconditions:
+  - A weekly program has been imported.
+  - The `Review` tab is active.
+- Steps:
+  1. Click `Focus Live View`.
+  2. Verify the live meeting workspace is brought into view.
+  3. Click `Start Current Part` from the review actions.
+  4. Verify sticky timer, active card, and run dashboard show running state.
+  5. Click the review action again to pause.
+- Expected:
+  - Review handoff controls use the same timer state as the live controls.
+  - Starting/pausing from review does not desynchronize elapsed time, active part, or displayed status.
+  - Footer version displays `3.6.9`.
+- Related decisions: DEC-012
+- Related files: `programCockpit.js`, `styles.css`, `index.html`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.

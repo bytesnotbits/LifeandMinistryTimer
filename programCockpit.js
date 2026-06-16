@@ -110,6 +110,23 @@ const programCockpit = {
                 this.renderAll();
             });
         }
+
+        const reviewView = document.getElementById('programReviewView');
+        if (reviewView) {
+            reviewView.addEventListener('click', (event) => {
+                const action = event.target.closest('[data-review-action]')?.dataset.reviewAction;
+                if (!action) return;
+                if (action === 'focus-run') {
+                    document.getElementById('programRunView')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else if (action === 'toggle-current') {
+                    state.toggleTimer();
+                    notify.show(state.isRunning ? 'Current part started' : 'Current part paused', state.isRunning ? 'success' : 'info');
+                    state.saveState();
+                    render.timerDisplay();
+                    this.renderAll();
+                }
+            });
+        }
     },
 
     setView(view) {
@@ -675,6 +692,14 @@ const programCockpit = {
                 <div><span>Actual</span><strong>${formatMeetingTime(actualTotal)}</strong></div>
                 <div><span>Meeting variance</span><strong class="${pace.className}">${pace.text}</strong></div>
                 <div><span>Suggested times</span><strong>${inferredCount}</strong></div>
+            </div>
+            <div class="review-actions">
+                <button type="button" class="primary-action" data-review-action="focus-run">
+                    Focus Live View
+                </button>
+                <button type="button" data-review-action="toggle-current">
+                    ${state.isRunning ? 'Pause Current Part' : 'Start Current Part'}
+                </button>
             </div>
             <table class="review-table">
                 <thead>
