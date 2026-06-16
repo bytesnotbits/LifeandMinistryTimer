@@ -645,17 +645,37 @@ const programCockpit = {
             const actual = state.elapsedTimes[index] || 0;
             const variance = actual - part.duration;
             const varianceClass = variance > 0 ? 'behind' : variance < 0 ? 'ahead' : '';
+            const sourceClass = part.durationSource === 'inferred' ? 'time-source-inferred' : 'time-source-imported';
+            const sourceLabel = part.durationSource === 'inferred' ? 'Suggested' : 'Imported';
             return `
                 <tr>
-                    <td>${this.escapeHtml(part.name)}</td>
+                    <td>
+                        <strong>${this.escapeHtml(part.name)}</strong>
+                        <span class="review-part-meta">${this.escapeHtml(part.section || 'Meeting')}${part.speaker ? ` - ${this.escapeHtml(part.speaker)}` : ''}</span>
+                        ${part.notes ? `<span class="review-part-note">${this.escapeHtml(part.notes)}</span>` : ''}
+                    </td>
                     <td>${formatTime(part.duration)}</td>
                     <td>${formatTime(actual)}</td>
                     <td class="${varianceClass}">${variance > 0 ? '+' : variance < 0 ? '-' : ''}${formatTime(Math.abs(variance))}</td>
+                    <td><span class="time-source ${sourceClass}">${sourceLabel}</span></td>
                 </tr>
             `;
         }).join('');
 
+        const plannedTotal = state.meetingParts.reduce((sum, part) => sum + (part.duration || 0), 0);
+        const actualTotal = Object.values(state.elapsedTimes).reduce((sum, seconds) => sum + Number(seconds || 0), 0);
+        const inferredCount = state.meetingParts.filter((part) => part.durationSource === 'inferred').length;
+        const pace = actualTotal > 0
+            ? getMeetingPaceState(actualTotal - plannedTotal)
+            : { className: 'on-pace', text: 'Not started' };
+
         container.innerHTML = `
+            <div class="review-summary">
+                <div><span>Planned</span><strong>${formatMeetingTime(plannedTotal)}</strong></div>
+                <div><span>Actual</span><strong>${formatMeetingTime(actualTotal)}</strong></div>
+                <div><span>Meeting variance</span><strong class="${pace.className}">${pace.text}</strong></div>
+                <div><span>Suggested times</span><strong>${inferredCount}</strong></div>
+            </div>
             <table class="review-table">
                 <thead>
                     <tr>
@@ -663,6 +683,7 @@ const programCockpit = {
                         <th>Planned</th>
                         <th>Actual</th>
                         <th>Variance</th>
+                        <th>Time</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>

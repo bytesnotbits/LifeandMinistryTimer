@@ -247,3 +247,23 @@ Track important decisions that explain *why* the code changed.
     - Try URL import fallback path when direct fetch is blocked.
   - Risks:
     - Automatic review handoff may surprise users who expected to remain on the prepare tab after import.
+
+## DEC-011: Turn program review into a timing pre-flight check
+- Date: 2026-06-15
+- Status: Accepted
+- Related files: `programCockpit.js`, `styles.css`
+- Context:
+  - The review tab showed per-part timing, but it did not summarize meeting readiness or call out imported vs suggested timing clearly.
+- Decision:
+  - Add planned total, actual total, meeting variance, and suggested-time count above the review table.
+  - Add imported/suggested time badges and compact section/note context to each review row.
+- Consequences:
+  - Users can quickly identify whether timing needs attention before running the meeting.
+  - The review tab becomes useful both before the meeting and after timing data exists.
+- Validation:
+  - Manual checks:
+    - Import sample program and verify review summary appears above the table.
+    - Import or parse a program with inferred durations and verify suggested-time badges/counts appear.
+    - Run part timers and verify actual/variance values remain readable.
+  - Risks:
+    - More review table content may require horizontal care on narrow screens.

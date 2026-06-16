@@ -27,6 +27,7 @@ Document behavior in terms of user outcomes.
 - Card reordering uses drag-and-drop when timer is stopped and no inline editor is open.
 - Card removal is available when timer is stopped.
 - The program cockpit import flow should surface whether imported timing is ready to run or needs review.
+- The review tab should act as a timing pre-flight check with planned/actual totals, meeting variance, and imported vs suggested timing badges.
 
 ### 2.3 State Persistence
 - Relevant user state persists across refresh when expected.
@@ -78,3 +79,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-03-01: Replaced arrow-based reordering with drag-and-drop reordering.
 - 2026-06-15: Enhanced the live timer experience with active-part status pills, next-part preview, clearer remaining/overtime cues, and a richer run dashboard.
 - 2026-06-15: Improved the program cockpit import flow with a readiness summary, automatic review handoff after import, and a corrected Jina Reader URL fallback.
+- 2026-06-15: Enhanced the program review tab with pre-flight summary metrics and imported/suggested timing badges.

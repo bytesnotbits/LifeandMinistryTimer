@@ -286,6 +286,23 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-010
 - Related files: `index.html`, `programCockpit.js`, `styles.css`, `tests/importer-fixtures.test.cjs`
 
+## REG-017: Program review summarizes timing readiness
+- Priority: High
+- Area: Rendering
+- Preconditions:
+  - A weekly program has been imported.
+- Steps:
+  1. Open the `Review` tab.
+  2. Inspect the summary metrics above the review table.
+  3. Inspect rows with imported and inferred/suggested durations.
+  4. Start/stop a part timer and return to review.
+- Expected:
+  - Review summary shows planned total, actual total, meeting variance, and suggested-time count.
+  - Each row shows imported or suggested timing source.
+  - Actual and variance values update after timing activity.
+- Related decisions: DEC-011
+- Related files: `programCockpit.js`, `styles.css`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.
