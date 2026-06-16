@@ -387,6 +387,28 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-015
 - Related files: `index.html`, `render.js`, `programCockpit.js`, `styles.css`
 
+## REG-022: Inline editing is scoped to one card and readable in dark mode
+- Priority: High
+- Area: Editing
+- Preconditions:
+  - App loaded with multiple parts.
+  - Global edit mode is disabled.
+- Steps:
+  1. Click the pencil on one part card.
+  2. Verify only that card shows inline fields, `Save`, `Cancel`, `Add Before`, and `Add After`.
+  3. Change name, speaker, duration, and comments, then click `Save`.
+  4. Reopen the same card and click `Add Before`, then save the new part.
+  5. Enable global edit mode and verify drag-and-drop remains available.
+  6. Switch to dark mode and inspect the inline editor, part editor modal, part text, and `Reset Timers` button.
+- Expected:
+  - A single card can be edited without enabling global edit mode.
+  - Add-before/add-after are available while that card is being edited.
+  - New parts open in inline editing at the requested position without shifting timer/comment data to the wrong existing card.
+  - Dark mode keeps editor surfaces, modal fields, part card text, and reset controls readable.
+  - Footer version displays `3.7.2`.
+- Related decisions: DEC-016
+- Related files: `lifeMinistryTimer.js`, `render.js`, `styles.css`, `index.html`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.

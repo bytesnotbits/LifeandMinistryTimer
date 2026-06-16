@@ -316,12 +316,12 @@ if (this.elements.partsDisplay) {
                          }
                          break;
                     case 'add-part-before':
-                         if (state.isEditMode && partIndex !== -1) {
+                         if ((state.isEditMode || state.editingPartIndex === partIndex) && partIndex !== -1) {
                              state.addPartAt(partIndex);
                          }
                          break;
                     case 'add-part-after':
-                         if (state.isEditMode && partIndex !== -1) {
+                         if ((state.isEditMode || state.editingPartIndex === partIndex) && partIndex !== -1) {
                              state.addPartAt(partIndex + 1);
                          }
                          break;
@@ -1837,7 +1837,11 @@ render.timerDisplay();
 
     // Add a new part at a specific position
     addPartAt(index) {
-        if (!this.isEditMode) return;
+        if (!this.isEditMode && this.editingPartIndex === null) return;
+        if (this.isRunning) {
+            notify.show('Stop the timer before adding a part', 'warning');
+            return;
+        }
         
         const newPart = {
             name: 'New Part',
@@ -1845,18 +1849,40 @@ render.timerDisplay();
             speaker: '',
             enableComments: false
         };
+        const insertIndex = Math.max(0, Math.min(index, this.meetingParts.length));
+        const oldElapsedTimes = { ...this.elapsedTimes };
         
-        // Insert at the specified index
-        this.meetingParts.splice(index, 0, newPart);
+        this.meetingParts.splice(insertIndex, 0, newPart);
+
+        const reindexedElapsedTimes = {};
+        Object.keys(oldElapsedTimes).forEach((key) => {
+            const oldIndex = parseInt(key, 10);
+            if (Number.isNaN(oldIndex)) return;
+            const newIndex = oldIndex >= insertIndex ? oldIndex + 1 : oldIndex;
+            reindexedElapsedTimes[newIndex] = oldElapsedTimes[oldIndex];
+        });
+        this.elapsedTimes = reindexedElapsedTimes;
+
+        this.comments = this.comments.map((comment) => {
+            if (comment.partIndex >= insertIndex) {
+                return { ...comment, partIndex: comment.partIndex + 1 };
+            }
+            return comment;
+        });
+
+        if (this.activePart >= insertIndex) {
+            this.activePart++;
+        }
         
         // Save to localStorage
         persistence.setJson(STORAGE_KEYS.meetingTemplate, this.meetingParts);
+        this.saveState();
         
         // Re-render
         render.timerDisplay();
         
         // Edit the new part
-        this.editPart(index);
+        this.editPart(insertIndex);
     },
 
     // Add a new part at the end

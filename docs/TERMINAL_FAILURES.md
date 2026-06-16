@@ -166,3 +166,16 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed while publishing timer redesign on 2026-06-16
 
+## TERM-011: PowerShell provider path passed to Node
+- Date observed: 2026-06-16
+- Failed pattern:
+  - PowerShell script used `Get-Location` directly, then passed `Join-Path` results to `node --check` from a UNC workspace.
+- Symptom:
+  - Node tried to resolve paths containing `Microsoft.PowerShell.Core\FileSystem::` and reported `MODULE_NOT_FOUND` even though files existed.
+- Likely cause:
+  - `Get-Location` returns a `PathInfo` object whose string form can include the provider prefix for UNC provider paths.
+- Preferred workaround:
+  - Use `(Get-Location).ProviderPath` or `Convert-Path` before passing filesystem paths to external executables.
+- Notes:
+  - Observed during inline editing verification on 2026-06-16.
+

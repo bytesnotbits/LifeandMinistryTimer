@@ -27,6 +27,8 @@ Document behavior in terms of user outcomes.
 - Users can create/edit schedule segments.
 - Segment durations drive timer targets.
 - Each card provides a title-level pencil action that opens inline card editing.
+- A single card can be edited directly without turning every card into edit mode.
+- Add-before and add-after controls appear while a card is being edited and create a new inline-editing card at that position.
 - Card reordering uses drag-and-drop when timer is stopped and no inline editor is open.
 - Card removal is available when timer is stopped.
 - The program cockpit import flow should surface whether imported timing is ready to run or needs review.
@@ -95,3 +97,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-16: Polished inline card editing with escaped values, keyboard save/cancel, validation focus, and version 3.7.0.
 - 2026-06-16: Documented task completion expectations for version bumps, docs synchronization, commits, and pushes.
 - 2026-06-16: Consolidated live timer progress, expanded the global meeting timer, added 30-second comment timing, adaptive global segment numbering, actual-time segment shifting, and version 3.7.1.
+- 2026-06-16: Restored single-card inline editing, moved add-before/add-after into the active card editor, improved dark-mode editor/modal contrast, fixed reset timer contrast, and version 3.7.2.

@@ -362,3 +362,29 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.7.1.
   - Risks:
     - Segment shifting is based on stored elapsed seconds rather than explicit wall-clock part end timestamps.
+
+## DEC-016: Make inline editing card-scoped
+- Date: 2026-06-16
+- Status: Accepted
+- Related files: `lifeMinistryTimer.js`, `render.js`, `styles.css`, `index.html`
+- Context:
+  - The global edit button made all cards feel like they entered edit mode at once, which slowed down normal single-card edits.
+  - The add-before/add-after controls were useful, but they only appeared with global edit mode.
+  - Some editing surfaces and reset controls had poor dark-mode contrast.
+- Decision:
+  - Show each card's pencil edit action without requiring global edit mode.
+  - Keep add-before/add-after controls inside the active inline editor and save with the inline `Save` button.
+  - Keep drag-and-drop reordering behind global edit mode.
+  - Restyle inline editors, the legacy part editor modal, and reset timer controls with theme variables.
+  - Bump the app version to 3.7.2.
+- Consequences:
+  - Users can edit one card directly while the rest of the meeting remains in normal mode.
+  - Inserted parts reindex elapsed times, comments, and active part state so timer data stays attached to the right card.
+- Validation:
+  - Manual checks:
+    - Open a single card editor from the pencil with global edit mode off, save changes, and verify other cards stay in normal display mode.
+    - Verify add-before/add-after appear only while a card editor is open and the new part opens for editing.
+    - Verify drag-and-drop still requires global edit mode.
+    - Switch to dark mode and verify part cards, inline editor fields, the part editor modal, and reset timer controls remain readable.
+  - Risks:
+    - Existing global edit users may still expect all card management controls to appear together; this keeps reorder there while moving insert controls to the active editor.

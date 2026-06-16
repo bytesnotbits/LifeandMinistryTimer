@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer - Styles
- * Version 3.7.0
+ * Version 3.7.2
  * 
  * Styles for the Life and Ministry Timer application
  */
@@ -999,6 +999,62 @@ main {
     animation: pulse 2s infinite;
 }
 
+.part-speaker,
+.part-comment-summary {
+    color: var(--text-light);
+    font-size: 0.875rem;
+}
+
+.part-card-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    color: var(--primary-color);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.part-card-icon-button:hover,
+.part-card-icon-button:focus-visible {
+    background-color: rgba(59, 130, 246, 0.12);
+    outline: none;
+}
+
+[data-theme="dark"] .part-card-icon-button:hover,
+[data-theme="dark"] .part-card-icon-button:focus-visible {
+    background-color: rgba(96, 165, 250, 0.18);
+}
+
+.inline-part-editor {
+    background-color: var(--bg-color);
+    background-color: color-mix(in srgb, var(--bg-card) 88%, var(--bg-color));
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+.inline-part-editor-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--text-color);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.inline-editor-secondary-button {
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    background-color: var(--border-color);
+    color: var(--text-color);
+}
+
+.inline-editor-secondary-button:hover,
+.inline-editor-secondary-button:focus-visible {
+    background-color: var(--text-light);
+    background-color: color-mix(in srgb, var(--border-color) 82%, var(--text-light));
+    outline: none;
+}
+
 @keyframes pulse {
     0% {
         box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
@@ -1342,6 +1398,12 @@ main {
     color: white;
 }
 
+[data-theme="dark"] .reset-button,
+[data-theme="dark"] #resetTimersBtn {
+    background-color: var(--danger-color) !important;
+    color: #111827 !important;
+}
+
 .comment-adjust-controls {
     display: inline-flex;
     align-items: center;
@@ -1603,7 +1665,9 @@ main {
 
 .part-editor-content {
     background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 0.5rem;
+    color: var(--text-color);
     padding: 1.5rem;
     width: 90%;
     max-width: 500px;
@@ -1626,6 +1690,7 @@ main {
 .part-editor-form label {
     display: block;
     margin-bottom: 0.25rem;
+    color: var(--text-color);
     font-weight: 500;
 }
 

@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer - Rendering Module
- * Version 3.7.1
+ * Version 3.7.2
  * 
  * Handles all DOM updates and rendering for the Life and Ministry Timer application
  */
@@ -303,6 +303,8 @@ const render = {
             const escapedInlineNameValue = escapeHtmlAttribute(inlineNameValue);
             const escapedInlineSpeakerValue = escapeHtmlAttribute(inlineSpeakerValue);
             const escapedInlineDurationValue = escapeHtmlAttribute(inlineDurationValue);
+            const showRemoveAction = state.isEditMode || isInlineEditing;
+            const showInsertActions = state.isEditMode || isInlineEditing;
             const canRemove = !state.isRunning && state.meetingParts.length > 1;
             const removeDisabledClass = canRemove ? '' : 'opacity-40 cursor-not-allowed';
             const removeDisabledAttr = canRemove ? '' : 'disabled';
@@ -328,9 +330,9 @@ const render = {
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold flex items-center gap-2">
                         <span>${escapedPartName}</span>
-                        ${state.isEditMode ? `
+                        ${!isInlineEditing ? `
                         <button data-action="edit-part" data-part-index="${index}"
-                            class="p-1 text-blue-600 hover:text-blue-800 rounded"
+                            class="part-card-icon-button"
                             aria-label="Edit ${escapedPartName}">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path d="M17.414 2.586a2 2 0 010 2.828l-8.5 8.5a1 1 0 01-.447.264l-4 1a1 1 0 01-1.213-1.213l1-4a1 1 0 01.264-.447l8.5-8.5a2 2 0 012.828 0zM5.978 10.607l-.5 2 2-.5 7.95-7.95-1.5-1.5-7.95 7.95z"/>
@@ -338,9 +340,9 @@ const render = {
                         </button>
                         ` : ''}
                     </h3>
-                    <div class="text-sm text-gray-600">${escapedSpeaker}</div>
+                    <div class="part-speaker">${escapedSpeaker}</div>
                     <div class="ml-2 flex items-center gap-1">
-                        ${state.isEditMode ? `
+                        ${showRemoveAction ? `
                             <button data-action="remove-part" data-part-index="${index}"
                                 class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 ${removeDisabledClass}"
                                 aria-label="Remove ${escapedPartName}" ${removeDisabledAttr}>
@@ -351,24 +353,24 @@ const render = {
                 </div>
 
                 ${isInlineEditing ? `
-                    <div class="inline-part-editor mb-3 p-3 border rounded bg-gray-50" role="group" aria-label="Editing ${escapedPartName}">
+                    <div class="inline-part-editor mb-3 p-3 border rounded" role="group" aria-label="Editing ${escapedPartName}">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
                             <div>
-                                <label for="editPartName-inline-${index}" class="block text-sm font-medium text-gray-700 mb-1">Part Name</label>
+                                <label for="editPartName-inline-${index}" class="inline-part-editor-label">Part Name</label>
                                 <input id="editPartName-inline-${index}" type="text" class="w-full px-2 py-1 border rounded" value="${escapedInlineNameValue}" data-inline-edit-field="name" autocomplete="off">
                             </div>
                             <div>
-                                <label for="editPartSpeaker-inline-${index}" class="block text-sm font-medium text-gray-700 mb-1">Speaker</label>
+                                <label for="editPartSpeaker-inline-${index}" class="inline-part-editor-label">Speaker</label>
                                 <input id="editPartSpeaker-inline-${index}" type="text" class="w-full px-2 py-1 border rounded" value="${escapedInlineSpeakerValue}" data-inline-edit-field="speaker" autocomplete="off">
                             </div>
                             <div>
-                                <label for="editPartDuration-inline-${index}" class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                                <label for="editPartDuration-inline-${index}" class="inline-part-editor-label">Duration (minutes)</label>
                                 <input id="editPartDuration-inline-${index}" type="number" min="1" max="180" class="w-full px-2 py-1 border rounded" value="${escapedInlineDurationValue}" data-inline-edit-field="duration" inputmode="numeric">
                             </div>
                             <div class="flex items-end">
                                 <label class="inline-flex items-center">
                                     <input id="editPartComments-inline-${index}" type="checkbox" class="mr-2" ${inlineCommentsChecked ? 'checked' : ''}>
-                                    <span class="text-sm font-medium text-gray-700">Enable Comments</span>
+                                    <span class="inline-part-editor-label">Enable Comments</span>
                                 </label>
                             </div>
                         </div>
@@ -379,7 +381,7 @@ const render = {
                                 Save
                             </button>
                             <button data-action="cancel-inline-part" data-part-index="${index}"
-                                class="px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                                class="inline-editor-secondary-button"
                                 aria-label="Cancel editing ${escapedPartName}">
                                 Cancel
                             </button>
@@ -398,7 +400,7 @@ const render = {
                 </div>
 
                 ${part.enableComments ? `
-                    <div class="text-sm text-gray-700 mb-2">
+                    <div class="part-comment-summary">
                         Comments:
                         <span id="partCommentCount-${index}" class="font-semibold">${partCommentStats.count}</span>
                         |
@@ -490,7 +492,7 @@ const render = {
                     ` : ''}
                 </div>
 
-                ${state.isEditMode ? `
+                ${showInsertActions ? `
                     <div class="edit-controls mt-2 flex justify-between">
                         <button data-action="add-part-before" data-part-index="${index}"
                             class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
