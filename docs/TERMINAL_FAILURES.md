@@ -60,3 +60,22 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
   - Treat files outside that folder, such as the outer `AGENTS.md`, as workspace guidance that will not be included in normal repository commits.
 - Notes:
   - Check `git status --short` from the nested repo before staging so unrelated files are not bundled.
+
+## TERM-004: Windows Git probes can misread WSL repository layout
+- Date observed: 2026-06-16
+- Failed pattern:
+  - Probing Git repository state from Windows Git against a WSL UNC path, then continuing with one-off PowerShell/WSL snippets after the first probe gives confusing results.
+- Symptom:
+  - The Windows-side probe does not see the expected WSL repository location or reports misleading repository boundaries.
+  - A first PowerShell wrapper can reveal useful facts, such as "the app directory is the actual Git repo, not the parent," but then fail because of PowerShell escaping or WSL command quoting.
+- Likely cause:
+  - Windows Git, UNC path handling, PowerShell quoting, and WSL shell semantics are all in play at once.
+  - Repository discovery can differ depending on whether the command runs from Windows, from WSL, or through a wrapper crossing that boundary.
+- Preferred workaround:
+  - Stop using fragile one-off shell snippets after the first failure.
+  - Create a small self-reporting PowerShell wrapper that calls into WSL deliberately, prints the current Windows path, WSL path, Git version, branch, and repository root, and exits nonzero on mismatch.
+  - If the wrapper trips on PowerShell escaping, patch the wrapper and rerun it instead of switching back to ad hoc commands.
+  - Prefer running Git from the confirmed repository root once discovered.
+- Notes:
+  - Capture the useful discovery from the failed wrapper before patching it.
+  - This is a sign to simplify the boundary: either stay Windows-native for Windows paths or call into WSL once with carefully quoted arguments.
