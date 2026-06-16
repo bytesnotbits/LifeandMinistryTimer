@@ -1005,6 +1005,26 @@ main {
     font-size: 0.875rem;
 }
 
+.part-number-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background-color: rgba(59, 130, 246, 0.12);
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+[data-theme="dark"] .part-number-badge {
+    background-color: rgba(96, 165, 250, 0.18);
+}
+
 .part-card-icon-button {
     display: inline-flex;
     align-items: center;

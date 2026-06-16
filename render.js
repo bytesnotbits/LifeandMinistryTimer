@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer - Rendering Module
- * Version 3.7.2
+ * Version 3.7.3
  * 
  * Handles all DOM updates and rendering for the Life and Ministry Timer application
  */
@@ -99,6 +99,7 @@ const render = {
             segments.innerHTML = buildGlobalMeetingSegments(displayState.totalSec)
                 .map((segment) => `
                     <span class="global-segment"
+                        data-part-number="${segment.partNumber}"
                         style="left:${segment.left}%;width:${segment.width}%"
                         title="${escapeHtmlAttribute(segment.title)}">${segment.label ? `<span class="global-segment-label">${segment.label}</span>` : ''}</span>
                 `)
@@ -308,6 +309,7 @@ const render = {
             const canRemove = !state.isRunning && state.meetingParts.length > 1;
             const removeDisabledClass = canRemove ? '' : 'opacity-40 cursor-not-allowed';
             const removeDisabledAttr = canRemove ? '' : 'disabled';
+            const partNumber = getPartDisplayNumber(index);
             const partCommentStats = commentStatsByPart[index] || { count: 0, totalDuration: 0 };
             const averageCommentDuration = partCommentStats.count > 0
                 ? Math.round(partCommentStats.totalDuration / partCommentStats.count)
@@ -329,6 +331,7 @@ const render = {
                 ` : ''}
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold flex items-center gap-2">
+                        <span class="part-number-badge" aria-label="Part ${partNumber}">${partNumber}</span>
                         <span>${escapedPartName}</span>
                         ${!isInlineEditing ? `
                         <button data-action="edit-part" data-part-index="${index}"
@@ -396,7 +399,7 @@ const render = {
                 </div>
                 <div class="part-timing-row">
                     <span data-role="part-status" class="timer-status-pill timer-status-${timing.state}">${timing.label}</span>
-                    <span>${isActive ? 'Current' : `Part ${index + 1} of ${state.meetingParts.length}`}</span>
+                    <span>${isActive ? `Current - Part ${partNumber} of ${state.meetingParts.length}` : `Part ${partNumber} of ${state.meetingParts.length}`}</span>
                 </div>
 
                 ${part.enableComments ? `
@@ -794,6 +797,7 @@ function buildGlobalMeetingSegments(totalSec) {
 
     let cursorSec = bufferSec;
     return state.meetingParts.map((part, index) => {
+        const partNumber = getPartDisplayNumber(index);
         cursorSec += gapSecondsByIndex[index] || 0;
         const sourcePartSec = sourceDurationSec > 0 ? Math.max(0, part.duration || 0) : 1;
         const denominator = sourceDurationSec > 0 ? sourceDurationSec : fallbackDurationSec;
@@ -806,14 +810,19 @@ function buildGlobalMeetingSegments(totalSec) {
             ? Math.max(0, elapsed) * sourceScale
             : widthSec;
         const segment = {
+            partNumber: partNumber,
             left: Math.max(0, Math.min(100, (cursorSec / totalSec) * 100)),
             width: Math.max(0.3, Math.min(100, (widthSec / totalSec) * 100)),
-            title: `${index + 1}. ${part.name || 'Meeting part'}: ${formatTime(part.duration || 0)}`,
-            label: state.meetingParts.length <= 16 && (widthSec / totalSec) * 100 >= 3.5 ? String(index + 1) : ''
+            title: `Part ${partNumber}: ${part.name || 'Meeting part'}: ${formatTime(part.duration || 0)}`,
+            label: state.meetingParts.length <= 16 && (widthSec / totalSec) * 100 >= 3.5 ? String(partNumber) : ''
         };
         cursorSec += cursorAdvanceSec;
         return segment;
     });
+}
+
+function getPartDisplayNumber(index) {
+    return index + 1;
 }
 
 function getProgressColorClass(percent, isOvertime = false, defaultClass = 'bg-blue-500') {

@@ -388,3 +388,28 @@ Track important decisions that explain *why* the code changed.
     - Switch to dark mode and verify part cards, inline editor fields, the part editor modal, and reset timer controls remain readable.
   - Risks:
     - Existing global edit users may still expect all card management controls to appear together; this keeps reorder there while moving insert controls to the active editor.
+
+## DEC-017: Align global segment labels with part card numbers
+- Date: 2026-06-16
+- Status: Accepted
+- Related files: `render.js`, `index.html`
+- Context:
+  - Global meeting timer segment numbers needed to identify the same part numbers shown in the part cards.
+  - Repeating raw index math in different render paths made the relationship easy to miss.
+- Decision:
+  - Use a shared part display-number helper for part card numbering and global meeting segment labels.
+  - Show that part number as a badge beside each part title so imported agenda numbers in titles are not confused with app part numbers.
+  - Add the part number to each global segment's DOM metadata and title.
+  - Show the active card as `Current - Part N of total` so the active part has the same visible number as its segment.
+  - Bump the app version to 3.7.3.
+- Consequences:
+  - Segment labels now explicitly represent their source part number rather than an independent segment count.
+  - Debugging and visual inspection can compare card badges, card text, segment labels, segment titles, and `data-part-number`.
+- Validation:
+  - Manual checks:
+    - Load a scheduled meeting so the global timer segments render.
+    - Compare visible global segment labels with the corresponding part card number badges.
+    - Verify the active card still reads as current while including its part number.
+    - Verify footer version displays 3.7.3.
+  - Risks:
+    - Very narrow or short segments may still hide their label to prevent crowding; hidden labels should not be treated as renumbering.
