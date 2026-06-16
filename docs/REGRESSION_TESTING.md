@@ -252,6 +252,23 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-008
 - Related files: `newFeatures.js`, `styles.css`, `index.html`
 
+## REG-015: Live timer state remains glanceable across part states
+- Priority: High
+- Area: Rendering
+- Preconditions:
+  - App loaded with at least two meeting parts.
+- Steps:
+  1. Select the first part and verify the sticky current-part panel and run dashboard show the current part and next part.
+  2. Start the active part and verify status changes to running in the sticky panel, active card, and run dashboard.
+  3. Let or adjust the active part near its planned duration and verify closing/overtime cues appear.
+  4. Pause the active part and verify paused state appears without losing elapsed/remaining values.
+  5. Advance to the next part and verify the next-part preview updates.
+- Expected:
+  - Current-part status, remaining time, meeting pace, and next-part preview stay synchronized across the sticky panel, active card, and run dashboard.
+  - Overtime is visibly distinct from normal running state.
+- Related decisions: DEC-009
+- Related files: `index.html`, `render.js`, `programCockpit.js`, `styles.css`
+
 ## Coverage Notes
 
 - Add a new `REG-###` test for every bug fix.

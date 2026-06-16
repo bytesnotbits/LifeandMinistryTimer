@@ -17,6 +17,8 @@ Document behavior in terms of user outcomes.
 - Start, pause, and reset timer behavior is deterministic.
 - Display updates at expected intervals.
 - Timer state should not desync from UI controls.
+- The live timer surface should make the active part state glanceable: ready, running, closing, paused, or overtime.
+- The active part panel and run dashboard should show the next part when one exists.
 
 ### 2.2 Program/Segment Management
 - Users can create/edit schedule segments.
@@ -73,3 +75,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-03-01: Replaced global edit toggle UI with per-card pencil edit action.
 - 2026-03-01: Replaced modal-based card edits with inline card editing and restored remove/reorder controls (disabled during active timing).
 - 2026-03-01: Replaced arrow-based reordering with drag-and-drop reordering.
+- 2026-06-15: Enhanced the live timer experience with active-part status pills, next-part preview, clearer remaining/overtime cues, and a richer run dashboard.

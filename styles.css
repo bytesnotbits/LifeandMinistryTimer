@@ -321,6 +321,25 @@ main {
     background: var(--bg-card);
 }
 
+.run-now.timer-state-running,
+.run-now.timer-state-closing {
+    border-color: rgba(59, 130, 246, 0.45);
+    box-shadow: inset 0.25rem 0 0 var(--primary-color);
+}
+
+.run-now.timer-state-overtime {
+    border-color: rgba(239, 68, 68, 0.55);
+    box-shadow: inset 0.25rem 0 0 var(--danger-color);
+}
+
+.run-title-row,
+.run-next {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
 .run-label {
     color: var(--text-light);
     font-size: 0.78rem;
@@ -364,6 +383,39 @@ main {
     font-size: 1.1rem;
 }
 
+.run-metrics .behind {
+    color: var(--danger-color);
+}
+
+.run-metrics .ahead {
+    color: var(--success-color);
+}
+
+.run-metrics .on-pace {
+    color: var(--primary-color);
+}
+
+.run-progress-line {
+    height: 0.4rem;
+    margin-top: 0.85rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--border-color);
+}
+
+.run-progress-line span {
+    display: block;
+    height: 100%;
+    max-width: 100%;
+    border-radius: inherit;
+    background: var(--primary-color);
+    transition: width 0.5s ease;
+}
+
+.timer-state-overtime .run-progress-line span {
+    background: var(--danger-color);
+}
+
 .run-actions {
     display: flex;
     flex-wrap: wrap;
@@ -391,6 +443,31 @@ main {
 .run-actions button:disabled {
     cursor: not-allowed;
     opacity: 0.55;
+}
+
+.run-next-count {
+    min-width: 4rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.45rem;
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    text-align: center;
+}
+
+.run-next-count span,
+.run-next-count b {
+    display: block;
+    line-height: 1.1;
+}
+
+.run-next-count span {
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.run-next-count b {
+    font-size: 0.72rem;
+    text-transform: uppercase;
 }
 
 .review-table {
@@ -649,6 +726,11 @@ main {
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
+.part-card.timer-state-overtime.active {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.22);
+}
+
 .part-card.timer-active {
     animation: pulse 2s infinite;
 }
@@ -696,6 +778,30 @@ main {
     right: 0;
 }
 
+.countdown.is-over {
+    color: #fee2e2;
+    font-weight: 800;
+}
+
+.part-timing-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 1.35rem;
+    margin: -0.2rem 0 0.65rem;
+    color: var(--text-light);
+    font-size: 0.78rem;
+}
+
+.part-timing-row > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Global meeting timer bar */
 .global-timer-container {
     position: sticky;
@@ -716,6 +822,21 @@ main {
 
 .active-timer-panel {
     min-width: 0;
+    padding: 0.55rem;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.active-timer-panel.timer-state-running,
+.active-timer-panel.timer-state-closing {
+    border-color: rgba(59, 130, 246, 0.35);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.active-timer-panel.timer-state-overtime {
+    border-color: rgba(239, 68, 68, 0.45);
+    background: rgba(239, 68, 68, 0.06);
 }
 
 .active-timer-label-row {
@@ -735,6 +856,65 @@ main {
     color: var(--text-color);
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.active-timer-title {
+    min-height: 1.45rem;
+    margin: -0.1rem 0 0.35rem;
+    overflow: hidden;
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.active-timer-next {
+    min-height: 1rem;
+    margin-top: 0.35rem;
+    overflow: hidden;
+    color: var(--text-light);
+    font-size: 0.78rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.timer-status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.35rem;
+    max-width: 100%;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(107, 114, 128, 0.14);
+    color: var(--text-color);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.timer-status-running {
+    background: rgba(59, 130, 246, 0.14);
+    color: var(--primary-color);
+}
+
+.timer-status-closing {
+    background: rgba(245, 158, 11, 0.18);
+    color: #b45309;
+}
+
+.timer-status-overtime {
+    background: rgba(239, 68, 68, 0.16);
+    color: var(--danger-color);
+}
+
+.timer-status-paused {
+    background: rgba(107, 114, 128, 0.16);
+    color: var(--text-light);
 }
 
 .global-progress-bar {

@@ -204,3 +204,24 @@ Track important decisions that explain *why* the code changed.
     - Return to page top and verify controls are visible again.
   - Risks:
     - On very short pages with little scroll movement, hide/reveal may be less noticeable.
+
+## DEC-009: Make the live timer state glanceable
+- Date: 2026-06-15
+- Status: Accepted
+- Related files: `index.html`, `render.js`, `programCockpit.js`, `styles.css`
+- Context:
+  - The app already had a sticky active timer area and run dashboard, but users needed clearer feedback about current part status, remaining time, overtime, and what comes next.
+- Decision:
+  - Add active-part status states (`Ready`, `Running`, `Closing`, `Paused`, `Over by ...`) to the sticky panel, part cards, and run dashboard.
+  - Show the next part in the sticky current-part panel and enrich the run dashboard with remaining time, meeting pace, and completed-part count.
+  - Preserve the existing focused meeting workspace instead of adding a new screen.
+- Consequences:
+  - The live meeting view is easier to scan during active use.
+  - Rendering now shares timing-state helpers between card rendering and the program cockpit.
+- Validation:
+  - Manual checks:
+    - Start, pause, and resume an active part and verify status labels update.
+    - Let a part reach closing/overtime and verify color/state cues update in the sticky panel, card, and run dashboard.
+    - Advance to the next part and verify next-part preview changes.
+  - Risks:
+    - Additional live labels must remain readable on narrow screens and in dark mode.

@@ -524,11 +524,6 @@ const programCockpit = {
         if (!container) return;
 
         const current = state.meetingParts[state.activePart];
-        const totalPlanned = typeof getActiveMeetingPlannedSeconds === 'function'
-            ? getActiveMeetingPlannedSeconds()
-            : state.meetingParts.reduce((sum, part) => sum + part.duration, 0);
-        const totalElapsed = Object.values(state.elapsedTimes).reduce((sum, seconds) => sum + Number(seconds || 0), 0);
-        const variance = totalElapsed - totalPlanned;
         const next = state.meetingParts[state.activePart + 1];
 
         if (!current) {
@@ -536,15 +531,43 @@ const programCockpit = {
             return;
         }
 
+        const currentElapsed = state.elapsedTimes[state.activePart] || 0;
+        const totalElapsed = Object.values(state.elapsedTimes).reduce((sum, seconds) => sum + Number(seconds || 0), 0);
+        const plannedElapsedToCurrent = state.meetingParts.reduce((sum, part, index) => {
+            if (index < state.activePart) {
+                return sum + (part.duration || 0);
+            }
+            if (index === state.activePart) {
+                return sum + Math.min(currentElapsed, part.duration || 0);
+            }
+            return sum;
+        }, 0);
+        const variance = totalElapsed - plannedElapsedToCurrent;
+        const currentTiming = getPartTimingState(currentElapsed, current.duration || 0, state.isRunning);
+        const pace = getMeetingPaceState(variance);
+        const completedParts = state.meetingParts.filter((part, index) => {
+            const elapsed = state.elapsedTimes[index] || 0;
+            return elapsed >= (part.duration || 0);
+        }).length;
+
         container.innerHTML = `
-            <div class="run-now">
-                <span class="run-label">Current Part</span>
-                <h3>${this.escapeHtml(current.name)}</h3>
+            <div class="run-now timer-state-${currentTiming.state}">
+                <div class="run-title-row">
+                    <div>
+                        <span class="run-label">Current Part</span>
+                        <h3>${this.escapeHtml(current.name)}</h3>
+                    </div>
+                    <span class="timer-status-pill timer-status-${currentTiming.state}">${currentTiming.label}</span>
+                </div>
                 <p>${this.escapeHtml(current.section || 'Meeting')} ${current.speaker ? `- ${this.escapeHtml(current.speaker)}` : ''}</p>
                 <div class="run-metrics">
                     <div><span>Planned</span><strong>${formatTime(current.duration)}</strong></div>
-                    <div><span>Actual</span><strong>${formatTime(state.elapsedTimes[state.activePart] || 0)}</strong></div>
-                    <div><span>Meeting Pace</span><strong>${variance > 0 ? '+' : ''}${formatMeetingTime(Math.abs(variance))}</strong></div>
+                    <div><span>Actual</span><strong>${formatTime(currentElapsed)}</strong></div>
+                    <div><span>Remaining</span><strong class="${currentTiming.state === 'overtime' ? 'behind' : ''}">${formatTimeWithSign(currentTiming.remaining)}</strong></div>
+                    <div><span>Meeting Pace</span><strong class="${pace.className}">${pace.text}</strong></div>
+                </div>
+                <div class="run-progress-line" aria-hidden="true">
+                    <span style="width:${currentTiming.percent}%"></span>
                 </div>
                 <div class="run-actions">
                     <button type="button" class="primary-action" data-run-action="${state.isRunning ? 'stop' : 'start'}">
@@ -556,9 +579,15 @@ const programCockpit = {
                 </div>
             </div>
             <div class="run-next">
-                <span class="run-label">Next</span>
-                <strong>${next ? this.escapeHtml(next.name) : 'End of meeting'}</strong>
-                <p>${next ? this.escapeHtml(next.section || '') : 'Ready for concluding review.'}</p>
+                <div>
+                    <span class="run-label">Next</span>
+                    <strong>${next ? this.escapeHtml(next.name) : 'End of meeting'}</strong>
+                    <p>${next ? `${this.escapeHtml(next.section || 'Meeting')} - ${formatTime(next.duration || 0)}` : 'Ready for concluding review.'}</p>
+                </div>
+                <div class="run-next-count">
+                    <span>${completedParts}</span>
+                    <b>done</b>
+                </div>
             </div>
         `;
     },
