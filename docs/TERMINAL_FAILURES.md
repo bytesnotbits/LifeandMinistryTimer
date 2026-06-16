@@ -79,3 +79,20 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Capture the useful discovery from the failed wrapper before patching it.
   - This is a sign to simplify the boundary: either stay Windows-native for Windows paths or call into WSL once with carefully quoted arguments.
+
+## TERM-005: Rewriting commit/push wrappers wastes effort
+- Date observed: 2026-06-16
+- Failed pattern:
+  - Creating a fresh temporary PowerShell script for every routine Git publish workflow after the same staging, commit, push, and cleanup shape has already proven useful.
+- Symptom:
+  - The workflow succeeds, but repeats boilerplate and reintroduces chances for small scripting mistakes.
+- Likely cause:
+  - The script-first policy encourages self-reporting scripts, but common Git workflows need a durable helper rather than a one-off wrapper each time.
+- Preferred workaround:
+  - Use the global reusable helpers before writing a new Git wrapper:
+    - `C:/Users/joefi/.codex/skills/script-first-execution/scripts/git-check.ps1`
+    - `C:/Users/joefi/.codex/skills/script-first-execution/scripts/git-publish.ps1`
+  - Run with `powershell -NoProfile -ExecutionPolicy Bypass -File ...` when execution policy blocks direct script execution.
+  - Pass explicit `-Paths` to `git-publish.ps1` unless deliberately staging all changes with `-All`.
+- Notes:
+  - If a project needs special publish behavior, prefer improving the reusable helper or wrapping it with a small project script.
