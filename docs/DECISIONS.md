@@ -441,3 +441,29 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.7.5.
   - Risks:
     - Extra confirmation adds one click for intentional meeting-end and reset workflows.
+
+## DEC-019: Add setup readiness checklist and next action
+- Date: 2026-06-17
+- Status: Accepted
+- Related files: `programCockpit.js`, `styles.css`, `index.html`, `lifeMinistryTimer.js`
+- Context:
+  - The import readiness card showed useful metrics, but it did not make the remaining setup steps obvious.
+  - Users need a calm path from imported program to reviewed timing, scheduled meeting, and live view.
+- Decision:
+  - Add a compact readiness checklist to the import status card.
+  - Surface a single recommended next action: review timing when suggested durations exist, schedule the meeting when timing is reviewed but no schedule exists, or focus the live view when setup is complete.
+  - Version local CSS/JS asset URLs with the app version so static-browser refreshes pick up the current setup workflow.
+  - Keep the checklist inside the existing prepare surface instead of adding another screen.
+  - Bump the app version to 3.7.6.
+- Consequences:
+  - Setup now communicates progress and the next useful action at a glance.
+  - The prepare card becomes slightly denser, so narrow-screen wrapping needs regression coverage.
+- Validation:
+  - Manual checks:
+    - Load the sample week and verify the readiness card shows setup steps.
+    - Import or parse a program with inferred timing and verify the next action is `Review Timing`.
+    - With reviewed timing and no schedule, verify the next action is `Schedule Meeting`.
+    - After scheduling, verify the next action is `Focus Live View`.
+    - Verify footer version displays 3.7.6.
+  - Risks:
+    - Readiness depends on scheduled start/end state; stale persisted schedules could make the setup look more complete than intended.

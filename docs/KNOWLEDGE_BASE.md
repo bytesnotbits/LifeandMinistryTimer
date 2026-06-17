@@ -34,6 +34,7 @@ Document behavior in terms of user outcomes.
 - Card reordering uses drag-and-drop when timer is stopped and no inline editor is open.
 - Card removal is available when timer is stopped.
 - The program cockpit import flow should surface whether imported timing is ready to run or needs review.
+- The import readiness card should also show setup progress and the next useful action across timing review, meeting scheduling, and live view focus.
 - The review tab should act as a timing pre-flight check with planned/actual totals, meeting variance, and imported vs suggested timing badges.
 - Review should provide direct handoff actions into the live meeting view and current-part timer.
 
@@ -102,4 +103,5 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-16: Restored single-card inline editing, moved add-before/add-after into the active card editor, improved dark-mode editor/modal contrast, fixed reset timer contrast, and version 3.7.2.
 - 2026-06-16: Made global meeting segment labels derive from imported program part numbers, left unnumbered items unlabeled, and version 3.7.4.
 - 2026-06-17: Added confirmation guardrails for high-impact live timing actions and version 3.7.5.
+- 2026-06-17: Added a setup readiness checklist and next-action guidance to the import readiness card with version 3.7.6.
 

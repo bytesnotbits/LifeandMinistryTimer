@@ -90,6 +90,22 @@ const programCockpit = {
             });
         }
 
+        const readiness = document.getElementById('programImportReadiness');
+        if (readiness) {
+            readiness.addEventListener('click', (event) => {
+                const action = event.target.closest('[data-readiness-action]')?.dataset.readinessAction;
+                if (!action) return;
+
+                if (action === 'review') {
+                    this.setView('review');
+                } else if (action === 'schedule') {
+                    document.getElementById('schedule-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else if (action === 'live') {
+                    document.getElementById('programRunView')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        }
+
         const runView = document.getElementById('programRunView');
         if (runView) {
             runView.addEventListener('click', (event) => {
@@ -558,6 +574,7 @@ const programCockpit = {
         const commentParts = state.meetingParts.filter((part) => part.enableComments).length;
         const status = inferredCount > 0 ? 'Review suggested times' : 'Ready to run';
         const statusClass = inferredCount > 0 ? 'needs-review' : 'ready';
+        const setupReadiness = this.getSetupReadiness(inferredCount);
 
         container.innerHTML = `
             <div class="readiness-card ${statusClass}">
@@ -572,8 +589,48 @@ const programCockpit = {
                     <span><b>${inferredCount}</b> inferred</span>
                     <span><b>${commentParts}</b> comment parts</span>
                 </div>
+                <div class="setup-checklist" aria-label="Setup readiness">
+                    ${setupReadiness.steps.map((step) => `
+                        <span class="setup-step setup-step-${step.state}">
+                            <b>${this.escapeHtml(step.status)}</b>
+                            ${this.escapeHtml(step.label)}
+                        </span>
+                    `).join('')}
+                </div>
+                <div class="readiness-actions">
+                    <button type="button" class="primary-action" data-readiness-action="${setupReadiness.nextAction.action}">
+                        ${this.escapeHtml(setupReadiness.nextAction.label)}
+                    </button>
+                </div>
             </div>
         `;
+    },
+
+    getSetupReadiness(inferredCount) {
+        const hasSchedule = !!(state.meetingScheduledStart && state.meetingScheduledEnd);
+        const needsReview = inferredCount > 0;
+
+        const step = (label, isComplete, isAttention = false) => ({
+            label,
+            state: isComplete ? 'complete' : isAttention ? 'attention' : 'pending',
+            status: isComplete ? 'Done' : isAttention ? 'Review' : 'Open'
+        });
+
+        const steps = [
+            step('Program imported', state.meetingParts.length > 0),
+            step(needsReview ? 'Review suggested times' : 'Timing reviewed', !needsReview, needsReview),
+            step('Meeting scheduled', hasSchedule),
+            step('Ready for live view', state.meetingParts.length > 0 && hasSchedule && !needsReview)
+        ];
+
+        let nextAction = { action: 'live', label: 'Focus Live View' };
+        if (needsReview) {
+            nextAction = { action: 'review', label: 'Review Timing' };
+        } else if (!hasSchedule) {
+            nextAction = { action: 'schedule', label: 'Schedule Meeting' };
+        }
+
+        return { steps, nextAction };
     },
 
     renderRunDashboard() {

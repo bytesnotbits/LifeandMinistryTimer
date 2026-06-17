@@ -397,6 +397,48 @@ main {
     font-size: 0.98rem;
 }
 
+.setup-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.setup-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 1.65rem;
+    padding: 0.25rem 0.55rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background-color: var(--bg-color);
+    color: var(--text-light);
+    font-size: 0.78rem;
+    line-height: 1.1;
+}
+
+.setup-step b {
+    color: var(--text-color);
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.setup-step-complete {
+    border-color: rgba(16, 185, 129, 0.35);
+    background-color: rgba(16, 185, 129, 0.08);
+}
+
+.setup-step-attention {
+    border-color: rgba(245, 158, 11, 0.45);
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.readiness-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .section-summary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));

@@ -464,3 +464,28 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.7.5`.
 - Related decisions: DEC-018
 - Related files: `lifeMinistryTimer.js`, `newFeatures.js`, `index.html`
+
+## REG-025: Setup readiness card guides import to live workflow
+- Priority: High
+- Area: Rendering
+- Preconditions:
+  - App loaded.
+  - Program cockpit is visible.
+- Steps:
+  1. Click `Load Sample Week`.
+  2. Inspect the import readiness card.
+  3. Import or parse a program with inferred/suggested timing.
+  4. Click the readiness card's `Review Timing` action.
+  5. Return to prepare with reviewed timing and no schedule set.
+  6. Click the readiness card's `Schedule Meeting` action.
+  7. Set a meeting schedule and inspect the readiness card again.
+  8. Click the readiness card's `Focus Live View` action.
+- Expected:
+  - The readiness card shows setup steps for imported program, timing review, meeting schedule, and live readiness.
+  - Suggested/inferred timing marks the review step as needing attention.
+  - `Review Timing` activates the review tab.
+  - `Schedule Meeting` brings the weekly schedule controls into view.
+  - Once timing is reviewed and a schedule exists, `Focus Live View` brings the run dashboard into view.
+  - Footer version displays `3.7.6`.
+- Related decisions: DEC-019
+- Related files: `programCockpit.js`, `styles.css`, `index.html`
