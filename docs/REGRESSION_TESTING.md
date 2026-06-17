@@ -436,3 +436,31 @@ Use this file to prevent behavior drift while evolving the app.
   - failing scenario,
   - expected behavior,
   - linked `DEC-###` decision entry.
+
+## REG-024: High-impact live timing actions require confirmation
+- Priority: High
+- Area: Timer
+- Preconditions:
+  - App loaded with at least one meeting part.
+  - A part timer has been started.
+  - A global meeting timer is visible or running.
+- Steps:
+  1. Click the active part card's `Reset` button and cancel the confirmation.
+  2. Verify the active part timer still has elapsed time.
+  3. Click the active part card's `Reset` button again and confirm.
+  4. Start or schedule the global meeting timer, click `End Meeting`, and cancel.
+  5. Click `End Meeting` again and confirm.
+  6. Click the admin `Reset Timers` button and inspect the confirmation.
+  7. Press `R` while the active part is running.
+  8. Press `E` while the global meeting timer is active.
+- Expected:
+  - Resetting the running active timer opens the app confirmation modal before stopping or clearing elapsed time.
+  - Canceling the active timer reset leaves elapsed time intact.
+  - Confirming the active timer reset stops and clears that part timer.
+  - Ending the global meeting opens the app confirmation modal before recording the actual end time.
+  - Canceling the meeting end leaves the global meeting timer active.
+  - Reset Timers uses the app confirmation modal before clearing elapsed times and comment history.
+  - The `R` and `E` shortcuts open the same confirmation paths instead of resetting or ending immediately.
+  - Footer version displays `3.7.5`.
+- Related decisions: DEC-018
+- Related files: `lifeMinistryTimer.js`, `newFeatures.js`, `index.html`

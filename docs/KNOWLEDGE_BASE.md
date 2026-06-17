@@ -14,6 +14,7 @@ Capture what the Ministry Timer app does and what it is expected to do.
 Document behavior in terms of user outcomes.
 
 ### 2.1 Timer Control
+- High-impact live actions should require deliberate confirmation before ending the global meeting, resetting all timing data, or resetting a running active part with elapsed time.
 - Start, pause, and reset timer behavior is deterministic.
 - Display updates at expected intervals.
 - Timer state should not desync from UI controls.
@@ -100,3 +101,5 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-16: Consolidated live timer progress, expanded the global meeting timer, added 30-second comment timing, adaptive global segment numbering, actual-time segment shifting, and version 3.7.1.
 - 2026-06-16: Restored single-card inline editing, moved add-before/add-after into the active card editor, improved dark-mode editor/modal contrast, fixed reset timer contrast, and version 3.7.2.
 - 2026-06-16: Made global meeting segment labels derive from imported program part numbers, left unnumbered items unlabeled, and version 3.7.4.
+- 2026-06-17: Added confirmation guardrails for high-impact live timing actions and version 3.7.5.
+

@@ -362,10 +362,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetTimersBtn = document.getElementById('resetTimersBtn');
     if (resetTimersBtn) {
         resetTimersBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to reset all timers? This will keep your template but clear all timing data.')) {
+            const resetAllTimers = () => {
                 state.resetTimers();
                 render.timerDisplay();
                 render.comments();
+            };
+            if (typeof DOM !== 'undefined' && DOM.showConfirmation) {
+                DOM.showConfirmation(
+                    'Reset all timers?',
+                    'This will stop any running timer and clear all elapsed times and comment history, while keeping the current meeting template.',
+                    resetAllTimers
+                );
+            } else if (confirm('Are you sure you want to reset all timers? This will keep your template but clear all timing data.')) {
+                resetAllTimers();
             }
         });
     }

@@ -206,3 +206,31 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed while verifying imported program part numbering.
 
+
+## TERM-014: PowerShell git-publish path list parsing
+- Date observed: 2026-06-16
+- Failed pattern:
+  - git-publish.ps1 -Paths docs/DECISIONS.md docs/KNOWLEDGE_BASE.md ...
+- Symptom:
+  - PowerShell reported: A positional parameter cannot be found that accepts argument after the first path.
+- Likely cause:
+  - The helper's -Paths parameter expects an array value; bare space-separated paths were parsed as separate positional arguments from this call shape.
+- Preferred workaround:
+  - Pass -Paths as a PowerShell array expression or run through a small script that assigns the paths array before invoking git-publish.ps1.
+- Notes:
+  -
+
+
+## TERM-015: git-publish helper flattens Paths during git add
+- Date observed: 2026-06-16
+- Failed pattern:
+  - git-publish.ps1 called with a string array for -Paths from PowerShell wrapper
+- Symptom:
+  - Helper listed individual paths, then git add received one flattened pathspec containing all paths separated by spaces.
+- Likely cause:
+  - The helper's remaining-arguments wrapper or Windows PowerShell array forwarding flattened the explicit path array when invoking git add on a UNC workspace.
+- Preferred workaround:
+  - Use a self-reporting repo-local publish script that stages each explicit path with a separate native git add -- <path> call, then commits and pushes.
+- Notes:
+  -
+

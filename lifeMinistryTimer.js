@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer
- * Version 3.7.4
+ * Version 3.7.5
  * 
  * A comprehensive timer application for managing meeting parts,
  * tracking comments, and maintaining meeting templates.
@@ -294,7 +294,7 @@ if (this.elements.partsDisplay) {
                         break;
                     case 'reset-timer':
                          if (!state.isEditMode && partIndex !== -1) {
-                            state.resetTimer(partIndex);
+                            state.requestResetTimer(partIndex);
                          }
                         break;
                     case 'edit-part':
@@ -706,9 +706,7 @@ if (this.elements.commentHistory) {
 
         if (this.elements.endMeetingBtn) {
             this.elements.endMeetingBtn.addEventListener('click', () => {
-                state.endMeeting();
-                this.updateMeetingForm();
-                notify.show('Meeting ended', 'info');
+                state.requestEndMeeting();
             });
         }
     },
@@ -1098,6 +1096,22 @@ let state = {
             render.timerDisplay(); // Explicitly re-render the timer display
         }
     },
+
+    requestResetTimer(partIndex) {
+        if (partIndex < 0 || partIndex >= this.meetingParts.length) return;
+
+        const isActiveRunningPart = this.isRunning && partIndex === this.activePart;
+        if (!isActiveRunningPart) {
+            this.resetTimer(partIndex);
+            return;
+        }
+
+        DOM.showConfirmation(
+            'Reset active timer?',
+            'This will stop the running part timer and clear its elapsed time. Comments and other parts will stay intact.',
+            () => this.resetTimer(partIndex)
+        );
+    },
     
     // Clear all data and reset to defaults
     clearAllData() {
@@ -1277,6 +1291,20 @@ let state = {
             this.meetingOverride = null;
             this.saveState();
         }
+    },
+
+    requestEndMeeting() {
+        if (!this.meetingIsRunning && !this.meetingScheduledStart) return;
+
+        DOM.showConfirmation(
+            'End meeting?',
+            'This will stop the global meeting timer and record the current time as the meeting end.',
+            () => {
+                this.endMeeting();
+                DOM.updateMeetingForm();
+                notify.show('Meeting ended', 'info');
+            }
+        );
     },
     
     // Start the timer
@@ -2811,11 +2839,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // R: Reset active timer
         if (e.key === 'r' || e.key === 'R') {
-            state.resetTimer(state.activePart);
+            state.requestResetTimer(state.activePart);
         }
         // E: End global meeting timer (if running or scheduled)
         if (e.key === 'e' || e.key === 'E') {
-            state.endMeeting();
+            state.requestEndMeeting();
         }
         
     });

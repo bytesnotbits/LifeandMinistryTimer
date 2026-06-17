@@ -413,3 +413,31 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.7.4.
   - Risks:
     - Very narrow or short numbered segments may still hide their label to prevent crowding; hidden labels should not be treated as renumbering.
+
+## DEC-018: Confirm high-impact live timing actions
+- Date: 2026-06-17
+- Status: Accepted
+- Related files: `lifeMinistryTimer.js`, `newFeatures.js`, `index.html`
+- Context:
+  - Live meeting actions such as ending the global meeting, resetting the active part timer, and resetting all timing data were one-click operations.
+  - During a meeting, accidental clicks should be absorbed before they stop or erase important live timing context.
+- Decision:
+  - Route the End Meeting action through the app confirmation modal before recording the meeting end.
+  - Require confirmation before resetting the currently running active part.
+  - Route the `R` reset shortcut and `E` end-meeting shortcut through the same confirmation paths as their buttons.
+  - Route the Reset Timers admin action through the same app confirmation modal, with a native confirm fallback.
+  - Bump the app version to 3.7.5.
+- Consequences:
+  - High-impact actions now require a deliberate second step during live operation.
+  - Routine reset actions for stopped or empty part timers remain quick.
+- Validation:
+  - Manual checks:
+    - Start a part timer, click its Reset button, cancel the confirmation, and verify elapsed time continues.
+    - Repeat and confirm, then verify the active part timer stops and resets.
+    - Start or schedule a global meeting, click End Meeting, cancel, and verify the global timer remains active.
+    - Repeat and confirm, then verify the meeting end is recorded.
+    - Click Reset Timers and verify the app modal appears before timing data clears.
+    - Press `R` while the active part is running and `E` while the global meeting is active, then verify both shortcuts open confirmations instead of acting immediately.
+    - Verify footer version displays 3.7.5.
+  - Risks:
+    - Extra confirmation adds one click for intentional meeting-end and reset workflows.
