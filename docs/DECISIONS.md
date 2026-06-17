@@ -467,3 +467,29 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.7.6.
   - Risks:
     - Readiness depends on scheduled start/end state; stale persisted schedules could make the setup look more complete than intended.
+
+## DEC-020: Use real controls for part selection
+- Date: 2026-06-17
+- Status: Accepted
+- Related files: `render.js`, `lifeMinistryTimer.js`, `styles.css`, `index.html`
+- Context:
+  - Part cards were rendered as button-like containers while also containing timer, comment, reset, edit, and remove buttons.
+  - Nested interactive semantics can make browser automation, keyboard use, and assistive technology less reliable.
+- Decision:
+  - Keep part cards as semantic containers instead of assigning `role="button"` to the whole card.
+  - Preserve pointer convenience by allowing stopped, non-editing cards to select on card click.
+  - Add a small real `Select` button to selectable non-active cards for keyboard and assistive technology users.
+  - Route the new `select-part` action through the existing delegated part action handler.
+  - Bump the app version to 3.7.7.
+- Consequences:
+  - Timer card controls are no longer exposed as buttons nested inside another button-like card.
+  - Non-active cards gain one quiet explicit selection control.
+- Validation:
+  - Manual checks:
+    - Verify non-active stopped cards show a small `Select` button.
+    - Click a non-active card body and verify it still becomes active.
+    - Activate the `Select` button by keyboard and verify the part becomes active.
+    - Start a timer and verify select controls no longer appear while running.
+    - Verify footer version displays 3.7.7.
+  - Risks:
+    - The extra Select control adds a small amount of visual density to stopped meeting cards.

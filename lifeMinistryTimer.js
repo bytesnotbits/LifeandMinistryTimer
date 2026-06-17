@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer
- * Version 3.7.6
+ * Version 3.7.7
  * 
  * A comprehensive timer application for managing meeting parts,
  * tracking comments, and maintaining meeting templates.
@@ -263,6 +263,11 @@ if (this.elements.partsDisplay) {
                     case 'toggle-timer':
                         if (!state.isEditMode && partIndex === state.activePart) {
                             state.toggleTimer();
+                        }
+                        break;
+                    case 'select-part':
+                        if (!state.isRunning && !state.isEditMode && state.editingPartIndex === null && partIndex !== state.activePart) {
+                            state.selectPart(partIndex);
                         }
                         break;
                     case 'next-part':

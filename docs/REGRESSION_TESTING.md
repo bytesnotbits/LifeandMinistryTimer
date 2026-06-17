@@ -489,3 +489,26 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.7.6`.
 - Related decisions: DEC-019
 - Related files: `programCockpit.js`, `styles.css`, `index.html`
+
+## REG-026: Part selection uses valid controls without nested button semantics
+- Priority: High
+- Area: Rendering
+- Preconditions:
+  - App loaded with multiple meeting parts.
+  - Timer is stopped.
+  - No inline editor is open.
+- Steps:
+  1. Inspect a non-active part card.
+  2. Click the card body outside inner controls.
+  3. Select another non-active card using the card's `Select` button.
+  4. Navigate to another non-active card's `Select` button by keyboard and activate it.
+  5. Start the active timer.
+  6. Inspect non-active cards while the timer is running.
+- Expected:
+  - Part cards are not exposed as button-like containers around nested timer/edit controls.
+  - A non-active stopped card body can still be clicked to select that part.
+  - The real `Select` button selects its part by pointer and keyboard.
+  - Select controls are hidden while the timer is running.
+  - Footer version displays `3.7.7`.
+- Related decisions: DEC-020
+- Related files: `render.js`, `lifeMinistryTimer.js`, `styles.css`, `index.html`

@@ -207,9 +207,10 @@ const render = {
             const timing = getPartTimingState(elapsed, part.duration || 0, state.isRunning && isActive);
             const isOver = timing.state === 'overtime';
             const progressPercent = timing.percent;
+            const isSelectableCard = !isActive && !state.isRunning && state.editingPartIndex === null && !state.isEditMode;
             
             const partElement = document.createElement('div');
-            partElement.className = `part-card p-4 rounded shadow timer-state-${timing.state} ${isActive ? 'active' : ''} ${canReorder ? 'edit-mode' : ''} ${!isActive && !state.isRunning && state.editingPartIndex === null && !state.isEditMode ? 'clickable' : ''}`;
+            partElement.className = `part-card p-4 rounded shadow timer-state-${timing.state} ${isActive ? 'active' : ''} ${canReorder ? 'edit-mode' : ''} ${isSelectableCard ? 'clickable' : ''}`;
             partElement.setAttribute('data-part-index', index);
             
             // Enable drag-and-drop reordering while timer is stopped and no inline editor is open.
@@ -266,19 +267,8 @@ const render = {
                 });
             }
             // Make the entire card clickable if timer is not running and no inline editor is open.
-            else if (!state.isRunning && state.editingPartIndex === null) {
+            else if (isSelectableCard) {
                 partElement.onclick = function() { state.selectPart(index); };
-                partElement.setAttribute('role', 'button');
-                partElement.setAttribute('aria-label', `Select ${part.name} part`);
-                partElement.setAttribute('tabindex', '0');
-                
-                // Add keyboard support (Enter and Space keys)
-                partElement.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space') {
-                        e.preventDefault();
-                        state.selectPart(index);
-                    }
-                });
             }
             
             // Calculate progress bar color based on progress
@@ -351,6 +341,13 @@ const render = {
                     </h3>
                     <div class="part-speaker">${escapedSpeaker}</div>
                     <div class="ml-2 flex items-center gap-1">
+                        ${isSelectableCard ? `
+                            <button data-action="select-part" data-part-index="${index}"
+                                class="part-card-select-button"
+                                aria-label="Select ${escapedPartName}">
+                                Select
+                            </button>
+                        ` : ''}
                         ${showRemoveAction ? `
                             <button data-action="remove-part" data-part-index="${index}"
                                 class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 ${removeDisabledClass}"
