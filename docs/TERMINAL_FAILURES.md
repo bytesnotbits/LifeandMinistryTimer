@@ -234,3 +234,17 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   -
 
+
+## TERM-016: Git geometric repack permission warning after push
+- Date observed: 2026-06-16
+- Failed pattern:
+  - git push origin main after commit on UNC WSL workspace
+- Symptom:
+  - Push completed, then Git reported fatal: renaming pack to .git/objects/pack/*.idx failed: Permission denied; failed to perform geometric repack.
+- Likely cause:
+  - Windows Git background maintenance/geometric repack can hit transient permission issues against the WSL UNC .git object store after network push.
+- Preferred workaround:
+  - Treat the push result as authoritative when remote ref updates; run git status/fetch to verify. If cleanup is needed, run maintenance from inside WSL or retry when no process has .git/objects open.
+- Notes:
+  -
+
