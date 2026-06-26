@@ -430,3 +430,17 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed while publishing command-center comment click fix on 2026-06-26.
 
+
+## TERM-030: Git push succeeds but geometric repack permission denied
+- Date observed: 2026-06-26
+- Failed pattern:
+  - git push on WSL UNC repo triggers background geometric repack
+- Symptom:
+  - Push completed, then Git reported permission denied renaming a pack idx file during geometric repack.
+- Likely cause:
+  - Windows Git maintenance touched pack files on the WSL UNC filesystem and hit a transient filesystem permission/locking issue.
+- Preferred workaround:
+  - Treat push result separately from maintenance output; if object maintenance is needed, rerun git maintenance or gc from inside WSL/native filesystem context after checking no Git process is active.
+- Notes:
+  - Observed after successful push of commit 4716f06 on 2026-06-26.
+
