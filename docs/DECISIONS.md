@@ -593,3 +593,27 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.8.1.
   - Risks:
     - Sync depends on the operator having tracked part timers accurately before clicking the action.
+
+## DEC-025: Resize global dividers from completed actual durations
+- Date: 2026-06-26
+- Status: Accepted
+- Related files: `index.html`, `render.js`
+- Context:
+  - Completed parts already advanced the global segment cursor from actual elapsed time, but their rendered segment width still used planned duration.
+  - That could make a long or short completed part leave a visual gap or overlap before the next divider.
+- Decision:
+  - Use the same adjusted duration for a completed part's segment width and for advancing the next segment cursor.
+  - Keep the existing 30-second guard threshold so accidental rapid advances do not distort the meeting bar.
+  - Include actual elapsed time in the segment hover title when a completed segment is adjusted.
+  - Bump the app version to 3.8.2.
+- Consequences:
+  - If part 4 runs long, part 4's global segment expands and pushes the part 5 divider forward; later dividers cascade from that adjusted position.
+  - If a completed part runs short, its segment contracts and later dividers move earlier.
+- Validation:
+  - Manual checks:
+    - Complete a part after more than 30 seconds with elapsed time longer than planned and verify the next divider moves later from the expanded segment edge.
+    - Complete a part after more than 30 seconds with elapsed time shorter than planned and verify the next divider moves earlier from the contracted segment edge.
+    - Advance a part in under 30 seconds and verify the divider still uses planned width.
+    - Verify footer version displays 3.8.2.
+  - Risks:
+    - Very large overages can compress or push later segments toward the right edge of the scheduled meeting bar.

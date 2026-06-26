@@ -597,3 +597,23 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.8.1`.
 - Related decisions: DEC-024
 - Related files: `index.html`, `lifeMinistryTimer.js`, `render.js`
+
+## REG-031: Global dividers cascade from completed actual durations
+- Priority: High
+- Area: Timer
+- Preconditions:
+  - App loaded with a scheduled meeting and multiple visible global timer segments.
+  - At least one part can be completed with elapsed time above the 30-second guard threshold.
+- Steps:
+  1. Complete a part with elapsed time longer than its planned duration.
+  2. Inspect that completed part's global segment and the next part divider.
+  3. Complete another part with elapsed time shorter than its planned duration but above 30 seconds.
+  4. Advance a part in under 30 seconds.
+- Expected:
+  - A long completed part expands in the global timer and pushes the next divider later.
+  - A short completed part contracts in the global timer and pulls the next divider earlier.
+  - Later dividers cascade from the adjusted completed segment boundary.
+  - Under-30-second advances still use planned width.
+  - Footer version displays `3.8.2`.
+- Related decisions: DEC-025
+- Related files: `index.html`, `render.js`

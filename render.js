@@ -819,24 +819,24 @@ function buildGlobalMeetingSegments(totalSec) {
         const partNumber = getPartDisplayNumber(part);
         const displayPartName = getPartDisplayName(part);
         cursorSec += gapSecondsByIndex[index] || 0;
-        const sourcePartSec = sourceDurationSec > 0 ? Math.max(0, part.duration || 0) : 1;
+        const plannedPartSec = sourceDurationSec > 0 ? Math.max(0, part.duration || 0) : 1;
         const denominator = sourceDurationSec > 0 ? sourceDurationSec : fallbackDurationSec;
-        const widthSec = sourceDurationSec > 0
-            ? sourcePartSec * sourceScale
-            : (denominator > 0 ? (sourcePartSec / denominator) * segmentPoolSec : 0);
+        const plannedWidthSec = sourceDurationSec > 0
+            ? plannedPartSec * sourceScale
+            : (denominator > 0 ? (plannedPartSec / denominator) * segmentPoolSec : 0);
         const elapsed = Number(state.elapsedTimes[index] || 0);
         const shouldShiftByActual = index < state.activePart && elapsed >= GLOBAL_SEGMENT_ACTUAL_SHIFT_THRESHOLD_SECONDS;
-        const cursorAdvanceSec = shouldShiftByActual
+        const adjustedWidthSec = shouldShiftByActual
             ? Math.max(0, elapsed) * sourceScale
-            : widthSec;
+            : plannedWidthSec;
         const segment = {
             partNumber: partNumber,
             left: Math.max(0, Math.min(100, (cursorSec / totalSec) * 100)),
-            width: Math.max(0.3, Math.min(100, (widthSec / totalSec) * 100)),
-            title: `${partNumber ? `Part ${partNumber}: ` : ''}${displayPartName || 'Meeting part'}: ${formatTime(part.duration || 0)}`,
-            label: partNumber && state.meetingParts.length <= 16 && (widthSec / totalSec) * 100 >= 3.5 ? String(partNumber) : ''
+            width: Math.max(0.3, Math.min(100, (adjustedWidthSec / totalSec) * 100)),
+            title: `${partNumber ? `Part ${partNumber}: ` : ''}${displayPartName || 'Meeting part'}: ${formatTime(part.duration || 0)}${shouldShiftByActual ? `, actual ${formatTime(elapsed)}` : ''}`,
+            label: partNumber && state.meetingParts.length <= 16 && (adjustedWidthSec / totalSec) * 100 >= 3.5 ? String(partNumber) : ''
         };
-        cursorSec += cursorAdvanceSec;
+        cursorSec += adjustedWidthSec;
         return segment;
     });
 }
