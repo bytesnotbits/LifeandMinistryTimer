@@ -332,3 +332,31 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed while validating WOL discussion import fixture.
 
+
+## TERM-023: PowerShell rg Unix globs on UNC path
+- Date observed: 2026-06-26
+- Failed pattern:
+  - rg pattern *.js *.html from Windows PowerShell in WSL UNC repo
+- Symptom:
+  - rg received literal wildcard path arguments and reported invalid filename syntax.
+- Likely cause:
+  - PowerShell did not expand the Unix-style globs as intended for rg on the UNC workspace.
+- Preferred workaround:
+  - Pass explicit file names to rg, use rg --glob patterns, or run the search from a script with checked arguments.
+- Notes:
+  - Observed while locating run dashboard pace code.
+
+
+## TERM-024: git-publish path array flattened on UNC workspace
+- Date observed: 2026-06-25
+- Failed pattern:
+  - git-publish.ps1 -Paths with multiple explicit paths from Windows PowerShell on WSL UNC repo
+- Symptom:
+  - Helper either received later paths as positional arguments or flattened all paths into one git add pathspec.
+- Likely cause:
+  - PowerShell process boundaries and the helper's native command forwarding flatten the explicit path array on this UNC workspace.
+- Preferred workaround:
+  - Use a self-reporting project script that runs git add once per explicit path, then commits and pushes.
+- Notes:
+  - Observed while publishing meeting clock sync action.
+

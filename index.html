@@ -7,17 +7,17 @@
     <title>Life and Ministry Timer</title>
 
     <!-- Styles -->
-    <link rel="stylesheet" href="styles.css?v=3.8.0">
+    <link rel="stylesheet" href="styles.css?v=3.8.1">
     <link rel="icon" href="data:,">
     
     <!-- Tailwind CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     
     <!-- Defer JavaScript loading -->
-    <script src="lifeMinistryTimer.js?v=3.8.0" defer></script>
-    <script src="render.js?v=3.8.0" defer></script>
-    <script src="newFeatures.js?v=3.8.0" defer></script>
-    <script src="programCockpit.js?v=3.8.0" defer></script>
+    <script src="lifeMinistryTimer.js?v=3.8.1" defer></script>
+    <script src="render.js?v=3.8.1" defer></script>
+    <script src="newFeatures.js?v=3.8.1" defer></script>
+    <script src="programCockpit.js?v=3.8.1" defer></script>
 </head>
 <body class="app-body">
     
@@ -136,7 +136,10 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mt-2">
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <button id="syncMeetingBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 hidden">
+                            Sync Meeting
+                        </button>
                         <button id="endMeetingBtn" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 hidden">
                             End Meeting
                         </button>
@@ -516,7 +519,7 @@
     </main>
 
     <footer class="p-4 text-sm text-left mt-4">
-        <div>Version: 3.8.0 (06/25/2026)</div>
+        <div>Version: 3.8.1 (06/26/2026)</div>
         <div class="font-bold mt-2">Someday:</div>
         <ul class="list-disc pl-5 mt-1">
             <li>Allow real-time remote viewing</li>

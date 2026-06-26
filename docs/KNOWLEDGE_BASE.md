@@ -21,6 +21,7 @@ Document behavior in terms of user outcomes.
 - The live timer surface should make the active part state glanceable: ready, running, closing, paused, or overtime.
 - The sticky live timer area should prioritize the global meeting timer; current-part progress belongs in the run dashboard's thin progress line.
 - Global meeting segments should shift from completed actual part timing after a 30-second guard threshold so meeting pace reflects early/late parts without reacting to accidental rapid advances.
+- Operators can use `Sync Meeting` to realign the global meeting timer with accumulated part timer elapsed when scheduled wall-clock elapsed has drifted from actual meeting progress.
 - Global meeting segment labels should use the same imported program part number shown on the corresponding part card; unnumbered items such as Opening Comments should not consume a segment number.
 - Comment timing in the run dashboard uses a fixed 30-second glance target and mirrors the same orange/red/overtime visual states as part timing.
 - The active part panel and run dashboard should show the next part when one exists.
@@ -112,4 +113,5 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-25: Added a single-level `Undo Stop` correction for accidentally stopped comment timers and version 3.7.8.
 - 2026-06-25: Added command-center comment start, stop, and undo-stop controls with version 3.7.9.
 - 2026-06-25: Enabled automatic comment tracking for imported WOL discussion parts and version 3.8.0.
+- 2026-06-26: Added `Sync Meeting` to realign the global meeting timer with tracked part timers and version 3.8.1.
 

@@ -168,6 +168,7 @@ const DOM = { // eslint-disable-line no-unused-vars
             weekendMeetingEndInput: 'weekendMeetingEndInput',
             scheduleWeekendMeetingBtn: 'scheduleWeekendMeetingBtn',
             endMeetingBtn: 'endMeetingBtn',
+            syncMeetingBtn: 'syncMeetingBtn',
             globalTimerContainer: 'globalTimerContainer',
             confirmationModal: 'confirmationModal',
             confirmationTitle: 'confirmationTitle',
@@ -717,6 +718,12 @@ if (this.elements.commentHistory) {
         if (this.elements.endMeetingBtn) {
             this.elements.endMeetingBtn.addEventListener('click', () => {
                 state.requestEndMeeting();
+            });
+        }
+
+        if (this.elements.syncMeetingBtn) {
+            this.elements.syncMeetingBtn.addEventListener('click', () => {
+                state.syncMeetingToTimers();
             });
         }
     },
@@ -1316,6 +1323,42 @@ let state = {
                 notify.show('Meeting ended', 'info');
             }
         );
+    },
+
+    syncMeetingToTimers() {
+        const trackedElapsedSeconds = this.getTrackedMeetingElapsedSeconds();
+        if (trackedElapsedSeconds <= 0) {
+            notify.show('Start timing a meeting part before syncing the meeting clock.', 'info');
+            return;
+        }
+
+        const plannedDurationMs = this._getPlannedMeetingDurationMs();
+        const now = Date.now();
+        const syncedStart = now - Math.round(trackedElapsedSeconds * 1000);
+
+        this.meetingScheduledStart = syncedStart;
+        this.meetingScheduledEnd = plannedDurationMs ? syncedStart + plannedDurationMs : null;
+        this.meetingActualEnd = null;
+        this.meetingIsRunning = true;
+        this.meetingOverride = this.meetingRepeatsWeekly
+            ? { start: this.meetingScheduledStart, end: this.meetingScheduledEnd }
+            : null;
+
+        this._setupMeetingInterval();
+        this.saveState();
+        render.globalTimerDisplay();
+        render.timerDisplay();
+        if (typeof programCockpit !== 'undefined') {
+            programCockpit.renderAll();
+        }
+        DOM.updateMeetingForm();
+        notify.show('Meeting clock synced to part timers', 'success');
+    },
+
+    getTrackedMeetingElapsedSeconds() {
+        return Object.values(this.elapsedTimes || {}).reduce((sum, seconds) => {
+            return sum + Math.max(0, Number(seconds || 0));
+        }, 0);
     },
     
     // Start the timer

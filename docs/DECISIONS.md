@@ -568,3 +568,28 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.8.0.
   - Risks:
     - Type detection now considers more imported text, so future broad keywords in detail lines should be added carefully.
+
+## DEC-024: Sync global meeting clock to tracked part timing
+- Date: 2026-06-26
+- Status: Accepted
+- Related files: `index.html`, `lifeMinistryTimer.js`, `render.js`
+- Context:
+  - The global meeting timer follows scheduled wall-clock elapsed time.
+  - Meeting Pace follows accumulated part timer elapsed compared with planned elapsed through the active part.
+  - When a scheduled meeting starts late or part timers are paused, the global segment position can disagree with Meeting Pace.
+- Decision:
+  - Add a `Sync Meeting` action beside `End Meeting` when tracked part elapsed time exists.
+  - Recalculate the meeting start as current time minus accumulated part timer elapsed.
+  - Preserve the planned meeting duration, clear any actual end timestamp, keep the meeting running, and persist a one-time override for recurring schedules.
+  - Bump the app version to 3.8.1.
+- Consequences:
+  - Operators can realign the global meeting bar with actual part timing without editing the schedule manually.
+  - Recurring schedules are preserved because the sync is stored as a one-time live meeting override.
+- Validation:
+  - Manual checks:
+    - Start a scheduled meeting, accumulate part timer elapsed that differs from scheduled elapsed, click `Sync Meeting`, and verify the global elapsed label matches accumulated part elapsed.
+    - Verify the active global segment position agrees with the current part timer and Meeting Pace after syncing.
+    - Verify `Sync Meeting` stays hidden until at least one part has elapsed time.
+    - Verify footer version displays 3.8.1.
+  - Risks:
+    - Sync depends on the operator having tracked part timers accurately before clicking the action.

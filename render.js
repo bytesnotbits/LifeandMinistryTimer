@@ -117,6 +117,11 @@ const render = {
         if (statusLabel) {
             statusLabel.textContent = displayState.isOvertime ? 'Overtime' : formatMeetingTime(displayState.totalSec);
         }
+        const syncBtn = document.getElementById('syncMeetingBtn');
+        if (syncBtn) {
+            const trackedElapsedSeconds = state.getTrackedMeetingElapsedSeconds ? state.getTrackedMeetingElapsedSeconds() : 0;
+            syncBtn.classList.toggle('hidden', trackedElapsedSeconds <= 0 || !!state.meetingActualEnd);
+        }
         const endBtn = document.getElementById('endMeetingBtn');
         if (endBtn) {
             if (displayState.canEnd) {
@@ -126,6 +131,10 @@ const render = {
             }
         }
         } else {
+            const syncBtn = document.getElementById('syncMeetingBtn');
+            if (syncBtn) {
+                syncBtn.classList.add('hidden');
+            }
             const endBtn = document.getElementById('endMeetingBtn');
             if (endBtn) {
                 endBtn.classList.add('hidden');

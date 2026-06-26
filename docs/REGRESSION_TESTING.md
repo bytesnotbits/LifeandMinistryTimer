@@ -576,3 +576,24 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.8.0`.
 - Related decisions: DEC-023
 - Related files: `programCockpit.js`, `tests/importer-fixtures.test.cjs`, `index.html`
+
+## REG-030: Global meeting clock syncs to part timers
+- Priority: High
+- Area: Timer
+- Preconditions:
+  - App loaded with a scheduled meeting so the global timer is visible.
+  - Part timers have accumulated elapsed time that differs from scheduled wall-clock elapsed.
+- Steps:
+  1. Start or resume the active part timer and accumulate elapsed time.
+  2. Observe the global meeting elapsed label and Meeting Pace before syncing.
+  3. Click `Sync Meeting`.
+  4. Reinspect the global meeting elapsed label, active global segment position, and Meeting Pace.
+  5. Refresh the page.
+- Expected:
+  - `Sync Meeting` is hidden until at least one part timer has elapsed time.
+  - After syncing, the global meeting elapsed label matches accumulated part elapsed within one second.
+  - The global segment position agrees with the current active part timer and Meeting Pace.
+  - The synced meeting remains active after refresh without changing the recurring weekly schedule.
+  - Footer version displays `3.8.1`.
+- Related decisions: DEC-024
+- Related files: `index.html`, `lifeMinistryTimer.js`, `render.js`
