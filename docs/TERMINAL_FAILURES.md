@@ -528,3 +528,17 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed while publishing realtime share VPS migration.
 
+
+## TERM-037: Git geometric repack permission after push
+- Date observed: 2026-06-25
+- Failed pattern:
+  - git push from Windows Git against repo stored under \\wsl.localhost
+- Symptom:
+  - Push updated origin/main, then local maintenance printed fatal: renaming pack ... failed: Permission denied and geometric-repack failed
+- Likely cause:
+  - Windows Git local maintenance/repack can hit file permission or handle contention on WSL-backed .git object packs
+- Preferred workaround:
+  - Treat the push result separately from post-push maintenance; if cleanup is needed, run git gc from WSL after closing competing Git processes
+- Notes:
+  - Observed after publishing commit 48315a1.
+
