@@ -290,3 +290,17 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed while publishing undo stop comment work on 2026-06-25.
 
+
+## TERM-020: Git geometric repack permission warning after push
+- Date observed: 2026-06-25
+- Failed pattern:
+  - git push from Windows PowerShell against WSL UNC repo path
+- Symptom:
+  - Push completed, then Git reported permission denied while renaming a pack idx during geometric repack.
+- Likely cause:
+  - Windows Git maintenance can hit file locking or permission issues when operating on a WSL UNC working tree.
+- Preferred workaround:
+  - Verify the push completed, then run future maintenance from inside WSL or disable/avoid Windows-side auto maintenance for this UNC repo path.
+- Notes:
+  - Observed after commit 8ed6c56 pushed on 2026-06-25.
+
