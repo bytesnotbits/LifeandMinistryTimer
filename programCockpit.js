@@ -120,8 +120,20 @@ const programCockpit = {
                 } else if (action === 'next') {
                     state.startNextPart();
                     notify.show('Advanced to the next part', 'success');
+                } else if (action === 'toggle-comment') {
+                    if (state.isRunning && state.meetingParts[state.activePart]?.enableComments) {
+                        const wasActive = !!state.activeComment;
+                        state.toggleComment(state.activePart);
+                        notify.show(wasActive ? 'Comment stopped' : 'Comment started', wasActive ? 'info' : 'success');
+                    }
+                } else if (action === 'undo-stop-comment') {
+                    if (state.isRunning && state.meetingParts[state.activePart]?.enableComments && !state.activeComment) {
+                        state.undoStopComment(state.activePart);
+                        notify.show('Comment resumed', 'success');
+                    }
                 }
                 state.saveState();
+                render.comments();
                 render.timerDisplay();
                 this.renderAll();
             });
@@ -667,6 +679,13 @@ const programCockpit = {
         const commentStatus = state.activeComment && state.activeComment.partIndex === state.activePart
             ? commentTiming.label
             : 'Ready';
+        const canToggleComment = !!(state.isRunning && current.enableComments);
+        const canUndoStoppedComment = !!(
+            state.isRunning &&
+            current.enableComments &&
+            !state.activeComment &&
+            state.lastStoppedComment?.comment.partIndex === state.activePart
+        );
         const pace = getMeetingPaceState(variance);
         const completedParts = state.meetingParts.filter((part, index) => {
             const elapsed = state.elapsedTimes[index] || 0;
@@ -711,6 +730,19 @@ const programCockpit = {
                     <button type="button" data-run-action="next" ${state.activePart >= state.meetingParts.length - 1 ? 'disabled' : ''}>
                         Next Part
                     </button>
+                    ${current.enableComments ? `
+                        <button type="button"
+                            class="${state.activeComment ? 'comment-active' : ''}"
+                            data-run-action="toggle-comment"
+                            ${canToggleComment ? '' : 'disabled'}>
+                            ${state.activeComment ? 'Stop Comment' : 'Comment'}
+                        </button>
+                    ` : ''}
+                    ${canUndoStoppedComment ? `
+                        <button type="button" data-run-action="undo-stop-comment">
+                            Undo Stop
+                        </button>
+                    ` : ''}
                 </div>
             </div>
             <div class="run-next">

@@ -534,3 +534,26 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.7.8`.
 - Related decisions: DEC-021
 - Related files: `lifeMinistryTimer.js`, `render.js`, `index.html`
+
+## REG-028: Command center controls comment timing
+- Priority: High
+- Area: Run Dashboard
+- Preconditions:
+  - App loaded with the run dashboard visible.
+  - The active part has comments enabled.
+- Steps:
+  1. Verify the command-center `Comment` button is disabled while the active part timer is stopped.
+  2. Click `Start Current Part`.
+  3. Click the command-center `Comment` button.
+  4. Observe the command-center comment timer and the active card comment timer.
+  5. Click command-center `Stop Comment`.
+  6. Verify `Undo Stop` appears in the command center.
+  7. Click command-center `Undo Stop`, then stop the comment again.
+- Expected:
+  - `Comment` is enabled only while the active part timer is running.
+  - Starting or stopping from the command center updates the active card controls and comment history consistently.
+  - The active command-center stop button uses the comment active styling.
+  - `Undo Stop` resumes the stopped comment using the same behavior as the active card control.
+  - Footer version displays `3.7.9`.
+- Related decisions: DEC-022
+- Related files: `programCockpit.js`, `styles.css`, `index.html`

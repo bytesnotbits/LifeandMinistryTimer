@@ -645,6 +645,12 @@ main {
     color: #fff;
 }
 
+.run-actions button.comment-active {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
+    color: #fff;
+}
+
 .run-actions button:disabled {
     cursor: not-allowed;
     opacity: 0.55;

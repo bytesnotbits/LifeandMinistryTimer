@@ -518,3 +518,29 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.7.8.
   - Risks:
     - Users may expect undo after changing parts or refreshing; those broader undo semantics are intentionally out of scope.
+
+## DEC-022: Add comment controls to the command center
+- Date: 2026-06-25
+- Status: Accepted
+- Related files: `programCockpit.js`, `styles.css`, `index.html`
+- Context:
+  - The run dashboard command center is the primary live meeting surface.
+  - Comment timing could only be started and stopped from the active part card or keyboard shortcut, forcing users away from the command center during live operation.
+- Decision:
+  - Add a command-center `Comment` / `Stop Comment` button for comment-enabled current parts.
+  - Keep the button disabled until the current part timer is running, matching existing comment timing rules.
+  - Surface `Undo Stop` in the command center when the most recently stopped comment can be resumed.
+  - Route command-center comment actions through the same `state.toggleComment` and `state.undoStopComment` methods used by card controls.
+  - Bump the app version to 3.7.9.
+- Consequences:
+  - Live comment timing can be controlled from the same surface as start/pause and next part.
+  - The active stop-comment action uses the danger color to distinguish it from starting a comment.
+- Validation:
+  - Manual checks:
+    - Start the current part from the command center and verify `Comment` becomes enabled for comment-enabled parts.
+    - Click `Comment` from the command center and verify the card comment timer, run dashboard comment timer, and history behavior stay synchronized.
+    - Click `Stop Comment` from the command center and verify the comment is saved.
+    - Verify `Undo Stop` appears in the command center and resumes the stopped comment.
+    - Verify footer version displays 3.7.9.
+  - Risks:
+    - The run action row gains another button on comment-enabled parts, so narrow layouts need wrapping coverage.
