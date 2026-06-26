@@ -617,3 +617,28 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.8.2.
   - Risks:
     - Very large overages can compress or push later segments toward the right edge of the scheduled meeting bar.
+
+## DEC-026: Handle command-center actions on pointer press
+- Date: 2026-06-26
+- Status: Accepted
+- Related files: `programCockpit.js`, `index.html`
+- Context:
+  - The run dashboard command center re-renders frequently while a part timer is running.
+  - The command-center `Comment` button could miss the first click when the dashboard DOM refreshed between pointer down and click.
+  - Card-level timer controls already handle primary pointer presses immediately to avoid the same live re-render issue.
+- Decision:
+  - Route run dashboard actions through one shared handler.
+  - Fire primary mouse/pen pointer presses immediately for enabled run action buttons.
+  - Keep click handling for keyboard activation and other non-pointer interactions, while skipping duplicate clicks already handled on pointer down.
+  - Bump the app version to 3.8.3.
+- Consequences:
+  - Command-center comment start/stop actions respond on the first normal mouse click even during active timer refreshes.
+  - Keyboard activation still works through the click event.
+- Validation:
+  - Manual checks:
+    - Start a comment-enabled part from the command center and click `Comment` once; verify the comment starts immediately.
+    - Click `Stop Comment` once while the timer is running; verify the comment stops and is saved.
+    - Use keyboard activation on the command-center comment button and verify it still toggles once.
+    - Verify footer version displays 3.8.3.
+  - Risks:
+    - Touch input remains on click handling to avoid changing mobile activation behavior.

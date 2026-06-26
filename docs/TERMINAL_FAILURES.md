@@ -360,3 +360,73 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed while publishing meeting clock sync action.
 
+
+## TERM-025: Git diff pathspec from parent workspace
+- Date observed: 2026-06-26
+- Failed pattern:
+  - git diff -- LifeandMinistryTimer/<paths> from parent folder without repository metadata
+- Symptom:
+  - Git reported no-index usage and pathspec comparison limitations instead of showing the repo diff.
+- Likely cause:
+  - The Git repository root is LifeandMinistryTimer, while the command was run from the parent MinistryTimer folder.
+- Preferred workaround:
+  - Run git diff/status from \\wsl.localhost\Ubuntu\home\vibecoding\MinistryTimer\LifeandMinistryTimer or use the git-check helper to confirm the repo root first.
+- Notes:
+  - Observed during command-center comment click fix verification on 2026-06-26.
+
+
+## TERM-026: Git publish comma-separated Paths argument
+- Date observed: 2026-06-26
+- Failed pattern:
+  - git-publish.ps1 -Paths 'file1','file2' from a single PowerShell command string
+- Symptom:
+  - Helper passed one comma-joined pathspec to git add, which failed to match files.
+- Likely cause:
+  - Comma-separated values were parsed as one argument in this invocation context instead of separate path arguments.
+- Preferred workaround:
+  - Pass explicit paths as separate arguments after -Paths, e.g. -Paths file1 file2 docs/file.md.
+- Notes:
+  - Observed while publishing command-center comment click fix on 2026-06-26.
+
+
+## TERM-027: Git publish Paths as unbound positional arguments
+- Date observed: 2026-06-26
+- Failed pattern:
+  - git-publish.ps1 -Paths file1 file2 file3 from inline command string
+- Symptom:
+  - PowerShell reported that no positional parameter accepts the second path argument.
+- Likely cause:
+  - The inline command did not bind the remaining file names into the string-array Paths parameter.
+- Preferred workaround:
+  - Call git-publish.ps1 from a small PowerShell script with $paths = @(...) and pass -Paths $paths.
+- Notes:
+  - Observed while publishing command-center comment click fix on 2026-06-26.
+
+
+## TERM-028: Git publish Paths array flattened through nested PowerShell
+- Date observed: 2026-06-26
+- Failed pattern:
+  - Temporary script calling powershell -File git-publish.ps1 -Paths $paths
+- Symptom:
+  - Nested PowerShell process flattened the Paths array and helper rejected the second path as positional.
+- Likely cause:
+  - Passing an array through a process boundary did not preserve PowerShell parameter binding.
+- Preferred workaround:
+  - Invoke the helper in-process from the temporary PowerShell script with & $helper -Paths $paths.
+- Notes:
+  - Observed while publishing command-center comment click fix on 2026-06-26.
+
+
+## TERM-029: Git publish helper does not splat Paths into git add
+- Date observed: 2026-06-26
+- Failed pattern:
+  - git-publish.ps1 with a valid string[] Paths value
+- Symptom:
+  - Helper printed individual paths but git add received one space-joined pathspec and failed.
+- Likely cause:
+  - The helper invokes git add $Paths instead of splatting the path array into separate git arguments.
+- Preferred workaround:
+  - Use a temporary self-reporting publish script that runs git add -- <each explicit path>, then git commit and git push.
+- Notes:
+  - Observed while publishing command-center comment click fix on 2026-06-26.
+

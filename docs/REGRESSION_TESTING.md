@@ -617,3 +617,23 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.8.2`.
 - Related decisions: DEC-025
 - Related files: `index.html`, `render.js`
+
+## REG-032: Command-center comment clicks register on first click
+- Priority: High
+- Area: Run Dashboard
+- Preconditions:
+  - App loaded with the run dashboard visible.
+  - The active part has comments enabled.
+  - The active part timer is running so the run dashboard is refreshing live.
+- Steps:
+  1. Click the command-center `Comment` button once with a mouse.
+  2. Observe the command-center comment timer and active card comment timer.
+  3. Click command-center `Stop Comment` once.
+  4. Focus the command-center `Comment` button with the keyboard and activate it.
+- Expected:
+  - The first mouse click starts comment timing immediately.
+  - The first mouse click on `Stop Comment` stops and saves the comment immediately.
+  - Keyboard activation toggles the command-center comment action exactly once.
+  - Footer version displays `3.8.3`.
+- Related decisions: DEC-026
+- Related files: `programCockpit.js`, `index.html`

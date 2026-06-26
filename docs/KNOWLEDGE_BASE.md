@@ -115,4 +115,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-25: Enabled automatic comment tracking for imported WOL discussion parts and version 3.8.0.
 - 2026-06-26: Added `Sync Meeting` to realign the global meeting timer with tracked part timers and version 3.8.1.
 - 2026-06-26: Made completed global meeting segments resize to actual elapsed time so later dividers cascade from the adjusted boundary and version 3.8.2.
-
+- 2026-06-26: Made command-center comment actions handle primary pointer press immediately so live dashboard re-renders do not drop the first click, with version 3.8.3.

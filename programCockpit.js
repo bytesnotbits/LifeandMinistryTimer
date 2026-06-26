@@ -108,8 +108,10 @@ const programCockpit = {
 
         const runView = document.getElementById('programRunView');
         if (runView) {
-            runView.addEventListener('click', (event) => {
-                const action = event.target.closest('[data-run-action]')?.dataset.runAction;
+            const handledOnPointerdown = 'handledOnPointerdown';
+            const handleRunAction = (event) => {
+                const actionButton = event.target.closest('[data-run-action]');
+                const action = actionButton?.dataset.runAction;
                 if (!action) return;
                 if (action === 'start') {
                     state.startTimer();
@@ -136,6 +138,25 @@ const programCockpit = {
                 render.comments();
                 render.timerDisplay();
                 this.renderAll();
+            };
+
+            runView.addEventListener('pointerdown', (event) => {
+                if (typeof event.button === 'number' && event.button !== 0) return;
+                if (event.pointerType && event.pointerType !== 'mouse' && event.pointerType !== 'pen') return;
+                const actionButton = event.target.closest('[data-run-action]');
+                if (!actionButton || actionButton.disabled) return;
+                actionButton.dataset[handledOnPointerdown] = 'true';
+                handleRunAction(event);
+            });
+
+            runView.addEventListener('click', (event) => {
+                const actionButton = event.target.closest('[data-run-action]');
+                if (!actionButton) return;
+                if (actionButton.dataset[handledOnPointerdown] === 'true') {
+                    delete actionButton.dataset[handledOnPointerdown];
+                    return;
+                }
+                handleRunAction(event);
             });
         }
 
