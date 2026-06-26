@@ -557,3 +557,22 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.7.9`.
 - Related decisions: DEC-022
 - Related files: `programCockpit.js`, `styles.css`, `index.html`
+
+## REG-029: WOL discussion imports enable comment tracking
+- Priority: High
+- Area: Program Import
+- Preconditions:
+  - App loaded with the program cockpit visible.
+  - A WOL copied-text or reader-style program includes a part whose timing/detail line says `Discussion.` or `Discussion based on the article.`
+- Steps:
+  1. Import the WOL program text.
+  2. Open the review tab and inspect the imported discussion parts.
+  3. Inspect the corresponding timer cards and run dashboard when each discussion part is active.
+  4. Inspect the import readiness summary's comment-enabled count.
+- Expected:
+  - Discussion parts import as comment-enabled without manual editing.
+  - Comment controls appear for those parts when their timer is active.
+  - The readiness summary includes discussion parts in the comment-enabled count.
+  - Footer version displays `3.8.0`.
+- Related decisions: DEC-023
+- Related files: `programCockpit.js`, `tests/importer-fixtures.test.cjs`, `index.html`

@@ -544,3 +544,27 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.7.9.
   - Risks:
     - The run action row gains another button on comment-enabled parts, so narrow layouts need wrapping coverage.
+
+## DEC-023: Enable comments for imported WOL discussion parts
+- Date: 2026-06-25
+- Status: Accepted
+- Related files: `programCockpit.js`, `tests/importer-fixtures.test.cjs`, `index.html`
+- Context:
+  - WOL labels question-and-answer parts as `Discussion.` or `Discussion based on the article.` on the timing/detail line.
+  - The importer cleaned timing lines out of display notes before type detection, so some discussion parts imported without comment tracking enabled.
+- Decision:
+  - Classify imported part type from the full collected part block, including timing/detail lines.
+  - Keep display notes clean by continuing to omit timing-only lines from notes.
+  - Treat imported discussion parts as comment-enabled through the existing discussion type rule.
+  - Bump the app version to 3.8.0.
+- Consequences:
+  - WOL discussion parts automatically expose comment controls after import.
+  - The import readiness comment-enabled count now includes these discussion parts.
+- Validation:
+  - Automated fixture:
+    - Verify WOL reader-like parts with `(5 min.) Discussion.` and `(10 min.) Discussion based on the article.` import as `type: discussion` with `enableComments: true`.
+  - Manual checks:
+    - Import a WOL week containing discussion parts and verify those cards have comments enabled.
+    - Verify footer version displays 3.8.0.
+  - Risks:
+    - Type detection now considers more imported text, so future broad keywords in detail lines should be added carefully.

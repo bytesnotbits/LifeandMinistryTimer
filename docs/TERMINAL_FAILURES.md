@@ -304,3 +304,31 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed after commit 8ed6c56 pushed on 2026-06-25.
 
+
+## TERM-021: Git helper from non-repo workspace root
+- Date observed: 2026-06-25
+- Failed pattern:
+  - git-check.ps1 -RepoRoot \\wsl.localhost\Ubuntu\home\vibecoding\MinistryTimer
+- Symptom:
+  - Git reported fatal: not a git repository before the actual app subdirectory was selected.
+- Likely cause:
+  - The shared workspace root contains the LifeandMinistryTimer repository as a child directory, not at the root.
+- Preferred workaround:
+  - Run git helpers with -RepoRoot pointing to \\wsl.localhost\Ubuntu\home\vibecoding\MinistryTimer\LifeandMinistryTimer.
+- Notes:
+  - Observed while orienting WOL discussion import work.
+
+
+## TERM-022: PowerShell native command failure not caught by ErrorActionPreference
+- Date observed: 2026-06-25
+- Failed pattern:
+  - Self-reporting PowerShell validation script runs node test without checking $LASTEXITCODE
+- Symptom:
+  - The script printed later verification steps and exited 0 even though node reported a failed assertion afterward.
+- Likely cause:
+  - PowerShell 5.1 does not treat native command nonzero exit codes as terminating errors under ErrorActionPreference alone.
+- Preferred workaround:
+  - After native commands such as node, npm, git, or rg, explicitly check $LASTEXITCODE and throw when it is nonzero.
+- Notes:
+  - Observed while validating WOL discussion import fixture.
+

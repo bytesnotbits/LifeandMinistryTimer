@@ -35,6 +35,7 @@ Document behavior in terms of user outcomes.
 - Card removal is available when timer is stopped.
 - Non-active stopped cards can be selected by clicking the card body or by using the card's real `Select` button; cards should not wrap nested timer/edit controls in button-like semantics.
 - The program cockpit import flow should surface whether imported timing is ready to run or needs review.
+- WOL imported parts whose collected text labels them as `Discussion.` or similar should automatically enable comment tracking.
 - The import readiness card should also show setup progress and the next useful action across timing review, meeting scheduling, and live view focus.
 - The review tab should act as a timing pre-flight check with planned/actual totals, meeting variance, and imported vs suggested timing badges.
 - Review should provide direct handoff actions into the live meeting view and current-part timer.
@@ -110,4 +111,5 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-17: Reworked part selection semantics to use real Select buttons without button-like card containers and version 3.7.7.
 - 2026-06-25: Added a single-level `Undo Stop` correction for accidentally stopped comment timers and version 3.7.8.
 - 2026-06-25: Added command-center comment start, stop, and undo-stop controls with version 3.7.9.
+- 2026-06-25: Enabled automatic comment tracking for imported WOL discussion parts and version 3.8.0.
 

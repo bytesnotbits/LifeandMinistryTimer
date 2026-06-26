@@ -316,7 +316,7 @@ const programCockpit = {
             const name = isOpening ? 'Opening Comments' : isClosing ? 'Concluding Comments' : this.cleanPartName(line);
             const detailLines = this.collectDetails(partBlock.slice(1), 0);
             const section = isOpening ? 'Opening' : isClosing ? 'Closing' : currentSection;
-            const type = this.inferPartType(name, section, detailLines.join(' '));
+            const type = this.inferPartType(name, section, partBlock.join(' '));
             const usedInferredDuration = !this.extractDurationFromBlock(partBlock);
 
             parts.push({

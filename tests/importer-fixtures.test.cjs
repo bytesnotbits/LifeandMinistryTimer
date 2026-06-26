@@ -45,6 +45,10 @@ function partByName(parts, name) {
   return parts.find((part) => part.name === name);
 }
 
+function partByPrefix(parts, prefix) {
+  return parts.find((part) => part.name.startsWith(prefix));
+}
+
 function minutes(part) {
   return part.duration / 60;
 }
@@ -138,9 +142,17 @@ assert(minutes(readerBible) === 4, 'Reader fixture should infer Bible Reading as
 assert(readerBible.durationSource === 'inferred', 'Reader fixture should mark omitted Bible Reading time as inferred');
 
 const readerStudy = partByName(readerParts, '9. Congregation Bible Study');
+const readerDiscussion = partByName(readerParts, '7. How We Can Show Appreciation for Our Kingdom Halls');
+const readerArticleDiscussion = partByPrefix(readerParts, '8. How Your Donations Are Used');
 assert(readerStudy, 'Reader fixture should include numbered Congregation Bible Study');
 assert(minutes(readerStudy) === 30, 'Reader fixture should infer Congregation Bible Study as 30 minutes when omitted');
 assert(readerStudy.durationSource === 'inferred', 'Reader fixture should mark omitted study time as inferred');
+assert(readerDiscussion, 'Reader fixture should include discussion part');
+assert(readerDiscussion.type === 'discussion', 'Timing-line Discussion label should classify the part as discussion');
+assert(readerDiscussion.enableComments, 'Timing-line Discussion label should enable comment tracking');
+assert(readerArticleDiscussion, 'Reader fixture should include article discussion part');
+assert(readerArticleDiscussion.type === 'discussion', 'Discussion based on the article should classify as discussion');
+assert(readerArticleDiscussion.enableComments, 'Discussion based on the article should enable comment tracking');
 
 const pastedParsed = programCockpit.parseProgram(pastedTextFixture, 'fixture:pasted-text');
 const pastedParts = pastedParsed.parts;
@@ -162,7 +174,9 @@ console.log(JSON.stringify({
   readerParts: readerParts.map((part) => ({
     name: part.name,
     minutes: minutes(part),
-    durationSource: part.durationSource
+    durationSource: part.durationSource,
+    type: part.type,
+    enableComments: part.enableComments
   })),
   pastedParts: pastedParts.map((part) => ({
     name: part.name,
