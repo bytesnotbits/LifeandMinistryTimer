@@ -280,6 +280,11 @@ if (this.elements.partsDisplay) {
                             state.toggleComment(partIndex);
                         }
                         break;
+                    case 'undo-stop-comment':
+                        if (!state.isEditMode && partIndex === state.activePart && state.meetingParts[partIndex]?.enableComments) {
+                            state.undoStopComment(partIndex);
+                        }
+                        break;
                     case 'adjust-timer':
                         if (!state.isEditMode && partIndex === state.activePart) {
                            const adjustment = parseInt(button.dataset.adjust ?? 0);
@@ -968,6 +973,7 @@ let state = {
     timerInterval: null,
     commentInterval: null,
     activeComment: null,
+    lastStoppedComment: null,
     comments: [],
     isEditMode: false,
     editingPartIndex: null,
@@ -1505,12 +1511,17 @@ let state = {
     },
     
     // Start a new comment
-    startComment(partIndex) {
+    startComment(partIndex, resumedStartElapsed = null) {
+        const startElapsed = Number.isFinite(resumedStartElapsed)
+            ? resumedStartElapsed
+            : (this.elapsedTimes[partIndex] || 0);
+
         this.activeComment = {
-            startElapsed: this.elapsedTimes[partIndex] || 0,
+            startElapsed: startElapsed,
             partIndex: partIndex,
             startTime: Date.now() // Store the timestamp when comment started
         };
+        this.lastStoppedComment = null;
         
         /* //Play comment start sound if enabled
         // if (soundManager && soundManager.isSoundEnabled) {
@@ -1561,21 +1572,59 @@ let state = {
             const finalDuration = Math.min(duration, COMMENT_LIMIT);
             const now = Date.now();
             
-            this.comments.push({
+            const savedComment = {
                 duration: finalDuration,
                 timestamp: now,
                 partName: this.meetingParts[partIndex].name,
                 partIndex: partIndex,
                 id: now.toString() + Math.random().toString(36).substr(2, 9) // Unique ID
-            });
+            };
+
+            this.comments.push(savedComment);
+            this.lastStoppedComment = {
+                comment: savedComment,
+                stoppedAtElapsed: this.elapsedTimes[partIndex] || 0,
+                stoppedAtTimestamp: now
+            };
             
             this.saveState();
             render.comments();
+        } else {
+            this.lastStoppedComment = null;
         }
         
         clearInterval(this.commentInterval);
         this.commentInterval = null;
         this.activeComment = null;
+    },
+
+    // Resume the most recently stopped comment when it was stopped by accident.
+    undoStopComment(partIndex) {
+        if (!this.isRunning || this.activeComment || this.activePart !== partIndex) {
+            return;
+        }
+
+        const stoppedComment = this.lastStoppedComment;
+        if (!stoppedComment || stoppedComment.comment.partIndex !== partIndex) {
+            return;
+        }
+
+        const commentIndex = this.comments.findIndex(comment => comment.id === stoppedComment.comment.id);
+        if (commentIndex === -1) {
+            this.lastStoppedComment = null;
+            render.timerDisplay();
+            return;
+        }
+
+        this.comments.splice(commentIndex, 1);
+
+        const currentElapsed = this.elapsedTimes[partIndex] || 0;
+        const resumedStartElapsed = Math.max(0, currentElapsed - stoppedComment.comment.duration);
+
+        this.startComment(partIndex, resumedStartElapsed);
+        this.saveState();
+        render.comments();
+        render.timerDisplay();
     },
     
     // Delete a comment
@@ -1584,6 +1633,9 @@ let state = {
         this.comments = this.comments.filter(comment => comment.id !== commentId);
         
         if (initialCount !== this.comments.length) {
+            if (this.lastStoppedComment?.comment.id === commentId) {
+                this.lastStoppedComment = null;
+            }
             this.saveState();
             render.comments();
         }

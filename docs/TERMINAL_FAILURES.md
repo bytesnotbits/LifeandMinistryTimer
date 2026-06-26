@@ -248,3 +248,45 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   -
 
+
+## TERM-017: git-publish Paths argument shape
+- Date observed: 2026-06-25
+- Failed pattern:
+  - git-publish.ps1 -Paths file1 file2 file3
+- Symptom:
+  - PowerShell reported: A positional parameter cannot be found that accepts argument after the first path.
+- Likely cause:
+  - The helper script string array parameter expects a comma-delimited PowerShell array value when invoked through -File.
+- Preferred workaround:
+  - Pass paths as -Paths file1,file2,file3 or call the helper from a wrapper script with an explicit string array.
+- Notes:
+  - Observed while publishing undo stop comment work on 2026-06-25.
+
+
+## TERM-018: git-publish comma Paths from command line
+- Date observed: 2026-06-25
+- Failed pattern:
+  - git-publish.ps1 -Paths file1,file2,file3 from powershell -File
+- Symptom:
+  - The helper received the comma-delimited list as one literal pathspec and git add failed.
+- Likely cause:
+  - Passing array literals through nested PowerShell -File invocation can collapse into a single string depending on quoting and host parsing.
+- Preferred workaround:
+  - Use a small PowerShell wrapper script that assigns $paths = @(file1, file2) and passes -Paths $paths to git-publish.ps1.
+- Notes:
+  - Observed while publishing undo stop comment work on 2026-06-25.
+
+
+## TERM-019: git-publish array pathspec collapse
+- Date observed: 2026-06-25
+- Failed pattern:
+  - git-publish.ps1 called with a typed string array for -Paths
+- Symptom:
+  - The helper printed individual paths but git add received one combined pathspec containing spaces.
+- Likely cause:
+  - The helper forwards the array through a ValueFromRemainingArguments wrapper as one argument instead of splatting individual paths to git.
+- Preferred workaround:
+  - Use a self-reporting publish script that stages each explicit path with git add -- <path>, or patch the reusable helper to splat path arrays safely.
+- Notes:
+  - Observed while publishing undo stop comment work on 2026-06-25.
+

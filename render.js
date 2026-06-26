@@ -441,6 +441,13 @@ const render = {
                                 aria-label="${state.activeComment ? 'Stop comment' : 'Start comment'}">
                                 ${state.activeComment ? 'Stop Comment' : 'Comment'}
                             </button>
+                            ${state.isRunning && !state.activeComment && state.lastStoppedComment?.comment.partIndex === index ? `
+                                <button data-action="undo-stop-comment" data-part-index="${index}"
+                                    class="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded mr-2"
+                                    aria-label="Undo stop comment">
+                                    Undo Stop
+                                </button>
+                            ` : ''}
                             ${(() => {
                                 // compute the current comment duration for this part (non-negative)
                                 let duration = 0;

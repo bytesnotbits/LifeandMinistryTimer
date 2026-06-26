@@ -493,3 +493,28 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.7.7.
   - Risks:
     - The extra Select control adds a small amount of visual density to stopped meeting cards.
+
+## DEC-021: Allow undoing an accidental stopped comment
+- Date: 2026-06-25
+- Status: Accepted
+- Related files: `lifeMinistryTimer.js`, `render.js`, `index.html`
+- Context:
+  - During live timing, the `Stop Comment` control can be clicked accidentally.
+  - Restarting a fresh comment loses the original start point and leaves a misleading extra history entry.
+- Decision:
+  - Track a volatile snapshot of the most recently finalized comment.
+  - Show `Undo Stop` on the active comment-enabled part when the part timer is still running, no comment is active, and the last stopped comment belongs to that part.
+  - Undo removes the just-saved history entry and recreates the active comment at the same displayed duration, excluding the time gap while it was stopped.
+  - Clear the undo snapshot when a new comment starts, the saved comment is deleted, or the stopped comment was too short to be saved.
+  - Bump the app version to 3.7.8.
+- Consequences:
+  - Accidental comment stops can be corrected without polluting comment history.
+  - Undo is intentionally single-level and session-local; it is a live correction, not a persistent edit history.
+- Validation:
+  - Manual checks:
+    - Start a part timer on a comment-enabled part, start a comment, stop it, and verify `Undo Stop` appears.
+    - Wait a few seconds, click `Undo Stop`, and verify the comment resumes from the stopped duration instead of including the stopped gap.
+    - Stop the resumed comment and verify only one history entry remains for that comment.
+    - Verify footer version displays 3.7.8.
+  - Risks:
+    - Users may expect undo after changing parts or refreshing; those broader undo semantics are intentionally out of scope.

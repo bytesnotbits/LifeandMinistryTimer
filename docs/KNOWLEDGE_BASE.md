@@ -48,6 +48,7 @@ Document behavior in terms of user outcomes.
 - Inline editing state tracks a single active card editor (`editingPartIndex`).
 - Duration edits for the active part can be saved while timer is running and should update countdown/progress immediately.
 - Inline card editing should preserve typed values during live timer updates, safely handle punctuation in names/speakers, support `Esc` to cancel, support `Ctrl+Enter` or duration-field `Enter` to save, and validate part names/durations before committing.
+- A recently stopped comment can be resumed with `Undo Stop` while the same part timer is still active; the stopped gap should not count toward the comment duration.
 
 ## 3. State Model (High-Level)
 
@@ -106,4 +107,5 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-17: Added confirmation guardrails for high-impact live timing actions and version 3.7.5.
 - 2026-06-17: Added a setup readiness checklist and next-action guidance to the import readiness card with version 3.7.6.
 - 2026-06-17: Reworked part selection semantics to use real Select buttons without button-like card containers and version 3.7.7.
+- 2026-06-25: Added a single-level `Undo Stop` correction for accidentally stopped comment timers and version 3.7.8.
 

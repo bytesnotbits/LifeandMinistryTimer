@@ -512,3 +512,25 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.7.7`.
 - Related decisions: DEC-020
 - Related files: `render.js`, `lifeMinistryTimer.js`, `styles.css`, `index.html`
+
+## REG-027: Accidental stopped comment can be resumed
+- Priority: High
+- Area: Timer Controls
+- Preconditions:
+  - App loaded with an active part that has comments enabled.
+  - The active part timer is running.
+- Steps:
+  1. Start a comment and let it run for several seconds.
+  2. Click `Stop Comment`.
+  3. Verify `Undo Stop` appears next to the `Comment` button.
+  4. Wait several seconds while the part timer continues.
+  5. Click `Undo Stop`.
+  6. Observe the active comment timer, then stop the comment again.
+- Expected:
+  - The stopped comment's saved history entry is removed when undo resumes it.
+  - The active comment resumes from the duration it had when stopped; the stopped gap is not counted.
+  - Stopping the resumed comment creates a single history entry for the corrected comment.
+  - `Undo Stop` is hidden while a comment is active.
+  - Footer version displays `3.7.8`.
+- Related decisions: DEC-021
+- Related files: `lifeMinistryTimer.js`, `render.js`, `index.html`
