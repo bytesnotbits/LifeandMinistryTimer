@@ -642,3 +642,31 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.8.3.
   - Risks:
     - Touch input remains on click handling to avoid changing mobile activation behavior.
+
+## DEC-027: Host realtime share links from a VPS
+- Date: 2026-06-26
+- Status: Accepted
+- Related files: `index.html`, `lifeMinistryTimer.js`, `render.js`, `realtimeShare.js`, `server.js`, `package.json`, `styles.css`
+- Context:
+  - The app was a static browser-only timer, which works for local operation but cannot provide a live public share link from GitHub Pages alone.
+  - Shared viewers need meeting details, comment counts per part, active part timer progress, and global meeting progress without access to operator controls.
+- Decision:
+  - Add a small Node.js server that serves the existing static app and exposes `/api/share` plus a `/share` WebSocket endpoint.
+  - Keep share rooms ephemeral and in memory for the first VPS-ready version.
+  - Let the operator create a share link from the toolbar; the host browser broadcasts sanitized timer snapshots to connected viewers.
+  - Add a read-only viewer mode for `/?view=share&id=...` links that hides admin and timing controls while rendering live meeting state.
+  - Bump the app version to 3.8.4.
+- Consequences:
+  - The same app can still run as static files for local/manual use, but realtime sharing requires `npm install` and `npm start` on the VPS.
+  - Room state does not survive server restarts yet; durable rooms can be added later with Redis or SQLite if needed.
+  - The public viewer link receives only the meeting snapshot fields needed for display, not saved templates or local browser settings.
+- Validation:
+  - Automated checks:
+    - Run JavaScript syntax checks for `server.js`, `lifeMinistryTimer.js`, `render.js`, `realtimeShare.js`, `newFeatures.js`, and `programCockpit.js`.
+  - Manual checks:
+    - Start the Node server, create a share link, and verify a second browser receives the live snapshot.
+    - Start/stop part timers and comments on the host and verify viewer part progress, comment counts, comment history, and global progress update.
+    - Verify viewer links hide admin/edit/timer controls.
+    - Verify versioned assets use 3.8.4.
+  - Risks:
+    - Initial share rooms are single-process and memory-only, so VPS process restarts invalidate active links.

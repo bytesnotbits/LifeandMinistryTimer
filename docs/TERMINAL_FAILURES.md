@@ -444,3 +444,87 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed after successful push of commit 4716f06 on 2026-06-26.
 
+
+## TERM-031: Git commands from workspace wrapper
+- Date observed: 2026-06-25
+- Failed pattern:
+  - Run git rev-parse/status from \\wsl.localhost\Ubuntu\home\vibecoding\MinistryTimer when .git lives in LifeandMinistryTimer
+- Symptom:
+  - fatal: not a git repository, while app files and .git are inside LifeandMinistryTimer/
+- Likely cause:
+  - Codex workspace root is one directory above the actual repository root
+- Preferred workaround:
+  - Run git helpers and repo commands with -RepoRoot or workdir set to LifeandMinistryTimer
+- Notes:
+  - Observed during VPS/realtime-share migration orientation.
+
+
+## TERM-032: Start-Process Node from UNC repo
+- Date observed: 2026-06-25
+- Failed pattern:
+  - Start-Process node server.js with -WorkingDirectory set to a \\wsl.localhost UNC path and same stdout/stderr redirect file
+- Symptom:
+  - CMD defaulted to C:\Windows, node looked for C:\Windows\server.js, and Start-Process rejected identical RedirectStandardOutput/RedirectStandardError paths
+- Likely cause:
+  - Windows process launch has limited UNC working-directory support and PowerShell requires distinct redirect files
+- Preferred workaround:
+  - Launch node with the absolute UNC script path or use WSL-native execution, and redirect stdout/stderr to separate temp files
+- Notes:
+  - Observed during realtime share server smoke verification.
+
+
+## TERM-033: NPM scripts from UNC workspace
+- Date observed: 2026-06-25
+- Failed pattern:
+  - Run npm script containing shell chaining from \\wsl.localhost repo through Windows PowerShell
+- Symptom:
+  - CMD.EXE reports UNC paths are not supported and command resolution falls back toward C:\Windows
+- Likely cause:
+  - npm on Windows runs scripts through cmd.exe, which cannot use UNC current directories reliably
+- Preferred workaround:
+  - Run npm install/check/start through WSL from /home/vibecoding/MinistryTimer/LifeandMinistryTimer or use a mapped drive/local Windows path
+- Notes:
+  - Observed while verifying realtime share package scripts.
+
+
+## TERM-034: Server starter curl without max time
+- Date observed: 2026-06-25
+- Failed pattern:
+  - Use curl -fsS against localhost health endpoints in a startup loop without --max-time
+- Symptom:
+  - Startup script hung until the outer command timeout when a tested port accepted or stalled without returning health JSON
+- Likely cause:
+  - curl can wait too long on local networking edge cases unless each probe has a hard timeout
+- Preferred workaround:
+  - Use curl --max-time 2 or another bounded health probe in server startup scripts
+- Notes:
+  - Observed while trying to leave the realtime share dev server running.
+
+
+## TERM-035: git-publish Paths array parsing
+- Date observed: 2026-06-25
+- Failed pattern:
+  - Pass many -Paths values directly to git-publish.ps1 from a single powershell -File command
+- Symptom:
+  - PowerShell reported a positional parameter could not accept the second path argument
+- Likely cause:
+  - The helper parameter binding expected an explicit array shape rather than bare repeated values in this invocation context
+- Preferred workaround:
+  - Invoke git-publish.ps1 from a wrapper script or pass -Paths as an explicit PowerShell array
+- Notes:
+  - Observed while committing realtime share VPS migration.
+
+
+## TERM-036: git-publish collapses path array into one pathspec
+- Date observed: 2026-06-25
+- Failed pattern:
+  - Call git-publish.ps1 with multiple explicit -Paths from a wrapper script
+- Symptom:
+  - Helper printed each path but git add received one combined pathspec string and failed
+- Likely cause:
+  - Array was collapsed when passed through the helper Invoke-Git path to git add
+- Preferred workaround:
+  - Use non-interactive git add -- @paths in a wrapper script, then git commit and git push explicitly
+- Notes:
+  - Observed while publishing realtime share VPS migration.
+

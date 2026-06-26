@@ -976,6 +976,7 @@ let state = {
     meetingParts: [],
     activePart: 0,
     isRunning: false,
+    isViewerMode: false,
     elapsedTimes: {},
     timerInterval: null,
     commentInterval: null,
@@ -1073,6 +1074,9 @@ let state = {
     // Save current state to localStorage
     saveState() {
         try {
+            if (this.isViewerMode) {
+                return;
+            }
             persistence.setJson(STORAGE_KEYS.elapsedTimes, this.elapsedTimes);
             persistence.setString(STORAGE_KEYS.activePart, this.activePart);
             persistence.setJson(STORAGE_KEYS.meetingComments, this.comments);
@@ -1089,6 +1093,52 @@ let state = {
             console.error('Error saving state:', error);
             notify.show('Failed to save state to local storage', 'error');
         }
+    },
+
+    getShareSnapshot() {
+        return {
+            schemaVersion: 1,
+            generatedAt: Date.now(),
+            meetingParts: this.meetingParts.map((part) => ({
+                name: part.name,
+                speaker: part.speaker || '',
+                duration: part.duration || 0,
+                enableComments: !!part.enableComments,
+                section: part.section || '',
+                partNumber: part.partNumber || null
+            })),
+            activePart: this.activePart,
+            isRunning: this.isRunning,
+            elapsedTimes: { ...this.elapsedTimes },
+            activeComment: this.activeComment ? { ...this.activeComment } : null,
+            comments: this.comments.map((comment) => ({ ...comment })),
+            meetingScheduledStart: this.meetingScheduledStart,
+            meetingScheduledEnd: this.meetingScheduledEnd,
+            meetingActualEnd: this.meetingActualEnd,
+            meetingIsRunning: this.meetingIsRunning
+        };
+    },
+
+    applyShareSnapshot(snapshot) {
+        if (!snapshot || snapshot.schemaVersion !== 1) return;
+
+        this.isViewerMode = true;
+        this.meetingParts = Array.isArray(snapshot.meetingParts) ? snapshot.meetingParts : [];
+        this.activePart = Number.isInteger(snapshot.activePart) ? snapshot.activePart : 0;
+        this.isRunning = !!snapshot.isRunning;
+        this.elapsedTimes = snapshot.elapsedTimes && typeof snapshot.elapsedTimes === 'object'
+            ? { ...snapshot.elapsedTimes }
+            : {};
+        this.activeComment = snapshot.activeComment ? { ...snapshot.activeComment } : null;
+        this.comments = Array.isArray(snapshot.comments)
+            ? snapshot.comments.map((comment) => ({ ...comment }))
+            : [];
+        this.meetingScheduledStart = snapshot.meetingScheduledStart || null;
+        this.meetingScheduledEnd = snapshot.meetingScheduledEnd || null;
+        this.meetingActualEnd = snapshot.meetingActualEnd || null;
+        this.meetingIsRunning = !!snapshot.meetingIsRunning;
+        this.isEditMode = false;
+        this.editingPartIndex = null;
     },
     
     // Reset timer data (keeps template)

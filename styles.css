@@ -954,7 +954,8 @@ main {
 .theme-toggle,
 .sound-control,
 .shortcuts-btn,
-.edit-mode-toggle {
+.edit-mode-toggle,
+.share-meeting-btn {
     position: relative;
     width: 2.5rem;
     height: 2.5rem;
@@ -973,17 +974,55 @@ main {
 .theme-toggle:hover,
 .sound-control:hover,
 .shortcuts-btn:hover,
-.edit-mode-toggle:hover {
+.edit-mode-toggle:hover,
+.share-meeting-btn:hover {
     border-color: var(--primary-color);
 }
 
 .theme-toggle svg,
 .sound-control svg,
 .shortcuts-btn svg,
-.edit-mode-toggle svg {
+.edit-mode-toggle svg,
+.share-meeting-btn svg {
     width: 1.5rem;
     height: 1.5rem;
     color: currentColor;
+}
+
+.share-meeting-status {
+    max-width: 12rem;
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.share-viewer-status {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 50;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 4rem;
+    min-height: 2rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    color: #ffffff;
+    background: #0f766e;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.share-viewer-mode .admin-sidebar,
+.share-viewer-mode .app-toolbar,
+.share-viewer-mode #editModeControls,
+.share-viewer-mode #editModeInstructions {
+    display: none !important;
+}
+
+.share-viewer-mode .meeting-layout {
+    grid-template-columns: minmax(0, 1fr);
 }
 
 /* Timer cards */

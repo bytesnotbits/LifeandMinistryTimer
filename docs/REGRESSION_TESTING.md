@@ -637,3 +637,24 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.8.3`.
 - Related decisions: DEC-026
 - Related files: `programCockpit.js`, `index.html`
+
+## REG-033: Realtime share link renders read-only meeting progress
+- Priority: High
+- Area: Realtime Share
+- Preconditions:
+  - Dependencies installed with `npm install`.
+  - App running from the Node server with `npm start`.
+  - Host browser has the normal app open.
+- Steps:
+  1. Click the toolbar share button and copy/open the generated viewer link in a second browser or private window.
+  2. Start the active part timer on the host.
+  3. Start and stop a comment on a comment-enabled part.
+  4. Advance to the next part and let the global meeting timer continue.
+  5. Inspect the viewer page throughout the flow.
+- Expected:
+  - Viewer link connects to the live room and shows the same meeting parts as the host.
+  - Viewer part progress, current/remaining labels, global progress, comment count, and comment history update from host snapshots.
+  - Viewer mode hides admin sidebar, edit controls, timer controls, reset controls, and meeting sync/end actions.
+  - Footer version displays `3.8.4`.
+- Related decisions: DEC-027
+- Related files: `server.js`, `realtimeShare.js`, `lifeMinistryTimer.js`, `render.js`, `styles.css`, `index.html`

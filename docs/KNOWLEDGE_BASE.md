@@ -44,6 +44,8 @@ Document behavior in terms of user outcomes.
 ### 2.3 State Persistence
 - Relevant user state persists across refresh when expected.
 - Reset/clear flows remove persisted state that should not survive reset.
+- Realtime share rooms are ephemeral server memory; the host browser remains the authority for live meeting snapshots.
+- Shared viewer links render sanitized meeting state and should not persist or mutate local operator state.
 
 ### 2.4 Rendering and UI Sync
 - UI reflects the current application state after initialization.
@@ -74,6 +76,12 @@ Use this section to track the source of truth for each major state key.
   - `python3 -m http.server 8000`
 - Open in browser:
   - `http://localhost:8000/index.html`
+- Realtime share development/VPS preview:
+  - `cd /home/vibecoding/MinistryTimer/LifeandMinistryTimer`
+  - `npm install`
+  - `npm start`
+  - Open `http://localhost:8080/`
+  - Set `PORT` and `PUBLIC_BASE_URL` on the VPS when serving behind a reverse proxy.
 - During development:
   - Save code changes and refresh browser.
   - Use hard refresh (`Ctrl+Shift+R`) if stale assets are cached.
@@ -116,3 +124,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-26: Added `Sync Meeting` to realign the global meeting timer with tracked part timers and version 3.8.1.
 - 2026-06-26: Made completed global meeting segments resize to actual elapsed time so later dividers cascade from the adjusted boundary and version 3.8.2.
 - 2026-06-26: Made command-center comment actions handle primary pointer press immediately so live dashboard re-renders do not drop the first click, with version 3.8.3.
+- 2026-06-26: Added a Node/WebSocket VPS hosting path with realtime read-only share links and version 3.8.4.

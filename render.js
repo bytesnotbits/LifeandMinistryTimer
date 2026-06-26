@@ -120,11 +120,11 @@ const render = {
         const syncBtn = document.getElementById('syncMeetingBtn');
         if (syncBtn) {
             const trackedElapsedSeconds = state.getTrackedMeetingElapsedSeconds ? state.getTrackedMeetingElapsedSeconds() : 0;
-            syncBtn.classList.toggle('hidden', trackedElapsedSeconds <= 0 || !!state.meetingActualEnd);
+            syncBtn.classList.toggle('hidden', !!state.isViewerMode || trackedElapsedSeconds <= 0 || !!state.meetingActualEnd);
         }
         const endBtn = document.getElementById('endMeetingBtn');
         if (endBtn) {
-            if (displayState.canEnd) {
+            if (!state.isViewerMode && displayState.canEnd) {
                 endBtn.classList.remove('hidden');
             } else {
                 endBtn.classList.add('hidden');
@@ -205,7 +205,8 @@ const render = {
         
         container.innerHTML = '';
         const commentStatsByPart = buildCommentStatsByPart();
-        const canReorder = state.isEditMode && !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
+        const canControl = !state.isViewerMode;
+        const canReorder = canControl && state.isEditMode && !state.isRunning && state.editingPartIndex === null && state.meetingParts.length > 1;
         
         // Keep drop-zone spacing consistent across running/stopped states.
         this._addDropZone(container, 0);
@@ -216,7 +217,7 @@ const render = {
             const timing = getPartTimingState(elapsed, part.duration || 0, state.isRunning && isActive);
             const isOver = timing.state === 'overtime';
             const progressPercent = timing.percent;
-            const isSelectableCard = !isActive && !state.isRunning && state.editingPartIndex === null && !state.isEditMode;
+            const isSelectableCard = canControl && !isActive && !state.isRunning && state.editingPartIndex === null && !state.isEditMode;
             
             const partElement = document.createElement('div');
             partElement.className = `part-card p-4 rounded shadow timer-state-${timing.state} ${isActive ? 'active' : ''} ${canReorder ? 'edit-mode' : ''} ${isSelectableCard ? 'clickable' : ''}`;
@@ -305,8 +306,8 @@ const render = {
             const escapedInlineNameValue = escapeHtmlAttribute(inlineNameValue);
             const escapedInlineSpeakerValue = escapeHtmlAttribute(inlineSpeakerValue);
             const escapedInlineDurationValue = escapeHtmlAttribute(inlineDurationValue);
-            const showRemoveAction = state.isEditMode || isInlineEditing;
-            const showInsertActions = state.isEditMode || isInlineEditing;
+            const showRemoveAction = canControl && (state.isEditMode || isInlineEditing);
+            const showInsertActions = canControl && (state.isEditMode || isInlineEditing);
             const canRemove = !state.isRunning && state.meetingParts.length > 1;
             const removeDisabledClass = canRemove ? '' : 'opacity-40 cursor-not-allowed';
             const removeDisabledAttr = canRemove ? '' : 'disabled';
@@ -338,7 +339,7 @@ const render = {
                     <h3 class="font-bold flex items-center gap-2">
                         ${partNumber ? `<span class="part-number-badge" aria-label="Part ${partNumber}">${partNumber}</span>` : ''}
                         <span>${escapedDisplayPartName}</span>
-                        ${!isInlineEditing ? `
+                        ${canControl && !isInlineEditing ? `
                         <button data-action="edit-part" data-part-index="${index}"
                             class="part-card-icon-button"
                             aria-label="Edit ${escapedPartName}">
@@ -426,7 +427,7 @@ const render = {
 
                 <div class="flex justify-between items-center">
                     <div class="flex space-x-2">
-                        ${isActive && !state.isEditMode ? `
+                        ${canControl && isActive && !state.isEditMode ? `
                             <button data-action="toggle-timer" data-part-index="${index}"
                                 class="px-2 py-1 ${state.isRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded"
                                 aria-label="${state.isRunning ? 'Stop timer' : 'Start timer'}">
@@ -443,7 +444,7 @@ const render = {
                         ` : ''}
                     </div>
 
-                    ${part.enableComments && isActive && !state.isEditMode ? `
+                    ${canControl && part.enableComments && isActive && !state.isEditMode ? `
                         <div class="flex items-center">
                             <button data-action="toggle-comment" data-part-index="${index}"
                                 class="px-2 py-1 ${state.activeComment ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-500 hover:bg-purple-600'} text-white rounded mr-2"
@@ -493,7 +494,7 @@ const render = {
                 </div>
 
                 <div class="timer-controls">
-                     ${isActive && !state.isEditMode ? `
+                     ${canControl && isActive && !state.isEditMode ? `
                         <button data-action="adjust-timer" data-part-index="${index}" data-adjust="5"
                             class="time-adjust-button increment-button"
                             aria-label="Add 5 seconds">
@@ -505,7 +506,7 @@ const render = {
                             -5s
                         </button>
                     ` : ''}
-                    ${!state.isEditMode ? `
+                    ${canControl && !state.isEditMode ? `
                         <button data-action="reset-timer" data-part-index="${index}"
                             class="time-adjust-button reset-button"
                             aria-label="Reset timer">

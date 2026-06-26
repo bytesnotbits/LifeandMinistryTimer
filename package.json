@@ -1,0 +1,17 @@
+{
+    "name": "life-and-ministry-timer",
+    "version": "3.8.4",
+    "private": true,
+    "description": "Static Life and Ministry Timer app with optional realtime share hosting.",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "check": "node --check server.js && node --check lifeMinistryTimer.js && node --check render.js && node --check realtimeShare.js && node --check newFeatures.js && node --check programCockpit.js"
+    },
+    "dependencies": {
+        "ws": "^8.18.0"
+    },
+    "engines": {
+        "node": ">=20"
+    }
+}
