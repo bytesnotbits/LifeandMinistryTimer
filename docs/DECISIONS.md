@@ -722,3 +722,32 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.8.6.
   - Risks:
     - Dense rows may require extra scanning for very long part names or speaker names.
+
+## DEC-030: Add flexible timer adjustment to the command center
+- Date: 2026-07-03
+- Status: Accepted
+- Related files: `index.html`, `programCockpit.js`, `styles.css`
+- Context:
+  - The meeting parts dashboard no longer carries live timer controls.
+  - Operators still need the previous add/subtract timer adjustment capability, especially while testing longer timing jumps.
+  - Fixed five-second buttons require too many clicks when adding minutes.
+- Decision:
+  - Add an `Adjust by` control to the command center with a numeric amount and seconds/minutes selector.
+  - Default the adjustment to 5 seconds to preserve the previous behavior.
+  - Add plus and minus buttons that apply the selected amount to the active part timer through the existing timer adjustment state path.
+  - Keep the adjustment amount/unit stable across command-center re-renders.
+  - Bump the app version to 3.8.7.
+- Consequences:
+  - Operators can add or subtract seconds or minutes from the active part timer with one click.
+  - The command center remains the primary live meeting control surface after slimming the lower dashboard.
+- Validation:
+  - Automated checks:
+    - Run JavaScript syntax checks for `programCockpit.js`.
+    - Verify versioned assets use 3.8.7.
+  - Manual checks:
+    - Change the command-center adjustment to 2 minutes and verify one plus click adds 2:00.
+    - Change the command-center adjustment to seconds and verify minus subtracts the selected amount.
+    - Verify the lower meeting dashboard does not regain duplicate live controls.
+    - Verify footer version displays 3.8.7.
+  - Risks:
+    - The adjustment still follows the existing timer clamp and will not push elapsed time above the planned part duration.

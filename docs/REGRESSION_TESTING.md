@@ -680,3 +680,26 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.8.6`.
 - Related decisions: DEC-028, DEC-029
 - Related files: `index.html`, `render.js`, `styles.css`
+
+## REG-035: Command center adjusts active part timer by custom amount
+- Priority: High
+- Area: Run Dashboard
+- Preconditions:
+  - App loaded with the command-center run dashboard visible.
+  - Active part has at least several minutes of planned duration remaining.
+- Steps:
+  1. Inspect the command-center `Adjust by` control.
+  2. Click the plus adjustment button with the default amount.
+  3. Change the amount to `2` and the unit to `min`.
+  4. Click the plus adjustment button once.
+  5. Click the minus adjustment button once.
+  6. Inspect the lower meeting parts dashboard.
+- Expected:
+  - Default adjustment is `5 sec`.
+  - First plus click adds 5 seconds to the active part elapsed time.
+  - With `2 min` selected, one plus click adds 2 minutes and one minus click subtracts 2 minutes.
+  - Selected amount/unit remain stable while the command center refreshes.
+  - Lower part rows still do not show Start, Stop, Next, Comment, timer adjust, or Reset controls.
+  - Footer version displays `3.8.7`.
+- Related decisions: DEC-030
+- Related files: `index.html`, `programCockpit.js`, `styles.css`

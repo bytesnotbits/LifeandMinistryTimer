@@ -52,6 +52,8 @@ const programCockpit = {
         importedAt: null
     },
     view: 'prepare',
+    timerAdjustAmount: 5,
+    timerAdjustUnit: 'seconds',
 
     init() {
         this.loadMeta();
@@ -109,6 +111,15 @@ const programCockpit = {
         const runView = document.getElementById('programRunView');
         if (runView) {
             const handledOnPointerdown = 'handledOnPointerdown';
+            const getAdjustSeconds = () => {
+                const amountInput = runView.querySelector('[data-run-adjust-amount]');
+                const unitInput = runView.querySelector('[data-run-adjust-unit]');
+                const amount = Math.max(1, Math.floor(Number(amountInput?.value || this.timerAdjustAmount || 5)));
+                const unit = unitInput?.value === 'minutes' ? 'minutes' : 'seconds';
+                this.timerAdjustAmount = amount;
+                this.timerAdjustUnit = unit;
+                return unit === 'minutes' ? amount * 60 : amount;
+            };
             const handleRunAction = (event) => {
                 const actionButton = event.target.closest('[data-run-action]');
                 const action = actionButton?.dataset.runAction;
@@ -133,6 +144,11 @@ const programCockpit = {
                         state.undoStopComment(state.activePart);
                         notify.show('Comment resumed', 'success');
                     }
+                } else if (action === 'adjust-active') {
+                    const direction = actionButton.dataset.adjustDirection === 'subtract' ? -1 : 1;
+                    const seconds = getAdjustSeconds();
+                    state.adjustTimer(state.activePart, direction * seconds);
+                    notify.show(`${direction > 0 ? 'Added' : 'Subtracted'} ${formatTime(seconds)} on current part`, 'info');
                 }
                 state.saveState();
                 render.comments();
@@ -145,6 +161,7 @@ const programCockpit = {
                 if (event.pointerType && event.pointerType !== 'mouse' && event.pointerType !== 'pen') return;
                 const actionButton = event.target.closest('[data-run-action]');
                 if (!actionButton || actionButton.disabled) return;
+                if (actionButton.dataset.runAction === 'adjust-active') return;
                 actionButton.dataset[handledOnPointerdown] = 'true';
                 handleRunAction(event);
             });
@@ -157,6 +174,19 @@ const programCockpit = {
                     return;
                 }
                 handleRunAction(event);
+            });
+
+            runView.addEventListener('input', (event) => {
+                const amountInput = event.target.closest('[data-run-adjust-amount]');
+                if (!amountInput) return;
+                const amount = Math.max(1, Math.floor(Number(amountInput.value || 1)));
+                this.timerAdjustAmount = amount;
+            });
+
+            runView.addEventListener('change', (event) => {
+                const unitInput = event.target.closest('[data-run-adjust-unit]');
+                if (!unitInput) return;
+                this.timerAdjustUnit = unitInput.value === 'minutes' ? 'minutes' : 'seconds';
             });
         }
 
@@ -707,6 +737,8 @@ const programCockpit = {
             !state.activeComment &&
             state.lastStoppedComment?.comment.partIndex === state.activePart
         );
+        const adjustAmount = Math.max(1, Math.floor(Number(this.timerAdjustAmount || 5)));
+        const adjustUnit = this.timerAdjustUnit === 'minutes' ? 'minutes' : 'seconds';
         const pace = getMeetingPaceState(variance);
         const completedParts = state.meetingParts.filter((part, index) => {
             const elapsed = state.elapsedTimes[index] || 0;
@@ -731,6 +763,20 @@ const programCockpit = {
                 </div>
                 <div class="run-progress-line" aria-hidden="true">
                     <span class="${currentProgressClass} ${currentTiming.state === 'overtime' ? 'overtime-pulse' : ''}" style="width:${currentTiming.percent}%"></span>
+                </div>
+                <div class="run-adjust-control" aria-label="Adjust current part timer">
+                    <span>Adjust by</span>
+                    <input type="number" min="1" max="999" step="1" value="${adjustAmount}" data-run-adjust-amount aria-label="Timer adjustment amount">
+                    <select data-run-adjust-unit aria-label="Timer adjustment unit">
+                        <option value="seconds" ${adjustUnit === 'seconds' ? 'selected' : ''}>sec</option>
+                        <option value="minutes" ${adjustUnit === 'minutes' ? 'selected' : ''}>min</option>
+                    </select>
+                    <button type="button" data-run-action="adjust-active" data-adjust-direction="subtract" aria-label="Subtract adjustment from current part timer">
+                        -
+                    </button>
+                    <button type="button" data-run-action="adjust-active" data-adjust-direction="add" aria-label="Add adjustment to current part timer">
+                        +
+                    </button>
                 </div>
                 ${current.enableComments ? `
                     <div class="run-comment-timer timer-state-${commentTiming.state}">

@@ -583,6 +583,55 @@ main {
     animation: overtime-pulse-animation 1s infinite;
 }
 
+.run-adjust-control {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.7rem;
+    color: var(--text-light);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.run-adjust-control input,
+.run-adjust-control select {
+    height: 2rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.35rem;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.run-adjust-control input {
+    width: 4.5rem;
+    padding: 0 0.45rem;
+}
+
+.run-adjust-control select {
+    padding: 0 0.35rem;
+}
+
+.run-adjust-control button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.65rem;
+    border-radius: 0.35rem;
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--primary-color);
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+.run-adjust-control button:hover,
+.run-adjust-control button:focus-visible {
+    background: rgba(59, 130, 246, 0.2);
+    outline: none;
+}
+
 .run-comment-timer {
     margin-top: 0.55rem;
 }

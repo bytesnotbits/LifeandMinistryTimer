@@ -584,3 +584,31 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed while committing compact meeting dashboard row refinement.
 
+
+## TERM-041: PowerShell intercepts pipe intended for WSL grep
+- Date observed: 2026-07-02
+- Failed pattern:
+  - wsl -d Ubuntu ps ... | grep ... from PowerShell
+- Symptom:
+  - PowerShell tried to execute grep as a Windows command and reported grep is not recognized.
+- Likely cause:
+  - The pipe was parsed by PowerShell instead of being quoted inside a WSL shell command.
+- Preferred workaround:
+  - Run piped Linux commands as wsl -d Ubuntu sh -lc '... | grep ...' or avoid pipes with separate commands.
+- Notes:
+  - Observed while checking for hung Git processes after command-center adjustment changes.
+
+
+## TERM-042: Windows Git commit on WSL UNC reports multi-pack-index permission denied
+- Date observed: 2026-07-02
+- Failed pattern:
+  - git -C \\wsl.localhost\...\LifeandMinistryTimer commit ... from Windows Git
+- Symptom:
+  - Commit succeeded, then Git reported fatal: could not write multi-pack-index: Permission denied and geometric-repack failed.
+- Likely cause:
+  - Windows Git maintenance tried to write pack metadata through the WSL UNC filesystem boundary.
+- Preferred workaround:
+  - Treat the commit as successful if a commit hash is produced; use WSL-native Git when WSL is responsive, or disable automatic maintenance for Windows-Git-on-UNC workflows.
+- Notes:
+  - Observed after commit e935757 while adding command-center timer adjustment.
+
