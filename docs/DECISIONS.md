@@ -696,3 +696,29 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.8.5.
   - Risks:
     - Operators who used lower-card reset or adjustment buttons lose those on-screen controls in favor of a simpler live-meeting dashboard.
+
+## DEC-029: Compress meeting dashboard rows further
+- Date: 2026-07-03
+- Status: Accepted
+- Related files: `index.html`, `render.js`, `styles.css`
+- Context:
+  - The lower meeting parts dashboard no longer duplicates live controls, but each part still used a relatively tall progress row.
+  - The dashboard should feel like a compact program monitor beneath the command center.
+- Decision:
+  - Move elapsed/remaining time and comment stats into the main part row.
+  - Use a thin progress rail below each row instead of a full-height timer bar with embedded labels.
+  - Tighten row padding, gaps, badge size, and metadata text while preserving mobile wrapping.
+  - Bump the app version to 3.8.6.
+- Consequences:
+  - More meeting parts fit on screen while the command center remains dominant.
+  - The progress rail becomes a quick visual indicator, with exact timing shown beside the part data.
+- Validation:
+  - Automated checks:
+    - Run JavaScript syntax checks for `render.js`.
+    - Verify versioned assets use 3.8.6.
+  - Manual checks:
+    - Inspect desktop and mobile dashboard rows for overflow or overlapping text.
+    - Verify elapsed/remaining times still update live.
+    - Verify footer version displays 3.8.6.
+  - Risks:
+    - Dense rows may require extra scanning for very long part names or speaker names.

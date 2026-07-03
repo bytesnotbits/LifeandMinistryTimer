@@ -672,10 +672,11 @@ Use this file to prevent behavior drift while evolving the app.
   4. Inspect the lower part rows while the timer is running.
   5. Stop the timer, enable edit mode, and inspect edit controls.
 - Expected:
-  - Lower part rows show title, status, speaker when available, progress, remaining time, and comment count/average.
+  - Lower part rows show title, status, speaker when available, elapsed/remaining time, and comment count/average in a compact row.
+  - Each row uses a thin progress rail beneath the part data instead of a tall standalone timer bar.
   - Lower part rows do not show Start, Stop, Next, Comment, timer adjust, or Reset controls during normal live operation.
   - Command-center controls continue to start/stop parts, advance parts, and manage comments.
   - Edit mode still exposes edit, remove, add-before/add-after, and reorder affordances.
-  - Footer version displays `3.8.5`.
-- Related decisions: DEC-028
+  - Footer version displays `3.8.6`.
+- Related decisions: DEC-028, DEC-029
 - Related files: `index.html`, `render.js`, `styles.css`

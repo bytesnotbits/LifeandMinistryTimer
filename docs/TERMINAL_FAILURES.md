@@ -570,3 +570,17 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed in compact dashboard verification script.
 
+
+## TERM-040: PowerShell rejects bash-style && between WSL commands
+- Date observed: 2026-07-02
+- Failed pattern:
+  - wsl ... git add ... && wsl ... git commit ... from PowerShell
+- Symptom:
+  - PowerShell reported The token && is not a valid statement separator in this version before running Git.
+- Likely cause:
+  - The active Windows PowerShell version does not support && as a command separator.
+- Preferred workaround:
+  - Run WSL Git operations as separate shell_command calls or use a temporary script with explicit step checks.
+- Notes:
+  - Observed while committing compact meeting dashboard row refinement.
+

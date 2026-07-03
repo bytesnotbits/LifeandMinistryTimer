@@ -126,3 +126,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-06-26: Made command-center comment actions handle primary pointer press immediately so live dashboard re-renders do not drop the first click, with version 3.8.3.
 - 2026-06-26: Added a Node/WebSocket VPS hosting path with realtime read-only share links and version 3.8.4.
 - 2026-07-03: Minimized lower meeting parts into a compact dashboard without duplicate live run controls, keeping command-center operation primary with version 3.8.5.
+- 2026-07-03: Compressed meeting dashboard rows further with inline timing/comment metrics and thin progress rails in version 3.8.6.

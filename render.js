@@ -220,7 +220,7 @@ const render = {
             const isSelectableCard = canControl && !isActive && !state.isRunning && state.editingPartIndex === null && !state.isEditMode;
             
             const partElement = document.createElement('div');
-            partElement.className = `part-card part-dashboard-card p-3 rounded timer-state-${timing.state} ${isActive ? 'active' : ''} ${canReorder ? 'edit-mode' : ''} ${isSelectableCard ? 'clickable' : ''}`;
+            partElement.className = `part-card part-dashboard-card p-2 rounded timer-state-${timing.state} ${isActive ? 'active' : ''} ${canReorder ? 'edit-mode' : ''} ${isSelectableCard ? 'clickable' : ''}`;
             partElement.setAttribute('data-part-index', index);
             
             // Enable drag-and-drop reordering while timer is stopped and no inline editor is open.
@@ -356,6 +356,20 @@ const render = {
                             ${escapedSpeaker ? `<span>${escapedSpeaker}</span>` : ''}
                         </div>
                     </div>
+                    <div class="part-dashboard-metrics">
+                        <div class="part-dashboard-time" aria-label="Part timing">
+                            <span data-role="part-elapsed">${formatTime(elapsed)}</span>
+                            <span data-role="part-countdown" class="${isOver ? 'is-over' : ''}">${formatTimeWithSign(timing.remaining)}</span>
+                        </div>
+                        ${part.enableComments ? `
+                            <div class="part-comment-summary">
+                                <span>Comments</span>
+                                <strong id="partCommentCount-${index}">${partCommentStats.count}</strong>
+                                <span>Avg</span>
+                                <strong id="partCommentAverage-${index}">${formatTime(averageCommentDuration)}</strong>
+                            </div>
+                        ` : ''}
+                    </div>
                     <div class="part-dashboard-actions">
                         ${isSelectableCard ? `
                             <button data-action="select-part" data-part-index="${index}"
@@ -411,20 +425,8 @@ const render = {
                     </div>
                 ` : ''}
 
-                <div class="part-dashboard-detail">
-                    <div class="progress-bar part-dashboard-progress">
-                        <div data-role="part-progress" class="progress-bar-bg ${progressColor}" style="width: ${progressPercent}%"></div>
-                        <span data-role="part-elapsed" class="left-label">${formatTime(elapsed)}</span>
-                        <span data-role="part-countdown" class="countdown ${isOver ? 'is-over' : ''}">${formatTimeWithSign(timing.remaining)}</span>
-                    </div>
-                    ${part.enableComments ? `
-                        <div class="part-comment-summary">
-                            <span>Comments</span>
-                            <strong id="partCommentCount-${index}">${partCommentStats.count}</strong>
-                            <span>Avg</span>
-                            <strong id="partCommentAverage-${index}">${formatTime(averageCommentDuration)}</strong>
-                        </div>
-                    ` : ''}
+                <div class="progress-bar part-dashboard-progress" aria-hidden="true">
+                    <div data-role="part-progress" class="progress-bar-bg ${progressColor}" style="width: ${progressPercent}%"></div>
                 </div>
 
                 ${showInsertActions ? `
