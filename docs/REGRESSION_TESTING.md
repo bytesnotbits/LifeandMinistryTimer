@@ -658,3 +658,24 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.8.4`.
 - Related decisions: DEC-027
 - Related files: `server.js`, `realtimeShare.js`, `lifeMinistryTimer.js`, `render.js`, `styles.css`, `index.html`
+
+## REG-034: Meeting parts render as a compact dashboard
+- Priority: High
+- Area: Run Dashboard
+- Preconditions:
+  - App loaded with the command-center run dashboard visible.
+  - At least two meeting parts are available, with one comment-enabled part.
+- Steps:
+  1. Inspect the lower `Meeting Parts Dashboard` before starting the meeting.
+  2. Start the active part from the command center.
+  3. Start and stop a comment from the command center on a comment-enabled part.
+  4. Inspect the lower part rows while the timer is running.
+  5. Stop the timer, enable edit mode, and inspect edit controls.
+- Expected:
+  - Lower part rows show title, status, speaker when available, progress, remaining time, and comment count/average.
+  - Lower part rows do not show Start, Stop, Next, Comment, timer adjust, or Reset controls during normal live operation.
+  - Command-center controls continue to start/stop parts, advance parts, and manage comments.
+  - Edit mode still exposes edit, remove, add-before/add-after, and reorder affordances.
+  - Footer version displays `3.8.5`.
+- Related decisions: DEC-028
+- Related files: `index.html`, `render.js`, `styles.css`

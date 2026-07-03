@@ -1035,6 +1035,79 @@ main {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.part-dashboard-list {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.part-dashboard-card {
+    box-shadow: none;
+}
+
+.part-dashboard-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    align-items: start;
+}
+
+.part-dashboard-main {
+    min-width: 0;
+}
+
+.part-dashboard-title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.part-dashboard-title > span:last-of-type {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.part-dashboard-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.55rem;
+    margin-top: 0.35rem;
+    color: var(--text-light);
+    font-size: 0.75rem;
+}
+
+.part-dashboard-meta > span:not(.timer-status-pill) {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.part-dashboard-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.part-dashboard-detail {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1fr) auto;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 0.65rem;
+}
+
+.part-dashboard-progress {
+    height: 1.55rem;
+    min-width: 0;
+}
+
 .part-card.clickable {
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
@@ -1042,8 +1115,8 @@ main {
 
 .part-card.clickable:hover {
     background-color: rgba(59, 130, 246, 0.05);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px var(--shadow-color);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px var(--shadow-color);
 }
 
 /* Dark mode hover effect for clickable part cards */
@@ -1090,6 +1163,22 @@ main {
 .part-comment-summary {
     color: var(--text-light);
     font-size: 0.875rem;
+}
+
+.part-comment-summary {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    gap: 0.1rem 0.45rem;
+    align-items: baseline;
+    min-width: 6.5rem;
+    font-size: 0.72rem;
+    line-height: 1.15;
+}
+
+.part-comment-summary strong {
+    color: var(--text-color);
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    font-size: 0.78rem;
 }
 
 .part-number-badge {
@@ -1989,6 +2078,20 @@ main {
     .edit-mode-toggle svg {
         width: 1.25rem;
         height: 1.25rem;
+    }
+
+    .part-dashboard-row,
+    .part-dashboard-detail {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .part-dashboard-actions {
+        justify-content: flex-start;
+    }
+
+    .part-comment-summary {
+        grid-template-columns: auto auto auto auto;
+        justify-content: start;
     }
 }
 

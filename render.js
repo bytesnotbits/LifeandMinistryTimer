@@ -220,7 +220,7 @@ const render = {
             const isSelectableCard = canControl && !isActive && !state.isRunning && state.editingPartIndex === null && !state.isEditMode;
             
             const partElement = document.createElement('div');
-            partElement.className = `part-card p-4 rounded shadow timer-state-${timing.state} ${isActive ? 'active' : ''} ${canReorder ? 'edit-mode' : ''} ${isSelectableCard ? 'clickable' : ''}`;
+            partElement.className = `part-card part-dashboard-card p-3 rounded timer-state-${timing.state} ${isActive ? 'active' : ''} ${canReorder ? 'edit-mode' : ''} ${isSelectableCard ? 'clickable' : ''}`;
             partElement.setAttribute('data-part-index', index);
             
             // Enable drag-and-drop reordering while timer is stopped and no inline editor is open.
@@ -335,22 +335,28 @@ const render = {
                         </span>
                     </div>
                 ` : ''}
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="font-bold flex items-center gap-2">
-                        ${partNumber ? `<span class="part-number-badge" aria-label="Part ${partNumber}">${partNumber}</span>` : ''}
-                        <span>${escapedDisplayPartName}</span>
-                        ${canControl && !isInlineEditing ? `
-                        <button data-action="edit-part" data-part-index="${index}"
-                            class="part-card-icon-button"
-                            aria-label="Edit ${escapedPartName}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path d="M17.414 2.586a2 2 0 010 2.828l-8.5 8.5a1 1 0 01-.447.264l-4 1a1 1 0 01-1.213-1.213l1-4a1 1 0 01.264-.447l8.5-8.5a2 2 0 012.828 0zM5.978 10.607l-.5 2 2-.5 7.95-7.95-1.5-1.5-7.95 7.95z"/>
-                            </svg>
-                        </button>
-                        ` : ''}
-                    </h3>
-                    <div class="part-speaker">${escapedSpeaker}</div>
-                    <div class="ml-2 flex items-center gap-1">
+                <div class="part-dashboard-row">
+                    <div class="part-dashboard-main">
+                        <h3 class="part-dashboard-title">
+                            ${partNumber ? `<span class="part-number-badge" aria-label="Part ${partNumber}">${partNumber}</span>` : ''}
+                            <span>${escapedDisplayPartName}</span>
+                            ${canControl && !isInlineEditing ? `
+                            <button data-action="edit-part" data-part-index="${index}"
+                                class="part-card-icon-button"
+                                aria-label="Edit ${escapedPartName}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path d="M17.414 2.586a2 2 0 010 2.828l-8.5 8.5a1 1 0 01-.447.264l-4 1a1 1 0 01-1.213-1.213l1-4a1 1 0 01.264-.447l8.5-8.5a2 2 0 012.828 0zM5.978 10.607l-.5 2 2-.5 7.95-7.95-1.5-1.5-7.95 7.95z"/>
+                                </svg>
+                            </button>
+                            ` : ''}
+                        </h3>
+                        <div class="part-dashboard-meta">
+                            <span data-role="part-status" class="timer-status-pill timer-status-${timing.state}">${timing.label}</span>
+                            <span>${partTimingLabel}</span>
+                            ${escapedSpeaker ? `<span>${escapedSpeaker}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="part-dashboard-actions">
                         ${isSelectableCard ? `
                             <button data-action="select-part" data-part-index="${index}"
                                 class="part-card-select-button"
@@ -405,113 +411,19 @@ const render = {
                     </div>
                 ` : ''}
 
-                <div class="progress-bar h-8 mb-2">
-                    <div data-role="part-progress" class="progress-bar-bg ${progressColor}" style="width: ${progressPercent}%"></div>
-                    <span data-role="part-elapsed" class="left-label">${formatTime(elapsed)}</span>
-                    <span data-role="part-countdown" class="countdown ${isOver ? 'is-over' : ''}">${formatTimeWithSign(timing.remaining)}</span>
-                </div>
-                <div class="part-timing-row">
-                    <span data-role="part-status" class="timer-status-pill timer-status-${timing.state}">${timing.label}</span>
-                    <span>${partTimingLabel}</span>
-                </div>
-
-                ${part.enableComments ? `
-                    <div class="part-comment-summary">
-                        Comments:
-                        <span id="partCommentCount-${index}" class="font-semibold">${partCommentStats.count}</span>
-                        |
-                        Avg:
-                        <span id="partCommentAverage-${index}" class="font-semibold">${formatTime(averageCommentDuration)}</span>
+                <div class="part-dashboard-detail">
+                    <div class="progress-bar part-dashboard-progress">
+                        <div data-role="part-progress" class="progress-bar-bg ${progressColor}" style="width: ${progressPercent}%"></div>
+                        <span data-role="part-elapsed" class="left-label">${formatTime(elapsed)}</span>
+                        <span data-role="part-countdown" class="countdown ${isOver ? 'is-over' : ''}">${formatTimeWithSign(timing.remaining)}</span>
                     </div>
-                ` : ''}
-
-                <div class="flex justify-between items-center">
-                    <div class="flex space-x-2">
-                        ${canControl && isActive && !state.isEditMode ? `
-                            <button data-action="toggle-timer" data-part-index="${index}"
-                                class="px-2 py-1 ${state.isRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded"
-                                aria-label="${state.isRunning ? 'Stop timer' : 'Start timer'}">
-                                ${state.isRunning ? 'Stop' : 'Start'}
-                            </button>
-
-                            ${index < state.meetingParts.length - 1 ? `
-                                <button data-action="next-part" data-part-index="${index}"
-                                    class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                    aria-label="Next part">
-                                    Next
-                                </button>
-                            ` : ''}
-                        ` : ''}
-                    </div>
-
-                    ${canControl && part.enableComments && isActive && !state.isEditMode ? `
-                        <div class="flex items-center">
-                            <button data-action="toggle-comment" data-part-index="${index}"
-                                class="px-2 py-1 ${state.activeComment ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-500 hover:bg-purple-600'} text-white rounded mr-2"
-                                aria-label="${state.activeComment ? 'Stop comment' : 'Start comment'}">
-                                ${state.activeComment ? 'Stop Comment' : 'Comment'}
-                            </button>
-                            ${state.isRunning && !state.activeComment && state.lastStoppedComment?.comment.partIndex === index ? `
-                                <button data-action="undo-stop-comment" data-part-index="${index}"
-                                    class="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded mr-2"
-                                    aria-label="Undo stop comment">
-                                    Undo Stop
-                                </button>
-                            ` : ''}
-                            ${(() => {
-                                // compute the current comment duration for this part (non-negative)
-                                let duration = 0;
-                                const isActiveCommentForPart = !!(state.activeComment && state.activeComment.partIndex === index);
-                                if (isActiveCommentForPart) {
-                                    duration = (state.elapsedTimes[index] || 0) - state.activeComment.startElapsed;
-                                    duration = Math.max(0, duration);
-                                }
-                                const disableIncrementAttr = isActiveCommentForPart ? '' : ' disabled';
-                                const disableDecrementAttr = duration <= 0 || !isActiveCommentForPart ? ' disabled' : '';
-                                const adjustControlsClass = isActiveCommentForPart
-                                    ? 'comment-adjust-controls'
-                                    : 'comment-adjust-controls comment-adjust-controls--inactive';
-                                const adjustControlsHiddenAttr = isActiveCommentForPart ? '' : ' aria-hidden="true"';
-
-                                let html = `<span id="currentComment-${index}" class="font-mono">${formatTime(duration)}</span>`;
-                                html += `
-                                    <div class="${adjustControlsClass}"${adjustControlsHiddenAttr}>
-                                        <button data-action="adjust-comment" data-part-index="${index}" data-adjust="5"
-                                            class="time-adjust-button increment-button"${disableIncrementAttr}
-                                            aria-label="Add 5 seconds to comment">
-                                            +5s
-                                        </button>
-                                        <button data-action="adjust-comment" data-part-index="${index}" data-adjust="-5"
-                                            class="time-adjust-button decrement-button"${disableDecrementAttr}
-                                            aria-label="Subtract 5 seconds from comment">
-                                            -5s
-                                        </button>
-                                    </div>`;
-                                return html;
-                            })()}
+                    ${part.enableComments ? `
+                        <div class="part-comment-summary">
+                            <span>Comments</span>
+                            <strong id="partCommentCount-${index}">${partCommentStats.count}</strong>
+                            <span>Avg</span>
+                            <strong id="partCommentAverage-${index}">${formatTime(averageCommentDuration)}</strong>
                         </div>
-                    ` : ''}
-                </div>
-
-                <div class="timer-controls">
-                     ${canControl && isActive && !state.isEditMode ? `
-                        <button data-action="adjust-timer" data-part-index="${index}" data-adjust="5"
-                            class="time-adjust-button increment-button"
-                            aria-label="Add 5 seconds">
-                            +5s
-                        </button>
-                        <button data-action="adjust-timer" data-part-index="${index}" data-adjust="-5"
-                            class="time-adjust-button decrement-button"
-                            aria-label="Subtract 5 seconds">
-                            -5s
-                        </button>
-                    ` : ''}
-                    ${canControl && !state.isEditMode ? `
-                        <button data-action="reset-timer" data-part-index="${index}"
-                            class="time-adjust-button reset-button"
-                            aria-label="Reset timer">
-                            Reset
-                        </button>
                     ` : ''}
                 </div>
 

@@ -670,3 +670,29 @@ Track important decisions that explain *why* the code changed.
     - Verify versioned assets use 3.8.4.
   - Risks:
     - Initial share rooms are single-process and memory-only, so VPS process restarts invalidate active links.
+
+## DEC-028: Make meeting parts a compact dashboard below the command center
+- Date: 2026-07-03
+- Status: Accepted
+- Related files: `index.html`, `render.js`, `styles.css`
+- Context:
+  - The run dashboard command center is now the primary way to run the meeting.
+  - The lower meeting parts cards still repeated live operation controls, making the page feel like it had two competing control surfaces.
+- Decision:
+  - Rename the lower section to `Meeting Parts Dashboard` and describe it as a program summary.
+  - Render normal meeting parts as compact dashboard rows with title, status, speaker, progress, and comment stats.
+  - Remove Start/Stop, Next, comment, timer-adjust, and reset controls from normal part rows so live operation stays centered in the command center.
+  - Preserve select, edit, remove, inline editing, add-before/add-after, and drag/reorder behavior where those setup actions are already available.
+  - Bump the app version to 3.8.5.
+- Consequences:
+  - Operators have one obvious live control surface while still seeing progress across the whole program.
+  - Setup/edit workflows remain available without turning the lower list back into a second run interface.
+- Validation:
+  - Automated checks:
+    - Run JavaScript syntax checks for `render.js`, `programCockpit.js`, `lifeMinistryTimer.js`, `newFeatures.js`, `realtimeShare.js`, and `server.js`.
+  - Manual checks:
+    - Start a meeting from the command center and verify the lower rows show progress/status without duplicate live controls.
+    - Verify edit mode still exposes edit/remove/add/reorder controls.
+    - Verify footer version displays 3.8.5.
+  - Risks:
+    - Operators who used lower-card reset or adjustment buttons lose those on-screen controls in favor of a simpler live-meeting dashboard.

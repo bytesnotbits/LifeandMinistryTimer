@@ -7,18 +7,18 @@
     <title>Life and Ministry Timer</title>
 
     <!-- Styles -->
-    <link rel="stylesheet" href="styles.css?v=3.8.4">
+    <link rel="stylesheet" href="styles.css?v=3.8.5">
     <link rel="icon" href="data:,">
     
     <!-- Tailwind CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     
     <!-- Defer JavaScript loading -->
-    <script src="lifeMinistryTimer.js?v=3.8.4" defer></script>
-    <script src="render.js?v=3.8.4" defer></script>
-    <script src="newFeatures.js?v=3.8.4" defer></script>
-    <script src="programCockpit.js?v=3.8.4" defer></script>
-    <script src="realtimeShare.js?v=3.8.4" defer></script>
+    <script src="lifeMinistryTimer.js?v=3.8.5" defer></script>
+    <script src="render.js?v=3.8.5" defer></script>
+    <script src="newFeatures.js?v=3.8.5" defer></script>
+    <script src="programCockpit.js?v=3.8.5" defer></script>
+    <script src="realtimeShare.js?v=3.8.5" defer></script>
 </head>
 <body class="app-body">
     
@@ -103,7 +103,7 @@
                     <div>
                         <p class="cockpit-kicker">Live Meeting</p>
                         <h2 id="meeting-workspace-heading" class="cockpit-title">Run the meeting</h2>
-                        <p class="cockpit-subtitle">Keep the timers, current part, and meeting parts in one focused workspace.</p>
+                        <p class="cockpit-subtitle">Use the command center to run the meeting, with the full program summarized below.</p>
                     </div>
                     <div class="cockpit-summary" aria-label="Program summary">
                         <div>
@@ -154,7 +154,7 @@
                 <!-- Timer Display Section -->
                 <section id="timerSection" aria-labelledby="timer-heading" class="timer-section">
                     <div class="section-heading">
-                        <h2 id="timer-heading" class="text-xl font-bold">Meeting Parts</h2>
+                        <h2 id="timer-heading" class="text-xl font-bold">Meeting Parts Dashboard</h2>
                     </div>
                     <div id="editModeControls" class="edit-mode-controls hidden mb-4">
                         <p class="text-sm">Edit mode is active. Use the card insertion handles to add a part between cards.</p>
@@ -165,7 +165,7 @@
                         </p>
                     </div>
 
-                    <div id="partsDisplay" class="space-y-4" role="region" aria-label="Active timers" data-drag-container></div>
+                    <div id="partsDisplay" class="part-dashboard-list" role="region" aria-label="Meeting parts dashboard" data-drag-container></div>
                 </section>
             </section>
 
@@ -520,7 +520,7 @@
     </main>
 
     <footer class="p-4 text-sm text-left mt-4">
-        <div>Version: 3.8.3 (06/26/2026)</div>
+        <div>Version: 3.8.5 (07/03/2026)</div>
         <div class="font-bold mt-2">Someday:</div>
         <ul class="list-disc pl-5 mt-1">
             <li>Allow real-time remote viewing</li>

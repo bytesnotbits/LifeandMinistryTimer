@@ -542,3 +542,31 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed after publishing commit 48315a1.
 
+
+## TERM-038: Windows Git helper on WSL UNC path
+- Date observed: 2026-07-03
+- Failed pattern:
+  - powershell git-check.ps1 -RepoRoot \\wsl.localhost\Ubuntu\home\vibecoding\MinistryTimer
+- Symptom:
+  - Windows git reported fatal: not a git repository (or any of the parent directories): .git on the UNC workspace path.
+- Likely cause:
+  - Windows Git did not resolve the WSL UNC path as the Linux repository root.
+- Preferred workaround:
+  - Use WSL-native git from /home/vibecoding/MinistryTimer for repo status and publish workflows, or map/resolve the repo path before invoking Windows Git.
+- Notes:
+  - Observed while preparing compact meeting parts dashboard change.
+
+
+## TERM-039: PowerShell provider-qualified UNC path passed to Node
+- Date observed: 2026-07-03
+- Failed pattern:
+  - Join-Path (Get-Location) LifeandMinistryTimer inside a PowerShell script running on a WSL UNC workspace
+- Symptom:
+  - node --check tried to open a path containing Microsoft.PowerShell.Core\FileSystem:: inside the UNC path and failed with MODULE_NOT_FOUND.
+- Likely cause:
+  - Get-Location stringified as a provider-qualified path instead of a plain filesystem provider path.
+- Preferred workaround:
+  - Use $PWD.ProviderPath or Convert-Path before passing paths to external executables like node.
+- Notes:
+  - Observed in compact dashboard verification script.
+
