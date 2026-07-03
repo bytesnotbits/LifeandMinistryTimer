@@ -703,3 +703,24 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.8.7`.
 - Related decisions: DEC-030
 - Related files: `index.html`, `programCockpit.js`, `styles.css`
+
+## REG-036: Global segment starts lock when part timers start
+- Priority: High
+- Area: Global Meeting Timer
+- Preconditions:
+  - App loaded with a scheduled meeting so the global timer is visible.
+  - At least three meeting parts are available.
+- Steps:
+  1. Start the first part timer and inspect the first global segment position.
+  2. Advance before the planned end of the first part, then start the second part timer.
+  3. Let the second part run past its planned duration while the third part has not started.
+  4. Start the third part timer and refresh the page.
+  5. Reinspect the global segment boundaries.
+- Expected:
+  - The second part boundary locks at the actual moment the second part timer starts, even if that is earlier than planned.
+  - The third part projection moves later while the second part is overtime and remains unlocked until the third part timer starts.
+  - After the third part timer starts, its boundary locks at that actual start position.
+  - Locked segment positions persist after refresh.
+  - Footer version displays `3.8.8`.
+- Related decisions: DEC-031
+- Related files: `index.html`, `lifeMinistryTimer.js`, `render.js`

@@ -751,3 +751,33 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.8.7.
   - Risks:
     - The adjustment still follows the existing timer clamp and will not push elapsed time above the planned part duration.
+
+## DEC-031: Lock global segment boundaries when parts start
+- Date: 2026-07-03
+- Status: Accepted
+- Related files: `index.html`, `lifeMinistryTimer.js`, `render.js`
+- Context:
+  - The global meeting bar should be divisible by parts without making every future divider feel fixed before the meeting unfolds.
+  - Previous segment shifting used completed elapsed time, but it did not explicitly remember the wall-clock moment a part actually began.
+- Decision:
+  - Persist `partStartTimes` alongside elapsed part timing.
+  - Record a part's start timestamp the first time its timer starts.
+  - Render locked global segment starts from recorded part start timestamps.
+  - Keep unstarted future segments projected from the current plan and actual running/completed timing, so they can move earlier or later until their own timer starts.
+  - Reindex part start timestamps when parts are inserted, removed, or reordered, and clear them when timers are reset.
+  - Bump the app version to 3.8.8.
+- Consequences:
+  - A part that starts early or late anchors exactly where it began on the global bar.
+  - Later unstarted parts can still be pushed forward by overtime or pulled earlier by short completed parts.
+  - Realtime viewers receive the same locked boundary data as the host.
+- Validation:
+  - Automated checks:
+    - Run JavaScript syntax checks for `lifeMinistryTimer.js` and `render.js`.
+    - Verify versioned assets use 3.8.8.
+  - Manual checks:
+    - Start a scheduled meeting, start part 1, advance early, and start part 2; verify part 2's global boundary locks earlier than its original planned position.
+    - Let an active part go overtime before starting the next part; verify the next unstarted segment projection moves later, then locks when that part starts.
+    - Refresh after starting multiple parts and verify locked segment positions persist.
+    - Verify footer version displays 3.8.8.
+  - Risks:
+    - Old saved sessions do not have `partStartTimes`, so their bar falls back to projected behavior until parts are started again.

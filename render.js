@@ -729,29 +729,50 @@ function buildGlobalMeetingSegments(totalSec) {
     const fallbackDurationSec = state.meetingParts.length;
     const sourceScale = sourceDurationSec > 0 ? segmentPoolSec / sourceDurationSec : 0;
 
+    const getLockedStartSec = (index) => {
+        const startTs = Number(state.partStartTimes && state.partStartTimes[index]);
+        if (!Number.isFinite(startTs) || !state.meetingScheduledStart) {
+            return null;
+        }
+        return Math.max(0, Math.min(totalSec, (startTs - state.meetingScheduledStart) / 1000));
+    };
+
     let cursorSec = bufferSec;
     return state.meetingParts.map((part, index) => {
         const partNumber = getPartDisplayNumber(part);
         const displayPartName = getPartDisplayName(part);
-        cursorSec += gapSecondsByIndex[index] || 0;
+        const lockedStartSec = getLockedStartSec(index);
+        if (lockedStartSec === null) {
+            cursorSec += gapSecondsByIndex[index] || 0;
+        }
         const plannedPartSec = sourceDurationSec > 0 ? Math.max(0, part.duration || 0) : 1;
         const denominator = sourceDurationSec > 0 ? sourceDurationSec : fallbackDurationSec;
         const plannedWidthSec = sourceDurationSec > 0
             ? plannedPartSec * sourceScale
             : (denominator > 0 ? (plannedPartSec / denominator) * segmentPoolSec : 0);
         const elapsed = Number(state.elapsedTimes[index] || 0);
-        const shouldShiftByActual = index < state.activePart && elapsed >= GLOBAL_SEGMENT_ACTUAL_SHIFT_THRESHOLD_SECONDS;
-        const adjustedWidthSec = shouldShiftByActual
+        const nextLockedStartSec = getLockedStartSec(index + 1);
+        const hasLockedStart = lockedStartSec !== null;
+        const isCompletedPart = index < state.activePart;
+        const isActivePartOvertime = index === state.activePart && elapsed > plannedPartSec;
+        const shouldShiftByActual = hasLockedStart
+            && elapsed >= GLOBAL_SEGMENT_ACTUAL_SHIFT_THRESHOLD_SECONDS
+            && (isCompletedPart || isActivePartOvertime);
+        const actualWidthSec = shouldShiftByActual
             ? Math.max(0, elapsed) * sourceScale
             : plannedWidthSec;
+        const leftSec = hasLockedStart ? lockedStartSec : cursorSec;
+        const adjustedWidthSec = nextLockedStartSec !== null
+            ? Math.max(0.3, nextLockedStartSec - leftSec)
+            : actualWidthSec;
         const segment = {
             partNumber: partNumber,
-            left: Math.max(0, Math.min(100, (cursorSec / totalSec) * 100)),
+            left: Math.max(0, Math.min(100, (leftSec / totalSec) * 100)),
             width: Math.max(0.3, Math.min(100, (adjustedWidthSec / totalSec) * 100)),
-            title: `${partNumber ? `Part ${partNumber}: ` : ''}${displayPartName || 'Meeting part'}: ${formatTime(part.duration || 0)}${shouldShiftByActual ? `, actual ${formatTime(elapsed)}` : ''}`,
+            title: `${partNumber ? `Part ${partNumber}: ` : ''}${displayPartName || 'Meeting part'}: ${formatTime(part.duration || 0)}${hasLockedStart ? ', start locked' : ''}${shouldShiftByActual || nextLockedStartSec !== null ? `, actual ${formatTime(elapsed)}` : ''}`,
             label: partNumber && state.meetingParts.length <= 16 && (adjustedWidthSec / totalSec) * 100 >= 3.5 ? String(partNumber) : ''
         };
-        cursorSec += adjustedWidthSec;
+        cursorSec = leftSec + adjustedWidthSec;
         return segment;
     });
 }

@@ -814,6 +814,7 @@ const COMMENT_DISPLAY_UPDATE_INTERVAL = 200; // 200ms for smoother comment timer
 const STORAGE_KEYS = {
     meetingTemplate: 'meetingTemplate',
     elapsedTimes: 'elapsedTimes',
+    partStartTimes: 'partStartTimes',
     activePart: 'activePart',
     meetingComments: 'meetingComments',
     isEditMode: 'isEditMode',
@@ -978,6 +979,7 @@ let state = {
     isRunning: false,
     isViewerMode: false,
     elapsedTimes: {},
+    partStartTimes: {},
     timerInterval: null,
     commentInterval: null,
     activeComment: null,
@@ -1029,6 +1031,7 @@ let state = {
             
             // Load elapsed times
             this.elapsedTimes = persistence.getJson(STORAGE_KEYS.elapsedTimes, {});
+            this.partStartTimes = persistence.getJson(STORAGE_KEYS.partStartTimes, {});
             
             // Load active part
             this.activePart = parseInt(persistence.getString(STORAGE_KEYS.activePart), 10) || 0;
@@ -1065,6 +1068,7 @@ let state = {
             // Fallback to defaults if loading fails
             this.meetingParts = DEFAULT_PARTS;
             this.elapsedTimes = {};
+            this.partStartTimes = {};
             this.activePart = 0;
             this.comments = [];
             this.isEditMode = false;
@@ -1078,6 +1082,7 @@ let state = {
                 return;
             }
             persistence.setJson(STORAGE_KEYS.elapsedTimes, this.elapsedTimes);
+            persistence.setJson(STORAGE_KEYS.partStartTimes, this.partStartTimes);
             persistence.setString(STORAGE_KEYS.activePart, this.activePart);
             persistence.setJson(STORAGE_KEYS.meetingComments, this.comments);
             // persist meeting schedule information
@@ -1110,6 +1115,7 @@ let state = {
             activePart: this.activePart,
             isRunning: this.isRunning,
             elapsedTimes: { ...this.elapsedTimes },
+            partStartTimes: { ...this.partStartTimes },
             activeComment: this.activeComment ? { ...this.activeComment } : null,
             comments: this.comments.map((comment) => ({ ...comment })),
             meetingScheduledStart: this.meetingScheduledStart,
@@ -1129,6 +1135,9 @@ let state = {
         this.elapsedTimes = snapshot.elapsedTimes && typeof snapshot.elapsedTimes === 'object'
             ? { ...snapshot.elapsedTimes }
             : {};
+        this.partStartTimes = snapshot.partStartTimes && typeof snapshot.partStartTimes === 'object'
+            ? { ...snapshot.partStartTimes }
+            : {};
         this.activeComment = snapshot.activeComment ? { ...snapshot.activeComment } : null;
         this.comments = Array.isArray(snapshot.comments)
             ? snapshot.comments.map((comment) => ({ ...comment }))
@@ -1144,6 +1153,7 @@ let state = {
     // Reset timer data (keeps template)
     resetTimers() {
         this.elapsedTimes = {};
+        this.partStartTimes = {};
         this.comments = [];
         this.activeComment = null;
         this.stopTimer();
@@ -1160,6 +1170,7 @@ let state = {
             }
             
             this.elapsedTimes[partIndex] = 0;
+            delete this.partStartTimes[partIndex];
             this.saveState();
             render.timerDisplay(); // Explicitly re-render the timer display
         }
@@ -1185,6 +1196,7 @@ let state = {
     clearAllData() {
         persistence.remove(STORAGE_KEYS.meetingTemplate);
         persistence.remove(STORAGE_KEYS.elapsedTimes);
+        persistence.remove(STORAGE_KEYS.partStartTimes);
         persistence.remove(STORAGE_KEYS.activePart);
         persistence.remove(STORAGE_KEYS.meetingComments);
         persistence.remove(STORAGE_KEYS.isEditMode);
@@ -1410,6 +1422,16 @@ let state = {
             return sum + Math.max(0, Number(seconds || 0));
         }, 0);
     },
+
+    recordPartStart(partIndex, timestamp = Date.now()) {
+        if (partIndex < 0 || partIndex >= this.meetingParts.length) return;
+        if (!this.partStartTimes || typeof this.partStartTimes !== 'object') {
+            this.partStartTimes = {};
+        }
+        if (!this.partStartTimes[partIndex]) {
+            this.partStartTimes[partIndex] = timestamp;
+        }
+    },
     
     // Start the timer
     startTimer() {
@@ -1436,6 +1458,7 @@ let state = {
             if (!this.elapsedTimes[this.activePart]) {
                 this.elapsedTimes[this.activePart] = 0;
             }
+            this.recordPartStart(this.activePart, now);
             
             // Initialize update counter
             this._displayUpdateCounter = 0;
@@ -2029,6 +2052,7 @@ render.timerDisplay();
         };
         const insertIndex = Math.max(0, Math.min(index, this.meetingParts.length));
         const oldElapsedTimes = { ...this.elapsedTimes };
+        const oldPartStartTimes = { ...this.partStartTimes };
         
         this.meetingParts.splice(insertIndex, 0, newPart);
 
@@ -2040,6 +2064,15 @@ render.timerDisplay();
             reindexedElapsedTimes[newIndex] = oldElapsedTimes[oldIndex];
         });
         this.elapsedTimes = reindexedElapsedTimes;
+
+        const reindexedPartStartTimes = {};
+        Object.keys(oldPartStartTimes).forEach((key) => {
+            const oldIndex = parseInt(key, 10);
+            if (Number.isNaN(oldIndex)) return;
+            const newIndex = oldIndex >= insertIndex ? oldIndex + 1 : oldIndex;
+            reindexedPartStartTimes[newIndex] = oldPartStartTimes[oldIndex];
+        });
+        this.partStartTimes = reindexedPartStartTimes;
 
         this.comments = this.comments.map((comment) => {
             if (comment.partIndex >= insertIndex) {
@@ -2086,6 +2119,7 @@ render.timerDisplay();
             `Are you sure you want to remove "${this.meetingParts[index].name}"?`,
             () => {
                 const oldElapsedTimes = { ...this.elapsedTimes };
+                const oldPartStartTimes = { ...this.partStartTimes };
                 this.meetingParts.splice(index, 1);
 
                 // Reindex elapsed times to follow shifted part indexes.
@@ -2097,6 +2131,15 @@ render.timerDisplay();
                     reindexedElapsedTimes[newIndex] = oldElapsedTimes[oldIndex];
                 });
                 this.elapsedTimes = reindexedElapsedTimes;
+
+                const reindexedPartStartTimes = {};
+                Object.keys(oldPartStartTimes).forEach((key) => {
+                    const oldIndex = parseInt(key, 10);
+                    if (Number.isNaN(oldIndex) || oldIndex === index) return;
+                    const newIndex = oldIndex > index ? oldIndex - 1 : oldIndex;
+                    reindexedPartStartTimes[newIndex] = oldPartStartTimes[oldIndex];
+                });
+                this.partStartTimes = reindexedPartStartTimes;
 
                 // Drop comments for removed part and shift later indexes.
                 this.comments = this.comments
@@ -2160,6 +2203,7 @@ render.timerDisplay();
         // Get the part to move
         const part = this.meetingParts[fromIndex];
         const oldElapsedTimes = { ...this.elapsedTimes };
+        const oldPartStartTimes = { ...this.partStartTimes };
         
         // Remove from current position
         this.meetingParts.splice(fromIndex, 1);
@@ -2184,6 +2228,23 @@ render.timerDisplay();
             reindexedElapsedTimes[newIndex] = oldElapsedTimes[oldIndex];
         });
         this.elapsedTimes = reindexedElapsedTimes;
+
+        const reindexedPartStartTimes = {};
+        Object.keys(oldPartStartTimes).forEach((key) => {
+            const oldIndex = parseInt(key, 10);
+            if (Number.isNaN(oldIndex)) return;
+
+            let newIndex = oldIndex;
+            if (oldIndex === fromIndex) {
+                newIndex = toIndex;
+            } else if (fromIndex < toIndex && oldIndex > fromIndex && oldIndex <= toIndex) {
+                newIndex = oldIndex - 1;
+            } else if (fromIndex > toIndex && oldIndex >= toIndex && oldIndex < fromIndex) {
+                newIndex = oldIndex + 1;
+            }
+            reindexedPartStartTimes[newIndex] = oldPartStartTimes[oldIndex];
+        });
+        this.partStartTimes = reindexedPartStartTimes;
 
         // Keep comment part indexes aligned to the moved parts.
         this.comments = this.comments.map((comment) => {

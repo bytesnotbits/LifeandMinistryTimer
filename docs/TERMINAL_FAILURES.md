@@ -612,3 +612,17 @@ Use this log to avoid rediscovering the same terminal failures. Add entries when
 - Notes:
   - Observed after commit e935757 while adding command-center timer adjustment.
 
+
+## TERM-043: WSL publish script timed out before output
+- Date observed: 2026-07-02
+- Failed pattern:
+  - PowerShell temp publish script invoking repeated wsl -d Ubuntu --cd <repo> git commands
+- Symptom:
+  - The shell command timed out after 124 seconds without returning script output; changes remained unstaged.
+- Likely cause:
+  - The WSL boundary or an existing WSL/Git process stalled before the self-reporting script could return output.
+- Preferred workaround:
+  - Use a Windows-native git script with gc.auto disabled for staging/commit, or run a bounded single WSL command after confirming WSL responsiveness.
+- Notes:
+  - Observed while publishing global segment part-start lock work.
+

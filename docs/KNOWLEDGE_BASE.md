@@ -20,7 +20,7 @@ Document behavior in terms of user outcomes.
 - Timer state should not desync from UI controls.
 - The live timer surface should make the active part state glanceable: ready, running, closing, paused, or overtime.
 - The sticky live timer area should prioritize the global meeting timer; current-part progress belongs in the run dashboard's thin progress line.
-- Global meeting segments should resize and shift from completed actual part timing after a 30-second guard threshold so meeting pace reflects early/late parts without reacting to accidental rapid advances.
+- Global meeting segments should keep future part starts fluid until their timers actually start; started parts lock their global bar boundary from the recorded wall-clock start time, while unstarted future dividers can still move from short or overtime parts.
 - Operators can use `Sync Meeting` to realign the global meeting timer with accumulated part timer elapsed when scheduled wall-clock elapsed has drifted from actual meeting progress.
 - Global meeting segment labels should use the same imported program part number shown on the corresponding part card; unnumbered items such as Opening Comments should not consume a segment number.
 - Comment timing in the run dashboard uses a fixed 30-second glance target and mirrors the same orange/red/overtime visual states as part timing.
@@ -128,3 +128,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-07-03: Minimized lower meeting parts into a compact dashboard without duplicate live run controls, keeping command-center operation primary with version 3.8.5.
 - 2026-07-03: Compressed meeting dashboard rows further with inline timing/comment metrics and thin progress rails in version 3.8.6.
 - 2026-07-03: Added command-center timer adjustment with configurable seconds/minutes amount, defaulting to 5 seconds, in version 3.8.7.
+- 2026-07-03: Added persisted part start locks so global segment boundaries stay fluid until a part timer starts, then anchor to the actual start time in version 3.8.8.
