@@ -98,10 +98,10 @@ const render = {
         if (segments) {
             segments.innerHTML = buildGlobalMeetingSegments(displayState.totalSec)
                 .map((segment) => `
-                    <span class="global-segment"
+                    <span class="global-segment${segment.annotation ? ' global-segment-annotation' : ''}"
                         ${segment.partNumber ? `data-part-number="${segment.partNumber}"` : ''}
                         style="left:${segment.left}%;width:${segment.width}%"
-                        title="${escapeHtmlAttribute(segment.title)}">${segment.label ? `<span class="global-segment-label">${segment.label}</span>` : ''}</span>
+                        title="${escapeHtmlAttribute(segment.title)}">${segment.label ? `<span class="global-segment-label${segment.annotation ? ' global-segment-label-annotation' : ''}">${segment.label}</span>` : ''}</span>
                 `)
                 .join('');
         }
@@ -738,12 +738,30 @@ function buildGlobalMeetingSegments(totalSec) {
     };
 
     let cursorSec = bufferSec;
-    return state.meetingParts.map((part, index) => {
+    const segments = [{
+        partNumber: null,
+        left: 0,
+        width: (bufferSec / totalSec) * 100,
+        title: 'Song & Prayer',
+        label: 'Song & Prayer',
+        annotation: true
+    }];
+
+    state.meetingParts.forEach((part, index) => {
         const partNumber = getPartDisplayNumber(part);
         const displayPartName = getPartDisplayName(part);
         const lockedStartSec = getLockedStartSec(index);
-        if (lockedStartSec === null) {
-            cursorSec += gapSecondsByIndex[index] || 0;
+        const gapSec = lockedStartSec === null ? (gapSecondsByIndex[index] || 0) : 0;
+        if (gapSec > 0) {
+            segments.push({
+                partNumber: null,
+                left: (cursorSec / totalSec) * 100,
+                width: (gapSec / totalSec) * 100,
+                title: 'Song',
+                label: 'Song',
+                annotation: true
+            });
+            cursorSec += gapSec;
         }
         const plannedPartSec = sourceDurationSec > 0 ? Math.max(0, part.duration || 0) : 1;
         const denominator = sourceDurationSec > 0 ? sourceDurationSec : fallbackDurationSec;
@@ -765,16 +783,28 @@ function buildGlobalMeetingSegments(totalSec) {
         const adjustedWidthSec = nextLockedStartSec !== null
             ? Math.max(0.3, nextLockedStartSec - leftSec)
             : actualWidthSec;
-        const segment = {
+        segments.push({
             partNumber: partNumber,
             left: Math.max(0, Math.min(100, (leftSec / totalSec) * 100)),
             width: Math.max(0.3, Math.min(100, (adjustedWidthSec / totalSec) * 100)),
             title: `${partNumber ? `Part ${partNumber}: ` : ''}${displayPartName || 'Meeting part'}: ${formatTime(part.duration || 0)}${hasLockedStart ? ', start locked' : ''}${shouldShiftByActual || nextLockedStartSec !== null ? `, actual ${formatTime(elapsed)}` : ''}`,
             label: partNumber && state.meetingParts.length <= 16 && (adjustedWidthSec / totalSec) * 100 >= 3.5 ? String(partNumber) : ''
-        };
+        });
         cursorSec = leftSec + adjustedWidthSec;
-        return segment;
     });
+
+    if (cursorSec < totalSec) {
+        segments.push({
+            partNumber: null,
+            left: (cursorSec / totalSec) * 100,
+            width: ((totalSec - cursorSec) / totalSec) * 100,
+            title: 'Song & Prayer',
+            label: 'Song & Prayer',
+            annotation: true
+        });
+    }
+
+    return segments;
 }
 
 function getPartDisplayNumber(part) {

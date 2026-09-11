@@ -1565,6 +1565,15 @@ main {
     text-shadow: 0 1px 1px rgba(15, 23, 42, 0.45);
 }
 
+.global-segment-label-annotation {
+    display: flex;
+    padding: 0 0.2rem;
+    overflow: hidden;
+    font-size: 0.6rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .global-progress-bar .left-label,
 .global-progress-bar .countdown,
 .part-progress-bar .left-label,
