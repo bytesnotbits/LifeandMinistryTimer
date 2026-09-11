@@ -26,6 +26,7 @@ function buildCommentStatsByPart() {
 const GLOBAL_MEETING_EDGE_BUFFER_SECONDS = 5 * 60;
 const GLOBAL_MEETING_MID_SONG_GAP_SECONDS = 3 * 60;
 const GLOBAL_SEGMENT_ACTUAL_SHIFT_THRESHOLD_SECONDS = 30;
+const GLOBAL_SEGMENT_LABEL_MIN_PERCENT = 2.5;
 const COMMENT_GLANCE_TARGET_SECONDS = 30;
 
 //----------------------------------------------------------------------------------------------
@@ -788,7 +789,7 @@ function buildGlobalMeetingSegments(totalSec) {
             left: Math.max(0, Math.min(100, (leftSec / totalSec) * 100)),
             width: Math.max(0.3, Math.min(100, (adjustedWidthSec / totalSec) * 100)),
             title: `${partNumber ? `Part ${partNumber}: ` : ''}${displayPartName || 'Meeting part'}: ${formatTime(part.duration || 0)}${hasLockedStart ? ', start locked' : ''}${shouldShiftByActual || nextLockedStartSec !== null ? `, actual ${formatTime(elapsed)}` : ''}`,
-            label: partNumber && state.meetingParts.length <= 16 && (adjustedWidthSec / totalSec) * 100 >= 3.5 ? String(partNumber) : ''
+            label: partNumber && state.meetingParts.length <= 16 && (adjustedWidthSec / totalSec) * 100 >= GLOBAL_SEGMENT_LABEL_MIN_PERCENT ? String(partNumber) : ''
         });
         cursorSec = leftSec + adjustedWidthSec;
     });
