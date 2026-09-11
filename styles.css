@@ -1567,7 +1567,9 @@ main {
 
 .global-segment-label-annotation {
     display: flex;
+    align-items: flex-end;
     padding: 0 0.2rem;
+    padding-bottom: 0.15rem;
     overflow: hidden;
     font-size: 0.6rem;
     text-overflow: ellipsis;
