@@ -743,7 +743,7 @@ function buildGlobalMeetingSegments(totalSec) {
         left: 0,
         width: (bufferSec / totalSec) * 100,
         title: 'Song & Prayer',
-        label: 'Song & Prayer',
+        label: 'S&P',
         annotation: true
     }];
 
@@ -799,7 +799,7 @@ function buildGlobalMeetingSegments(totalSec) {
             left: (cursorSec / totalSec) * 100,
             width: ((totalSec - cursorSec) / totalSec) * 100,
             title: 'Song & Prayer',
-            label: 'Song & Prayer',
+            label: 'S&P',
             annotation: true
         });
     }
