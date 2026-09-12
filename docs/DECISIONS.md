@@ -804,3 +804,16 @@ Track important decisions that explain *why* the code changed.
     - Verify versioned assets and footer display 3.9.0.
   - Risks:
     - The schedule is an assumption when the real meeting started late; the existing sync control remains available for correction.
+
+## DEC-033: Place administration beside the command center on wide screens
+- Date: 2026-09-11
+- Status: Accepted
+- Related files: `index.html`, `styles.css`, `package.json`
+- Context:
+  - Wide screens had the administration column before the live meeting workspace, which placed the command center away from the primary reading order.
+- Decision:
+  - Keep the command center on the left and render administration to its right at the existing wide-screen breakpoint.
+  - Preserve the stacked layout on narrower screens.
+  - Bump the app version to 3.9.1.
+- Validation:
+  - Verify the wide-screen grid order and the 3.9.1 asset URLs and footer version.

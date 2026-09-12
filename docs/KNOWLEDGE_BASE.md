@@ -131,3 +131,4 @@ Use this section to track the source of truth for each major state key.
 - 2026-07-03: Added persisted part start locks so global segment boundaries stay fluid until a part timer starts, then anchor to the actual start time in version 3.8.8.
 - 2026-09-11: Anchored meeting progress to the scheduled start, accounted for planned song gaps in Meeting Pace, and prevented early part starts from resetting the global clock in version 3.8.9.
 - 2026-09-11: Caught up individual part timers to the scheduled wall-clock position when a meeting is opened late, preserving manual timing and version 3.9.0.
+- 2026-09-11: Placed administration beside the command center on wide screens while preserving the stacked narrow-screen layout, with version 3.9.1.
