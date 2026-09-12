@@ -699,6 +699,51 @@ function getActiveMeetingPlannedSeconds() {
     return state.meetingParts.reduce((sum, part) => sum + (part.duration || 0), 0);
 }
 
+function getScheduledPartWorkElapsedSeconds(totalSec, elapsedSec) {
+    if (!totalSec || totalSec <= 0 || !state.meetingParts.length) {
+        return 0;
+    }
+
+    const bufferSec = Math.min(GLOBAL_MEETING_EDGE_BUFFER_SECONDS, totalSec / 4);
+    const gapSecondsByIndex = state.meetingParts.map((part, index) => {
+        const previousPart = index > 0 ? state.meetingParts[index - 1] : null;
+        return hasMidMeetingSongGap(previousPart, part) ? GLOBAL_MEETING_MID_SONG_GAP_SECONDS : 0;
+    });
+    const totalGapSec = gapSecondsByIndex.reduce((sum, seconds) => sum + seconds, 0);
+    const interiorSec = Math.max(0, totalSec - (bufferSec * 2));
+    const segmentPoolSec = Math.max(0, interiorSec - Math.min(totalGapSec, interiorSec / 3));
+    const sourceDurationSec = state.meetingParts.reduce((sum, part) => sum + Math.max(0, part.duration || 0), 0);
+    if (sourceDurationSec <= 0 || segmentPoolSec <= 0) {
+        return 0;
+    }
+
+    let remainingSec = Math.max(0, Math.min(totalSec, elapsedSec)) - bufferSec;
+    if (remainingSec <= 0) {
+        return 0;
+    }
+
+    const sourceScale = segmentPoolSec / sourceDurationSec;
+    let workElapsedSec = 0;
+    for (let index = 0; index < state.meetingParts.length; index++) {
+        const gapSec = gapSecondsByIndex[index] || 0;
+        if (remainingSec <= gapSec) {
+            break;
+        }
+        remainingSec -= gapSec;
+
+        const partDurationSec = Math.max(0, state.meetingParts[index].duration || 0);
+        const scheduledPartSec = partDurationSec * sourceScale;
+        const consumedScheduledSec = Math.min(remainingSec, scheduledPartSec);
+        workElapsedSec += consumedScheduledSec / sourceScale;
+        remainingSec -= scheduledPartSec;
+        if (remainingSec <= 0) {
+            break;
+        }
+    }
+
+    return Math.min(sourceDurationSec, workElapsedSec);
+}
+
 function hasMidMeetingSongGap(previousPart, nextPart) {
     if (!previousPart || !nextPart) {
         return false;

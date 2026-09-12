@@ -710,16 +710,6 @@ const programCockpit = {
 
         const currentElapsed = state.elapsedTimes[state.activePart] || 0;
         const totalElapsed = Object.values(state.elapsedTimes).reduce((sum, seconds) => sum + Number(seconds || 0), 0);
-        const plannedElapsedToCurrent = state.meetingParts.reduce((sum, part, index) => {
-            if (index < state.activePart) {
-                return sum + (part.duration || 0);
-            }
-            if (index === state.activePart) {
-                return sum + Math.min(currentElapsed, part.duration || 0);
-            }
-            return sum;
-        }, 0);
-        const variance = totalElapsed - plannedElapsedToCurrent;
         const currentTiming = getPartTimingState(currentElapsed, current.duration || 0, state.isRunning);
         const currentProgressClass = getProgressColorClass(currentTiming.percent, currentTiming.state === 'overtime');
         const commentTiming = getCommentTimingState(state.activePart);
@@ -739,7 +729,26 @@ const programCockpit = {
         );
         const adjustAmount = Math.max(1, Math.floor(Number(this.timerAdjustAmount || 5)));
         const adjustUnit = this.timerAdjustUnit === 'minutes' ? 'minutes' : 'seconds';
-        const pace = getMeetingPaceState(variance);
+        const now = Date.now();
+        const meetingHasStarted = !!(state.meetingScheduledStart && now >= state.meetingScheduledStart);
+        const globalElapsed = meetingHasStarted
+            ? Math.max(0, (state.meetingActualEnd || now) - state.meetingScheduledStart) / 1000
+            : 0;
+        const scheduledWorkElapsed = meetingHasStarted
+            ? getScheduledPartWorkElapsedSeconds(getActiveMeetingPlannedSeconds(), globalElapsed)
+            : 0;
+        const hasPartOvertime = state.meetingParts.some((part, index) => {
+            return Number(state.elapsedTimes[index] || 0) > Math.max(0, part.duration || 0);
+        });
+        let pace = { className: 'on-pace', text: 'Not started' };
+        if (meetingHasStarted) {
+            const workVariance = totalElapsed - scheduledWorkElapsed;
+            pace = workVariance < 0
+                ? getMeetingPaceState(-workVariance)
+                : hasPartOvertime
+                    ? getMeetingPaceState(workVariance)
+                    : getMeetingPaceState(-workVariance);
+        }
         const completedParts = state.meetingParts.filter((part, index) => {
             const elapsed = state.elapsedTimes[index] || 0;
             return elapsed >= (part.duration || 0);

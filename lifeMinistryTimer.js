@@ -1438,9 +1438,9 @@ let state = {
         if (this.activePart !== null) {
             const now = Date.now();
             if (!this.meetingIsRunning) {
-                if (!this.meetingScheduledStart || this.meetingActualEnd || now < this.meetingScheduledStart) {
+                if (!this.meetingScheduledStart || this.meetingActualEnd) {
                     this.startMeeting(now, true);
-                } else {
+                } else if (now >= this.meetingScheduledStart) {
                     this.startMeetingIfDue(now);
                 }
             }
