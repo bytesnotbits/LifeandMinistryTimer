@@ -724,3 +724,23 @@ Use this file to prevent behavior drift while evolving the app.
   - Footer version displays `3.8.8`.
 - Related decisions: DEC-031
 - Related files: `index.html`, `lifeMinistryTimer.js`, `render.js`
+
+## REG-037: Late meeting load catches up part timers once
+- Priority: High
+- Area: Global Meeting Timer
+- Preconditions:
+  - App has a scheduled meeting with multiple timed parts.
+  - The scheduled start is in the past and no part timer has been started.
+- Steps:
+  1. Open the app 20–30 minutes after the scheduled start.
+  2. Inspect the active part and elapsed values.
+  3. Refresh the app.
+  4. Start a new scheduled meeting after recording manual timing in a part.
+- Expected:
+  - Earlier scheduled parts show as completed and the current part contains the appropriate partial elapsed time.
+  - The current part continues timing automatically when catch-up lands inside it.
+  - A late-start notification appears once, and refresh does not apply catch-up a second time.
+  - Existing manual part timing is preserved rather than overwritten by schedule catch-up.
+  - Footer version displays `3.9.0`.
+- Related decisions: DEC-032
+- Related files: `index.html`, `lifeMinistryTimer.js`, `render.js`

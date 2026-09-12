@@ -1,6 +1,6 @@
 /**
  * Life and Ministry Timer
- * Version 3.7.7
+ * Version 3.9.0
  * 
  * A comprehensive timer application for managing meeting parts,
  * tracking comments, and maintaining meeting templates.
@@ -821,6 +821,7 @@ const STORAGE_KEYS = {
     meetingScheduledStart: 'meetingScheduledStart',
     meetingScheduledEnd: 'meetingScheduledEnd',
     meetingActualEnd: 'meetingActualEnd',
+    meetingCatchUpStart: 'meetingCatchUpStart',
     meetingRepeatsWeekly: 'meetingRepeatsWeekly',
     recurringBaseStart: 'recurringBaseStart',
     recurringDurationMs: 'recurringDurationMs',
@@ -997,6 +998,7 @@ let state = {
     meetingScheduledStart: null,
     meetingScheduledEnd: null,
     meetingActualEnd: null,   // timestamp when user clicked end
+    meetingCatchUpStart: null, // scheduled start for which part timers were caught up
     meetingIsRunning: false,
     meetingInterval: null,
     meetingRepeatsWeekly: true,
@@ -1046,6 +1048,8 @@ let state = {
             this.meetingScheduledEnd = savedEnd ? parseInt(savedEnd, 10) : null;
             const savedActual = persistence.getString(STORAGE_KEYS.meetingActualEnd);
             this.meetingActualEnd = savedActual ? parseInt(savedActual, 10) : null;
+            const savedCatchUp = persistence.getString(STORAGE_KEYS.meetingCatchUpStart);
+            this.meetingCatchUpStart = savedCatchUp ? parseInt(savedCatchUp, 10) : null;
             const savedRepeats = persistence.getString(STORAGE_KEYS.meetingRepeatsWeekly);
             this.meetingRepeatsWeekly = savedRepeats !== null ? (savedRepeats === 'true') : true;
             const savedRecurring = persistence.getString(STORAGE_KEYS.recurringBaseStart);
@@ -1089,6 +1093,7 @@ let state = {
             persistence.setOptionalNumber(STORAGE_KEYS.meetingScheduledStart, this.meetingScheduledStart);
             persistence.setOptionalNumber(STORAGE_KEYS.meetingScheduledEnd, this.meetingScheduledEnd);
             persistence.setOptionalNumber(STORAGE_KEYS.meetingActualEnd, this.meetingActualEnd);
+            persistence.setOptionalNumber(STORAGE_KEYS.meetingCatchUpStart, this.meetingCatchUpStart);
             persistence.setString(STORAGE_KEYS.meetingRepeatsWeekly, this.meetingRepeatsWeekly ? 'true' : 'false');
             persistence.setOptionalNumber(STORAGE_KEYS.recurringBaseStart, this.recurringBaseStart);
             persistence.setOptionalNumber(STORAGE_KEYS.recurringDurationMs, this.recurringDurationMs);
@@ -1203,6 +1208,7 @@ let state = {
         persistence.remove(STORAGE_KEYS.meetingScheduledStart);
         persistence.remove(STORAGE_KEYS.meetingScheduledEnd);
         persistence.remove(STORAGE_KEYS.meetingActualEnd);
+        persistence.remove(STORAGE_KEYS.meetingCatchUpStart);
         persistence.remove(STORAGE_KEYS.weeklyMeetingSchedules);
         
         this.meetingParts = DEFAULT_PARTS;
@@ -1211,6 +1217,7 @@ let state = {
         this.meetingScheduledStart = null;
         this.meetingScheduledEnd = null;
         this.meetingActualEnd = null;
+        this.meetingCatchUpStart = null;
         this.meetingIsRunning = false;
         this.weeklyMeetingSchedules = JSON.parse(JSON.stringify(DEFAULT_WEEKLY_MEETING_SCHEDULES));
         if (this.meetingInterval) {
@@ -1236,6 +1243,7 @@ let state = {
         this.meetingScheduledStart = startTs;
         this.meetingScheduledEnd = endTs;
         this.meetingActualEnd = null;
+        this.meetingCatchUpStart = null;
         this.meetingIsRunning = false;
         // Configure repeating behavior
         this.meetingRepeatsWeekly = !!repeat;
@@ -1280,6 +1288,7 @@ let state = {
         this.meetingScheduledStart = startTs;
         this.meetingScheduledEnd = endTs;
         this.meetingActualEnd = null;
+        this.meetingCatchUpStart = null;
         this.meetingIsRunning = false;
 
         if (!this.startMeetingIfDue()) {
@@ -1337,7 +1346,93 @@ let state = {
         if (!meetingScheduleModel.shouldStartMeeting(this, now)) {
             return false;
         }
+        const caughtUp = this.catchUpPartTimersToSchedule(now);
         this.startMeeting();
+        if (caughtUp) {
+            const activeDuration = Math.max(0, Number(this.meetingParts[this.activePart]?.duration || 0));
+            const activeElapsed = Number(this.elapsedTimes[this.activePart] || 0);
+            if ((now - this.meetingScheduledStart) / 1000 > 5 * 60 && activeElapsed < activeDuration) {
+                this.startTimer();
+            }
+        }
+        return true;
+    },
+
+    catchUpPartTimersToSchedule(now = Date.now()) {
+        const start = Number(this.meetingScheduledStart);
+        if (!start || this.meetingCatchUpStart === start || now <= start || !this.meetingParts.length) {
+            return false;
+        }
+
+        // Preserve real timing if the operator already started tracking a part.
+        const hasTrackedTime = this.getTrackedMeetingElapsedSeconds() > 0;
+        this.meetingCatchUpStart = start;
+        if (hasTrackedTime) {
+            this.saveState();
+            return false;
+        }
+
+        const totalSec = this.meetingScheduledEnd && this.meetingScheduledEnd > start
+            ? (this.meetingScheduledEnd - start) / 1000
+            : this.meetingParts.reduce((sum, part) => sum + Math.max(0, Number(part.duration || 0)), 0);
+        const edgeSec = Math.min(5 * 60, totalSec / 4);
+        const interiorSec = Math.max(0, totalSec - (edgeSec * 2));
+        const gapSeconds = this.meetingParts.map((part, index) => {
+            const previous = index > 0 ? this.meetingParts[index - 1] : null;
+            return previous
+                && previous.section !== part.section
+                && /living as christians/i.test(part.section || '')
+                ? 3 * 60
+                : 0;
+        });
+        const totalGapSec = gapSeconds.reduce((sum, gap) => sum + gap, 0);
+        const workPoolSec = Math.max(0, interiorSec - Math.min(totalGapSec, interiorSec / 3));
+        const sourceDurationSec = this.meetingParts.reduce(
+            (sum, part) => sum + Math.max(0, Number(part.duration || 0)),
+            0
+        );
+        const scale = sourceDurationSec > 0 ? workPoolSec / sourceDurationSec : 0;
+        let remainingSec = Math.max(0, Math.min(totalSec, (now - start) / 1000)) - edgeSec;
+        let timelineCursorSec = edgeSec;
+        let currentPart = 0;
+        this.elapsedTimes = {};
+        this.partStartTimes = {};
+
+        this.meetingParts.forEach((part, index) => {
+            const durationSec = Math.max(0, Number(part.duration || 0));
+            const gapSec = gapSeconds[index] || 0;
+            timelineCursorSec += gapSec;
+            const scheduledPartSec = durationSec * scale;
+            const consumedSec = remainingSec > 0 && scale > 0
+                ? Math.min(remainingSec, scheduledPartSec)
+                : 0;
+            const partElapsedSec = scale > 0 ? consumedSec / scale : 0;
+
+            if (partElapsedSec > 0) {
+                this.partStartTimes[index] = start + Math.round(timelineCursorSec * 1000);
+                currentPart = index;
+            }
+            this.elapsedTimes[index] = partElapsedSec;
+            remainingSec -= scheduledPartSec;
+            timelineCursorSec += scheduledPartSec;
+        });
+
+        if (remainingSec > 0 && this.meetingParts.length) {
+            currentPart = this.meetingParts.length - 1;
+        } else {
+            for (let index = 0; index < this.meetingParts.length; index++) {
+                const durationSec = Math.max(0, Number(this.meetingParts[index].duration || 0));
+                const elapsedSec = Number(this.elapsedTimes[index] || 0);
+                if (elapsedSec < durationSec - 0.001) {
+                    currentPart = index;
+                    break;
+                }
+                currentPart = Math.min(index + 1, this.meetingParts.length - 1);
+            }
+        }
+        this.activePart = currentPart;
+        this.saveState();
+        notify.show(`Meeting started ${formatCatchUpDuration((now - start) / 1000)} ago; part timers caught up`, 'info');
         return true;
     },
 
@@ -3059,6 +3154,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
     });
 });
+
+function formatCatchUpDuration(seconds) {
+    const totalSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+    const minutes = Math.floor(totalSeconds / 60);
+    const remainingSeconds = totalSeconds % 60;
+    return minutes > 0
+        ? `${minutes} minute${minutes === 1 ? '' : 's'}`
+        : `${remainingSeconds} second${remainingSeconds === 1 ? '' : 's'}`;
+}
 
 // Simple notification system
 const notify = {

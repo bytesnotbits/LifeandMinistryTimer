@@ -781,3 +781,26 @@ Track important decisions that explain *why* the code changed.
     - Verify footer version displays 3.8.8.
   - Risks:
     - Old saved sessions do not have `partStartTimes`, so their bar falls back to projected behavior until parts are started again.
+
+## DEC-032: Catch up part timers when a scheduled meeting is opened late
+- Date: 2026-09-11
+- Status: Accepted
+- Related files: `index.html`, `lifeMinistryTimer.js`, `package.json`
+- Context:
+  - The global clock already advances from the scheduled start, but individual part timers remained at zero when the app was opened after the meeting began.
+- Decision:
+  - On first activation of a scheduled meeting, distribute elapsed scheduled wall-clock time across the planned parts, accounting for the existing opening/closing buffer and planned mid-meeting song gap.
+  - Preserve existing tracked part time if the operator has already started timing manually.
+  - Persist the scheduled start that was caught up so reloads do not repeat the adjustment.
+  - Automatically continue the current part timer when the catch-up lands inside a timed part, without replaying prior completion sounds or comments.
+  - Bump the app version to 3.9.0.
+- Consequences:
+  - Opening the app late now presents the expected current part and elapsed time.
+  - Operators receive a clear notification when catch-up occurs.
+  - Manual timing remains authoritative once any part timing has been recorded.
+- Validation:
+  - Automated checks:
+    - Run JavaScript syntax checks and the existing regression tests.
+    - Verify versioned assets and footer display 3.9.0.
+  - Risks:
+    - The schedule is an assumption when the real meeting started late; the existing sync control remains available for correction.
