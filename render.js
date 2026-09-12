@@ -834,7 +834,7 @@ function buildGlobalMeetingSegments(totalSec) {
             left: Math.max(0, Math.min(100, (leftSec / totalSec) * 100)),
             width: Math.max(0.3, Math.min(100, (adjustedWidthSec / totalSec) * 100)),
             title: `${partNumber ? `Part ${partNumber}: ` : ''}${displayPartName || 'Meeting part'}: ${formatTime(part.duration || 0)}${hasLockedStart ? ', start locked' : ''}${shouldShiftByActual || nextLockedStartSec !== null ? `, actual ${formatTime(elapsed)}` : ''}`,
-            label: partNumber && state.meetingParts.length <= 16 && (adjustedWidthSec / totalSec) * 100 >= GLOBAL_SEGMENT_LABEL_MIN_PERCENT ? String(partNumber) : ''
+            label: partNumber && (adjustedWidthSec / totalSec) * 100 >= GLOBAL_SEGMENT_LABEL_MIN_PERCENT ? String(partNumber) : ''
         });
         cursorSec = leftSec + adjustedWidthSec;
     });
@@ -856,7 +856,9 @@ function buildGlobalMeetingSegments(totalSec) {
 function getPartDisplayNumber(part) {
     const name = part && part.name ? String(part.name) : '';
     const match = name.match(/^\s*(\d{1,2})[\.)]\s+/);
-    return match ? Number(match[1]) : null;
+    if (match) return Number(match[1]);
+    const explicitNumber = Number(part && part.partNumber);
+    return Number.isInteger(explicitNumber) && explicitNumber > 0 ? explicitNumber : null;
 }
 
 function getPartDisplayName(part) {
