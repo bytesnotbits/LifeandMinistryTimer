@@ -7,18 +7,18 @@
     <title>Life and Ministry Timer</title>
 
     <!-- Styles -->
-    <link rel="stylesheet" href="styles.css?v=3.9.2">
+    <link rel="stylesheet" href="styles.css?v=3.9.3">
     <link rel="icon" href="data:,">
     
     <!-- Tailwind CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     
     <!-- Defer JavaScript loading -->
-    <script src="lifeMinistryTimer.js?v=3.9.2" defer></script>
-    <script src="render.js?v=3.9.2" defer></script>
-    <script src="newFeatures.js?v=3.9.2" defer></script>
-    <script src="programCockpit.js?v=3.9.2" defer></script>
-    <script src="realtimeShare.js?v=3.9.2" defer></script>
+    <script src="lifeMinistryTimer.js?v=3.9.3" defer></script>
+    <script src="render.js?v=3.9.3" defer></script>
+    <script src="newFeatures.js?v=3.9.3" defer></script>
+    <script src="programCockpit.js?v=3.9.3" defer></script>
+    <script src="realtimeShare.js?v=3.9.3" defer></script>
 </head>
 <body class="app-body">
     
@@ -299,6 +299,16 @@
                             </div>
                         </details>
                         <p class="text-sm text-gray-600 mt-1">Set the regular midweek or weekend meeting. The next matching date is scheduled automatically and repeats weekly.</p>
+                    </div>
+                    <div class="meeting-timing-options border-t pt-3 mt-3">
+                        <h3 class="text-sm font-semibold mb-2">Meeting Timing Options</h3>
+                        <label class="flex items-start gap-2 text-sm">
+                            <input type="checkbox" id="speakerTransitionSlotsCheckbox" class="mt-1">
+                            <span>
+                                <strong>Add 1:00 transition slots</strong>
+                                <span class="block text-gray-600">Include chairman comments and speaker changes after each part, except opening and closing comments.</span>
+                            </span>
+                        </label>
                     </div>
                 </section>
 

@@ -300,7 +300,7 @@ const programCockpit = {
         }
 
         this.meta = parsed.meta;
-        state.meetingParts = parsed.parts;
+        state.meetingParts = state.applySpeakerTransitionSlots(parsed.parts);
         state.resetTimers();
         persistence.setJson(STORAGE_KEYS.meetingTemplate, state.meetingParts);
         this.saveMeta();

@@ -167,6 +167,7 @@ const DOM = { // eslint-disable-line no-unused-vars
             weekendMeetingStartInput: 'weekendMeetingStartInput',
             weekendMeetingEndInput: 'weekendMeetingEndInput',
             scheduleWeekendMeetingBtn: 'scheduleWeekendMeetingBtn',
+            speakerTransitionSlotsCheckbox: 'speakerTransitionSlotsCheckbox',
             endMeetingBtn: 'endMeetingBtn',
             syncMeetingBtn: 'syncMeetingBtn',
             globalTimerContainer: 'globalTimerContainer',
@@ -228,6 +229,9 @@ const DOM = { // eslint-disable-line no-unused-vars
         if (this.elements.weekendMeetingDayInput) this.elements.weekendMeetingDayInput.value = weekend.day;
         if (this.elements.weekendMeetingStartInput) this.elements.weekendMeetingStartInput.value = weekend.start;
         if (this.elements.weekendMeetingEndInput) this.elements.weekendMeetingEndInput.value = weekend.end;
+        if (this.elements.speakerTransitionSlotsCheckbox) {
+            this.elements.speakerTransitionSlotsCheckbox.checked = !!state.addSpeakerTransitionSlots;
+        }
 
         render.globalTimerDisplay();
     },
@@ -236,6 +240,9 @@ const DOM = { // eslint-disable-line no-unused-vars
         this._setupTemplateEditorListeners();
         this._setupModalListeners();
         this._setupSchedulerListeners();
+        this._on(this.elements.speakerTransitionSlotsCheckbox, 'change', (event) => {
+            state.setSpeakerTransitionSlots(event.target.checked);
+        });
         this._setupPartDisplayListeners();
         this._setupCommentHistoryListeners();
         this._setupEditListeners();
@@ -813,6 +820,7 @@ const COMMENT_DISPLAY_UPDATE_INTERVAL = 200; // 200ms for smoother comment timer
 
 const STORAGE_KEYS = {
     meetingTemplate: 'meetingTemplate',
+    addSpeakerTransitionSlots: 'addSpeakerTransitionSlots',
     elapsedTimes: 'elapsedTimes',
     partStartTimes: 'partStartTimes',
     activePart: 'activePart',
@@ -1006,6 +1014,53 @@ let state = {
     recurringDurationMs: null,
     meetingOverride: null, // { start, end } for one-time overrides
     weeklyMeetingSchedules: JSON.parse(JSON.stringify(DEFAULT_WEEKLY_MEETING_SCHEDULES)),
+    addSpeakerTransitionSlots: true,
+
+    applySpeakerTransitionSlots(parts = this.meetingParts) {
+        const sourceParts = (Array.isArray(parts) ? parts : []).filter((part) => !part.isSpeakerTransition);
+        if (!this.addSpeakerTransitionSlots) return sourceParts;
+
+        const result = [];
+        sourceParts.forEach((part) => {
+            result.push(part);
+            const name = String(part.name || '');
+            const isOpeningOrClosing = /opening comments|closing comments|concluding comments/i.test(name);
+            if (!isOpeningOrClosing) {
+                result.push({
+                    name: 'Chairman Comments & Speaker Change',
+                    duration: 60,
+                    speaker: 'Chairman',
+                    enableComments: false,
+                    section: part.section || '',
+                    type: 'speaker-transition',
+                    durationSource: 'generated',
+                    isSpeakerTransition: true
+                });
+            }
+        });
+        return result;
+    },
+
+    setSpeakerTransitionSlots(enabled) {
+        if (this.isRunning) {
+            notify.show('Stop the timer before changing transition slots', 'warning');
+            DOM.updateMeetingForm();
+            return;
+        }
+        this.addSpeakerTransitionSlots = !!enabled;
+        this.meetingParts = this.applySpeakerTransitionSlots(this.meetingParts);
+        persistence.setString(STORAGE_KEYS.addSpeakerTransitionSlots, this.addSpeakerTransitionSlots ? 'true' : 'false');
+        persistence.setJson(STORAGE_KEYS.meetingTemplate, this.meetingParts);
+        this.elapsedTimes = {};
+        this.partStartTimes = {};
+        this.activePart = 0;
+        this.saveState();
+        render.templateEditor();
+        render.timerDisplay();
+        if (typeof programCockpit !== 'undefined') programCockpit.renderAll();
+        DOM.updateMeetingForm();
+        notify.show(this.addSpeakerTransitionSlots ? '1:00 transition slots added' : 'Transition slots removed', 'success');
+    },
     
     // Initialize application state
     init() {
@@ -1057,6 +1112,9 @@ let state = {
             const savedRecDur = persistence.getString(STORAGE_KEYS.recurringDurationMs);
             this.recurringDurationMs = savedRecDur ? parseInt(savedRecDur, 10) : null;
             this.meetingOverride = persistence.getJson(STORAGE_KEYS.meetingOverride, null);
+            const savedTransitionSlots = persistence.getString(STORAGE_KEYS.addSpeakerTransitionSlots);
+            this.addSpeakerTransitionSlots = savedTransitionSlots === null ? true : savedTransitionSlots === 'true';
+            this.meetingParts = this.applySpeakerTransitionSlots(this.meetingParts);
             this.weeklyMeetingSchedules = {
                 ...DEFAULT_WEEKLY_MEETING_SCHEDULES,
                 ...persistence.getJson(STORAGE_KEYS.weeklyMeetingSchedules, {})
@@ -1071,6 +1129,8 @@ let state = {
             console.error('Error loading state:', error);
             // Fallback to defaults if loading fails
             this.meetingParts = DEFAULT_PARTS;
+            this.addSpeakerTransitionSlots = true;
+            this.meetingParts = this.applySpeakerTransitionSlots(this.meetingParts);
             this.elapsedTimes = {};
             this.partStartTimes = {};
             this.activePart = 0;
@@ -1212,6 +1272,9 @@ let state = {
         persistence.remove(STORAGE_KEYS.weeklyMeetingSchedules);
         
         this.meetingParts = DEFAULT_PARTS;
+        this.addSpeakerTransitionSlots = true;
+        persistence.remove(STORAGE_KEYS.addSpeakerTransitionSlots);
+        this.meetingParts = this.applySpeakerTransitionSlots(this.meetingParts);
         this.isEditMode = false;
         this.resetTimers();
         this.meetingScheduledStart = null;
@@ -2860,7 +2923,7 @@ const templateManager = {
         }
         
         // Set meeting parts
-        state.meetingParts = JSON.parse(JSON.stringify(template.parts)); // Deep copy
+        state.meetingParts = state.applySpeakerTransitionSlots(JSON.parse(JSON.stringify(template.parts))); // Deep copy
         
         // Reset timers
         state.resetTimers();

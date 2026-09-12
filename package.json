@@ -1,6 +1,6 @@
 {
     "name": "life-and-ministry-timer",
-    "version": "3.9.2",
+    "version": "3.9.3",
     "private": true,
     "description": "Static Life and Ministry Timer app with optional realtime share hosting.",
     "main": "server.js",
