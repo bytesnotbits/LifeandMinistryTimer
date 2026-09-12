@@ -805,15 +805,16 @@ Track important decisions that explain *why* the code changed.
   - Risks:
     - The schedule is an assumption when the real meeting started late; the existing sync control remains available for correction.
 
-## DEC-033: Place administration beside the command center on wide screens
+## DEC-033: Place meeting parts beside the command center on extra-wide screens
 - Date: 2026-09-11
 - Status: Accepted
 - Related files: `index.html`, `styles.css`, `package.json`
 - Context:
-  - Wide screens had the administration column before the live meeting workspace, which placed the command center away from the primary reading order.
+  - The command center and the full meeting-parts dashboard were stacked vertically, requiring excess scrolling to see parts such as Opening Comments, Treasures, and Gems.
 - Decision:
-  - Keep the command center on the left and render administration to its right at the existing wide-screen breakpoint.
-  - Preserve the stacked layout on narrower screens.
-  - Bump the app version to 3.9.1.
+  - Keep the administration column on the left at the existing wide-screen breakpoint.
+  - At an extra-wide breakpoint, place the live command center on the left and the meeting-parts dashboard on the right within the workspace.
+  - Preserve the stacked workspace layout on narrower screens.
+  - Bump the app version to 3.9.2.
 - Validation:
-  - Verify the wide-screen grid order and the 3.9.1 asset URLs and footer version.
+  - Verify the administration remains on the left, the meeting-parts dashboard is beside the command center at 1440px+, and the 3.9.2 asset URLs and footer version are present.

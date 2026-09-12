@@ -745,11 +745,12 @@ Use this file to prevent behavior drift while evolving the app.
 - Related decisions: DEC-032
 - Related files: `index.html`, `lifeMinistryTimer.js`, `render.js`
 
-## Wide-screen command-center layout
-- Open the app at a viewport at least 1024px wide.
-- Confirm the live meeting command center and meeting parts appear on the left.
-- Confirm administration, schedule, comments, and template sections appear to the right.
-- Resize below the breakpoint and confirm the sections return to a single-column flow.
-- Confirm the footer version displays `3.9.1`.
+## Extra-wide meeting-parts layout
+- Open the app at a viewport at least 1440px wide.
+- Confirm administration, schedule, comments, and template sections remain on the left.
+- Confirm the live meeting command center appears on the left side of the workspace.
+- Confirm the meeting-parts dashboard, including Opening Comments, Treasures, and Gems, appears to the right of the command center.
+- Resize below the extra-wide breakpoint and confirm the workspace returns to a single-column flow.
+- Confirm the footer version displays `3.9.2`.
 - Related decisions: DEC-033
 - Related files: `index.html`, `styles.css`
